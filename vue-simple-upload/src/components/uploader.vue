@@ -24,9 +24,20 @@ export default {
   data () {
     return {
       options: {
-        target: '//localhost:3000/upload',
-        testChunks: false,
-        chunkSize: 1024 * 1024
+        target: '//localhost:3000/api/upload/chunk',
+        chunkSize: 1024 * 1024,
+        testChunks: true,
+        checkChunkUploadedByResponse: function (chunks, message) {
+          console.log('chunk' + chunks)
+          const objMessage = JSON.parse(message)
+          console.log('objMessage' + objMessage)
+          if (objMessage.data.uploaded) {
+            return true
+          }
+          const chunkNumbers = objMessage.data.chunkNumbers
+          console.log('chunkNumbers' + chunkNumbers)
+          return (chunkNumbers || []).indexOf(chunks.offset + 1) >= 0
+        }
       },
       statusText: {
         success: '上传成功',
@@ -52,6 +63,16 @@ export default {
       console.log('file' + file)
       console.log('response' + response)
       console.log('chunk' + chunk)
+      const res = JSON.parse(response)
+      console.log('onFileSuccess' + res)
+      if (!res.data.merge) {
+
+      } else {
+        const formData = new FormData()
+        formData.append('identifier', file.uniqueIdentifier)
+        formData.append('filename', file.name)
+        // merge(formData).then(response => {})
+      }
     },
 
     /**

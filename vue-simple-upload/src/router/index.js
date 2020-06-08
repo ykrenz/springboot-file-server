@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import uploader from '../components/vue-simple-uploader.vue'
+import uploader from '../components/uploader.vue'
 
 Vue.use(VueRouter)
 
