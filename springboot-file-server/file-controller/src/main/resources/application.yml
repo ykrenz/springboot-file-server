@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: file-server
+  profiles:
+    active: dev
+
+file:
+# 请填写自己的阿里云存储配置
+  ali:
+    access-key-id: 
+    access-key-secret: 
+    bucket-name: 
+    endpoint: 
+    # 文件访问前缀地址
+    # 如果Object是公共读/公共读写权限，那么文件URL的格式为：BucketName.Endpoint/ObjectName
+    # 如果Object是私有权限，则必须进行签名操作。文件URL的格式为：BucketName.Endpoint/Object?签名参数
+    # 如果Object所在的Bucket绑定了自定义域名，那么文件URL的格式为：YourDomainName/ObjectName
+    # 具体详情可访问https://help.aliyun.com/knowledge_detail/39607.html
+    # 也可以配置nginx的地址进行反向代理等。在此不做解释
+    web-server-url:
+  local:
+    file-storage-path: D:\data
+    web-server-url: http://127.0.0.1/
+fdfs:
+  so-timeout: 5
+  connect-timeout: 5
+  #缩略图生成参数
+  thumb-image:
+    width: 150
+    height: 150
+  #TrackerList参数,支持多个
+  tracker-list:
+    - 10.10.10.115:22122
+  web-server-url: 'http://10.10.10.115/'
+  pool:
+    test-on-borrow: true
+    test-on-return: true
+    test-on-create: true
+logging:
+  level:
+    root: info
+    com.github.tobato.fastdfs: debug
