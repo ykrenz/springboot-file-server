@@ -24,7 +24,7 @@ public class FileController {
     @Autowired
     private FileServiceImpl fileService;
 
-    @GetMapping("/checkChunk")
+    @GetMapping("/chunk")
     public R<MergeRes> checkChunk(Chunk chunk) {
         return R.success(fileService.checkChunk(chunk));
     }

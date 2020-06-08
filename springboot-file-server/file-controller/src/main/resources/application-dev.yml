@@ -1,5 +1,5 @@
 server:
-  port: 18080
+  port: 3000
 
 spring:
   servlet:
