@@ -2,6 +2,7 @@ package com.ren.file.service;
 
 import com.ren.file.pojo.request.Chunk;
 import com.ren.file.pojo.response.MergeRes;
+import com.ren.file.pojo.response.UploadChunkRes;
 import com.ren.file.util.R;
 
 /**
@@ -14,7 +15,7 @@ public interface IFileService {
     /**
      * 上传分片
      */
-    String uploadChunk(Chunk chunk);
+    R<UploadChunkRes> uploadChunk(Chunk chunk);
 
     /**
      * 秒传和续传

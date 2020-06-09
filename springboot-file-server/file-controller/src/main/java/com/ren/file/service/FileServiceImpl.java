@@ -6,6 +6,7 @@ import com.github.ren.file.properties.LocalFileProperties;
 import com.ren.file.enums.RErrorEnum;
 import com.ren.file.pojo.request.Chunk;
 import com.ren.file.pojo.response.MergeRes;
+import com.ren.file.pojo.response.UploadChunkRes;
 import com.ren.file.util.R;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -59,31 +60,45 @@ public class FileServiceImpl implements IFileService {
     }
 
     @Override
-    public String uploadChunk(Chunk chunk) {
+    public R<UploadChunkRes> uploadChunk(Chunk chunk) {
         //直接上传到文件服务
         if (chunk.getTotalSize() <= chunk.getChunkSize()) {
             try (InputStream inputStream = chunk.getFile().getInputStream()) {
-                return localFileClient.uploadFile(inputStream, chunk.getIdentifier().concat(".") + FilenameUtils.getExtension(chunk.getFilename()));
+                UploadChunkRes uploadChunkRes = new UploadChunkRes();
+                String url = fastDfsFileClient.uploadFile(inputStream,
+                        chunk.getIdentifier().concat(".") + FilenameUtils.getExtension(chunk.getFilename()));
+                uploadChunkRes.setUrl(url);
+                uploadChunkRes.setMerge(false);
+                return R.success(uploadChunkRes);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                return R.fail(RErrorEnum.UPLOAD_CHUNK_ERROR);
             }
         } else {
             //上传到分块目录
             MultipartFile file = chunk.getFile();
             Integer chunkNumber = chunk.getChunkNumber();
             String identifier = chunk.getIdentifier();
-            String ch = this.generateChunkPath(identifier);
+            String chunkPath = this.generateChunkPath(identifier);
             try {
-                File chunkFile = new File(ch, String.valueOf(chunkNumber));
-                if (chunkFile.exists() && !chunkFile.delete()) {
-                    throw new RuntimeException("临时文件删除失败");
+                File chunkFile = new File(chunkPath, String.valueOf(chunkNumber));
+                if (chunkFile.exists() && chunkFile.length() == chunk.getCurrentChunkSize()) {
+                    log.info("分块已经上传{}", chunk);
+                } else {
+                    file.transferTo(chunkFile);
                 }
-                file.transferTo(chunkFile);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                UploadChunkRes uploadChunkRes = new UploadChunkRes();
+                List<File> mergeFileList = fastDfsFileClient.getMergeFileList(chunkPath, Comparator.comparingInt(o -> Integer.parseInt(o.getName())));
+                if (chunk.getTotalChunks() == mergeFileList.size()) {
+                    uploadChunkRes.setMerge(true);
+                } else {
+                    uploadChunkRes.setMerge(false);
+                }
+                return R.success(uploadChunkRes);
+            } catch (Exception e) {
+                log.error("上传异常");
+                return R.fail(RErrorEnum.UPLOAD_CHUNK_ERROR);
             }
         }
-        return "SUCCESS";
     }
 
     public String generateChunkPath(String identifier) {
