@@ -22,21 +22,17 @@ file:
     file-storage-path: D:\data
     web-server-url: http://127.0.0.1/
 fdfs:
-  so-timeout: 5
-  connect-timeout: 5
+  so-timeout: 5000
+  connect-timeout: 5000
   #缩略图生成参数
   thumb-image:
     width: 150
     height: 150
   #TrackerList参数,支持多个
   tracker-list:
-    - 10.10.10.115:22122
-  web-server-url: 'http://10.10.10.115/'
-  pool:
-    test-on-borrow: true
-    test-on-return: true
-    test-on-create: true
+    - 机器ip:22122
+  #返回访问文件的地址前缀,一般是nginx域名
+  web-server-url: 'https://www.cloudren.top/'
 logging:
   level:
     root: info
-    com.github.tobato.fastdfs: debug

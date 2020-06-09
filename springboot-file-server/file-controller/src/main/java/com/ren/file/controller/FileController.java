@@ -10,9 +10,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * @author RenYinKui
  * @Description:
@@ -36,6 +33,6 @@ public class FileController {
 
     @PostMapping("/merge")
     public R<String> merge(String identifier, String filename) {
-        return R.success(fileService.mergeChunk(identifier, filename));
+        return fileService.mergeChunk(identifier, filename);
     }
 }

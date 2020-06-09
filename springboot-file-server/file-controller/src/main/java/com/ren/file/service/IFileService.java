@@ -2,6 +2,7 @@ package com.ren.file.service;
 
 import com.ren.file.pojo.request.Chunk;
 import com.ren.file.pojo.response.MergeRes;
+import com.ren.file.util.R;
 
 /**
  * @author RenYinKui
@@ -23,6 +24,6 @@ public interface IFileService {
     /**
      * 合并分片
      */
-    String mergeChunk(String identifier, String filename);
+    R<String> mergeChunk(String identifier, String filename);
 
 }
