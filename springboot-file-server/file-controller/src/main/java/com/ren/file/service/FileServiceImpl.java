@@ -3,6 +3,7 @@ package com.ren.file.service;
 import com.github.ren.file.clients.FastDfsFileClient;
 import com.github.ren.file.clients.LocalFileClient;
 import com.github.ren.file.properties.LocalFileProperties;
+import com.ren.file.config.FileSreverProperties;
 import com.ren.file.enums.RErrorEnum;
 import com.ren.file.pojo.request.Chunk;
 import com.ren.file.pojo.response.MergeRes;
@@ -18,7 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,14 +41,16 @@ public class FileServiceImpl implements IFileService {
     @Autowired
     private LocalFileProperties localFileProperties;
 
+    @Autowired
+    private FileSreverProperties fileSreverProperties;
+
     @Override
     public MergeRes checkChunk(Chunk chunk) {
         MergeRes mergeRes = new MergeRes();
         //查询数据库MD5校验文件是否已经上传,实现秒传,此处写死false
         mergeRes.setUploaded(false);
         String identifier = chunk.getIdentifier();
-        String chunkPath = this.generateChunkPath(identifier);
-        List<File> mergeFileList = fastDfsFileClient.getMergeFileList(chunkPath, Comparator.comparingInt(o -> Integer.parseInt(o.getName())));
+        List<File> mergeFileList = this.getMergeFileList(identifier);
         List<Integer> chunkNumbers = mergeFileList.stream().map(f -> Integer.parseInt(f.getName())).sorted(Comparator.comparing(Integer::new)).collect(Collectors.toList());
         mergeRes.setChunkNumbers(chunkNumbers);
         if (chunk.getTotalChunks() == chunkNumbers.size()) {
@@ -78,16 +80,16 @@ public class FileServiceImpl implements IFileService {
             MultipartFile file = chunk.getFile();
             Integer chunkNumber = chunk.getChunkNumber();
             String identifier = chunk.getIdentifier();
-            String chunkPath = this.generateChunkPath(identifier);
+            String chunkTempPath = fileSreverProperties.getChunkTempPath();
             try {
-                File chunkFile = new File(chunkPath, String.valueOf(chunkNumber));
+                File chunkFile = new File(chunkTempPath, identifier.concat("-") + chunkNumber);
                 if (chunkFile.exists() && chunkFile.length() == chunk.getCurrentChunkSize()) {
                     log.info("分块已经上传{}", chunk);
                 } else {
                     file.transferTo(chunkFile);
                 }
                 UploadChunkRes uploadChunkRes = new UploadChunkRes();
-                List<File> mergeFileList = fastDfsFileClient.getMergeFileList(chunkPath, Comparator.comparingInt(o -> Integer.parseInt(o.getName())));
+                List<File> mergeFileList = this.getMergeFileList(identifier);
                 if (chunk.getTotalChunks() == mergeFileList.size()) {
                     uploadChunkRes.setMerge(true);
                 } else {
@@ -95,34 +97,39 @@ public class FileServiceImpl implements IFileService {
                 }
                 return R.success(uploadChunkRes);
             } catch (Exception e) {
-                log.error("上传异常");
+                log.error("上传异常", e);
                 return R.fail(RErrorEnum.UPLOAD_CHUNK_ERROR);
             }
         }
     }
 
-    public String generateChunkPath(String identifier) {
-        File file = Paths.get(localFileProperties.getFileStoragePath(), identifier).toFile();
-        file.mkdirs();
-        if (!file.exists()) {
-            throw new RuntimeException("文件夹创建失败");
-        }
-        return file.getAbsolutePath();
+    private String getChunkTempPath() {
+        return fileSreverProperties.getChunkTempPath();
+    }
+
+    private List<File> getMergeFileList(String chunkTempPath, String identifier) {
+        return fastDfsFileClient.getMergeFileList(chunkTempPath, chunk1 -> chunk1.getName().startsWith(identifier),
+                Comparator.comparing(File::getName));
+    }
+
+    private List<File> getMergeFileList(String identifier) {
+        return fastDfsFileClient.getMergeFileList(this.getChunkTempPath(), chunk1 -> chunk1.getName().startsWith(identifier),
+                Comparator.comparing(File::getName));
     }
 
     @Override
     public R<String> mergeChunk(String identifier, String filename) {
-        String mergePath = this.generateChunkPath(identifier);
         try {
-            String url = fastDfsFileClient.uploadPart(fastDfsFileClient.getMergeFileList(mergePath, Comparator.comparingInt(o -> Integer.parseInt(o.getName()))), filename);
-            FileUtils.deleteDirectory(new File(localFileProperties.getFileStoragePath(), identifier));
-            return R.success(url);
+            List<File> mergeFileList = this.getMergeFileList(identifier);
+            String url = fastDfsFileClient.uploadPart(mergeFileList, filename);
+            mergeFileList.forEach(FileUtils::deleteQuietly);
 //            String md5 = localFileClient.mergeFile(mergePath, new File(localFileProperties.getFileStoragePath(), identifier.concat(".").concat(FilenameUtils.getExtension(filename))));
 //            if (identifier.equals(md5)) {
 //            return md5;
 //            } else {
 //                throw new RuntimeException("md5验证错误,上传失败");
 //            }
+            return R.success(url);
         } catch (Exception e) {
             log.error("合并分片失败", e);
             return R.fail(RErrorEnum.UPLOAD_MERGE_ERROR);
