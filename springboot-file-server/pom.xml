@@ -28,10 +28,6 @@
         <skipTests>true</skipTests>
         <spring.boot.version>2.3.0.RELEASE</spring.boot.version>
         <spring.cloud.version>Hoxton.SR3</spring.cloud.version>
-        <spring-cloud-alibaba-dependencies.version>2.2.1.RELEASE</spring-cloud-alibaba-dependencies.version>
-        <fastdfs.client.version>1.27.2</fastdfs.client.version>
-        <aliyun.sdk.oss.vsersion>3.9.1</aliyun.sdk.oss.vsersion>
-        <qiniu.java.sdk.version>7.2.9</qiniu.java.sdk.version>
         <fastjson.version>1.2.68</fastjson.version>
         <guava.version>22.0</guava.version>
         <hutool.version>5.3.1</hutool.version>
@@ -61,28 +57,6 @@
                 <version>${spring.boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.alibaba.cloud</groupId>
-                <artifactId>spring-cloud-alibaba-dependencies</artifactId>
-                <version>${spring-cloud-alibaba-dependencies.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.github.tobato</groupId>
-                <artifactId>fastdfs-client</artifactId>
-                <version>${fastdfs.client.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aliyun.oss</groupId>
-                <artifactId>aliyun-sdk-oss</artifactId>
-                <version>${aliyun.sdk.oss.vsersion}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.qiniu</groupId>
-                <artifactId>qiniu-java-sdk</artifactId>
-                <version>${qiniu.java.sdk.version}</version>
             </dependency>
             <dependency>
                 <groupId>cn.hutool</groupId>

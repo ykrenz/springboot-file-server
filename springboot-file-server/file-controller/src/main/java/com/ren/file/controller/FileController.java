@@ -1,15 +1,14 @@
 package com.ren.file.controller;
 
-import com.ren.file.pojo.request.Chunk;
-import com.ren.file.pojo.response.MergeRes;
-import com.ren.file.pojo.response.UploadChunkRes;
+import com.ren.file.dto.request.Chunk;
+import com.ren.file.dto.request.MergeChunkDto;
+import com.ren.file.dto.response.ChunkRes;
+import com.ren.file.dto.response.MergeRes;
 import com.ren.file.service.FileServiceImpl;
 import com.ren.file.util.R;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * @author RenYinKui
@@ -28,12 +27,12 @@ public class FileController {
     }
 
     @PostMapping("/chunk")
-    public R<UploadChunkRes> upload(Chunk chunk) {
-        return fileService.uploadChunk(chunk);
+    public R<ChunkRes> upload(Chunk chunk, @RequestParam("file") MultipartFile file) {
+        return fileService.uploadChunk(chunk, file);
     }
 
     @PostMapping("/merge")
-    public R<String> merge(String identifier, String filename) {
-        return fileService.mergeChunk(identifier, filename);
+    public R<String> merge(MergeChunkDto mergeChunkDto) {
+        return fileService.mergeChunk(mergeChunkDto);
     }
 }

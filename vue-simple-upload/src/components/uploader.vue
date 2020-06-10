@@ -2,6 +2,7 @@
   <uploader
     :options="options"
     :autoStart="false"
+    :file-status-text="statusText"
     class="uploader-example"
     @file-added="onFileAdded"
     @file-success="onFileSuccess"
@@ -27,16 +28,18 @@ export default {
         target: '//localhost:3000/api/upload/chunk',
         chunkSize: 1024 * 1024,
         testChunks: true,
-        checkChunkUploadedByResponse: function (chunks, message) {
-          console.log('chunk' + chunks)
+        checkChunkUploadedByResponse: function (chunk, message) {
           const objMessage = JSON.parse(message)
-          console.log('objMessage' + objMessage)
+          console.log(objMessage)
           if (objMessage.data.uploaded) {
             return true
           }
           const chunkNumbers = objMessage.data.chunkNumbers
-          console.log('chunkNumbers' + chunkNumbers)
-          return (chunkNumbers || []).indexOf(chunks.offset + 1) >= 0
+          return (chunkNumbers || []).indexOf(chunk.offset + 1) >= 0
+        },
+        query: {
+          fileType: '',
+          extension: ''
         }
       },
       statusText: {
@@ -53,25 +56,26 @@ export default {
   },
   methods: {
     onFileAdded (file) {
-      console.log(file)
+      this.options.query.fileType = file.fileType
+      this.options.query.extension = file.getExtension()
       // this.panelShow = true
       // 计算MD5，下文会提到
       this.computeMD5(file)
     },
     onFileSuccess (rootFile, file, response, chunk) {
-      console.log('rootFile' + rootFile)
-      console.log('file' + file)
-      console.log('response' + response)
-      console.log(chunk)
       const res = JSON.parse(response)
-      console.log('onFileSuccess' + res)
-      if (res.data.merge) {
+      if (res.data.merge & res.code === 200 & file.chunks.length > 1) {
         const form = new FormData()
         form.append('identifier', file.uniqueIdentifier)
         form.append('filename', file.name)
+        form.append('filesize', file.size)
+        form.append('fileType', file.getType())
+        form.append('extension', file.getExtension())
         merge(form).then(response => {
           console.log(response)
         })
+      } else {
+        console.log(res.message)
       }
     },
 
@@ -140,7 +144,7 @@ export default {
     computeMD5Success (md5, file) {
       file.uniqueIdentifier = md5 // 把md5值作为文件的识别码
       file.resume() // 开始上传
-      this.statusRemove(file.id)
+      // this.statusRemove(file.id)
     }
     /**
              * 新增的自定义的状态: 'md5'、'transcoding'、'failed'

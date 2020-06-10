@@ -1,7 +1,6 @@
-package com.ren.file.pojo.request;
+package com.ren.file.dto.request;
 
 import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.Serializable;
 
@@ -45,5 +44,7 @@ public class Chunk implements Serializable {
      */
     private String type;
 
-    private MultipartFile file;
+    private String extension;
+
+    private String fileType;
 }

@@ -5,12 +5,14 @@ spring:
     active: dev
 
 file:
+  server:
+    chunk-temp-path: D:\data
 # 请填写自己的阿里云存储配置
   ali:
-    access-key-id: 
-    access-key-secret: 
-    bucket-name: 
-    endpoint: 
+    access-key-id:
+    access-key-secret:
+    bucket-name:
+    endpoint:
     # 文件访问前缀地址
     # 如果Object是公共读/公共读写权限，那么文件URL的格式为：BucketName.Endpoint/ObjectName
     # 如果Object是私有权限，则必须进行签名操作。文件URL的格式为：BucketName.Endpoint/Object?签名参数
@@ -36,3 +38,4 @@ fdfs:
 logging:
   level:
     root: info
+    com.github.ren.file.clients: debug

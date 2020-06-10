@@ -1,4 +1,4 @@
-package com.ren.file.pojo.response;
+package com.ren.file.dto.response;
 
 import lombok.Data;
 

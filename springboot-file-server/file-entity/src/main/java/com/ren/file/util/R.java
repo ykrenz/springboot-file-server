@@ -1,6 +1,6 @@
 package com.ren.file.util;
 
-import com.ren.file.enums.RErrorEnum;
+import com.ren.file.enmus.RErrorEnum;
 
 import java.io.Serializable;
 
@@ -14,7 +14,7 @@ public class R<T> implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private int code;
-    private String msg;
+    private String message;
     private T data;
 
     private R() {
@@ -22,7 +22,7 @@ public class R<T> implements Serializable {
 
     private R(T data) {
         this.code = 200;
-        this.msg = "success";
+        this.message = "success";
         this.data = data;
     }
 
@@ -31,7 +31,16 @@ public class R<T> implements Serializable {
             return;
         }
         this.code = errorEnum.getCode();
-        this.msg = errorEnum.getMsg();
+        this.message = errorEnum.getMessage();
+    }
+
+    private R(RErrorEnum errorEnum, T data) {
+        if (errorEnum == null) {
+            return;
+        }
+        this.code = errorEnum.getCode();
+        this.message = errorEnum.getMessage();
+        this.data = data;
     }
 
     /**
@@ -54,12 +63,16 @@ public class R<T> implements Serializable {
         return new R<T>(errorEnum);
     }
 
+    public static <T> R<T> fail(RErrorEnum errorEnum, T data) {
+        return new R<T>(errorEnum, data);
+    }
+
     public int getCode() {
         return code;
     }
 
-    public String getMsg() {
-        return msg;
+    public String getMessage() {
+        return message;
     }
 
     public T getData() {

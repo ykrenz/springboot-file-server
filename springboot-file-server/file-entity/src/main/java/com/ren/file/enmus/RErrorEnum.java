@@ -1,4 +1,4 @@
-package com.ren.file.enums;
+package com.ren.file.enmus;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -38,5 +38,5 @@ public enum RErrorEnum {
     /**
      * 返回消息
      */
-    private String msg;
+    private String message;
 }
