@@ -4,6 +4,7 @@ import com.ren.file.dto.request.Chunk;
 import com.ren.file.dto.request.MergeChunkDto;
 import com.ren.file.dto.response.ChunkRes;
 import com.ren.file.dto.response.MergeRes;
+import com.ren.file.entity.Fileinfo;
 import com.ren.file.service.FileServiceImpl;
 import com.ren.file.util.R;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ public class FileController {
 
     @GetMapping("/chunk")
     public R<MergeRes> checkChunk(Chunk chunk) {
-        return R.success(fileService.checkChunk(chunk));
+        return fileService.checkChunk(chunk);
     }
 
     @PostMapping("/chunk")
@@ -32,7 +33,7 @@ public class FileController {
     }
 
     @PostMapping("/merge")
-    public R<String> merge(MergeChunkDto mergeChunkDto) {
+    public R<Fileinfo> merge(MergeChunkDto mergeChunkDto) {
         return fileService.mergeChunk(mergeChunkDto);
     }
 }

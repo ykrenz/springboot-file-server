@@ -4,6 +4,7 @@ import com.ren.file.dto.request.Chunk;
 import com.ren.file.dto.request.MergeChunkDto;
 import com.ren.file.dto.response.ChunkRes;
 import com.ren.file.dto.response.MergeRes;
+import com.ren.file.entity.Fileinfo;
 import com.ren.file.util.R;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,8 +17,9 @@ public interface IFileService {
 
     /**
      * 秒传和续传
+     * @return
      */
-    MergeRes checkChunk(Chunk chunk);
+    R<MergeRes> checkChunk(Chunk chunk);
 
     /**
      * 上传分片
@@ -27,6 +29,6 @@ public interface IFileService {
     /**
      * 合并分片
      */
-    R<String> mergeChunk(MergeChunkDto mergeChunkDto);
+    R<Fileinfo> mergeChunk(MergeChunkDto mergeChunkDto);
 
 }

@@ -3,12 +3,17 @@ package com.ren.file.dto.request;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * @Description:
  * @date 2020/6/10 20:39
  */
 @Data
-public class MergeChunkDto {
+public class MergeChunkDto implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     @ApiModelProperty(value = "文件名称")
     private String filename;
 

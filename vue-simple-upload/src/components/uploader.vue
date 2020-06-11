@@ -30,7 +30,6 @@ export default {
         testChunks: true,
         checkChunkUploadedByResponse: function (chunk, message) {
           const objMessage = JSON.parse(message)
-          console.log(objMessage)
           if (objMessage.data.uploaded) {
             return true
           }
@@ -64,7 +63,12 @@ export default {
     },
     onFileSuccess (rootFile, file, response, chunk) {
       const res = JSON.parse(response)
-      if (res.data.merge & res.code === 200 & file.chunks.length > 1) {
+      // 秒传 直接展示
+      if (res.data.uploaded) {
+        console.log('秒传结果')
+        console.log(res.data.fileinfo)
+      } else if (res.data.merge) {
+        // 需要合并
         const form = new FormData()
         form.append('identifier', file.uniqueIdentifier)
         form.append('filename', file.name)
@@ -72,9 +76,11 @@ export default {
         form.append('fileType', file.getType())
         form.append('extension', file.getExtension())
         merge(form).then(response => {
-          console.log(response)
+          console.log('合并结果')
+          console.log(response.data.data)
         })
       } else {
+        // 上传错误
         console.log(res.message)
       }
     },
@@ -102,10 +108,7 @@ export default {
       const chunks = Math.ceil(file.size / chunkSize)
       const spark = new SparkMD5.ArrayBuffer()
 
-      // 文件状态设为"计算MD5"
-      // this.statusSet(file.id, 'md5')
       file.pause()
-
       loadNext()
 
       fileReader.onload = e => {
@@ -144,50 +147,7 @@ export default {
     computeMD5Success (md5, file) {
       file.uniqueIdentifier = md5 // 把md5值作为文件的识别码
       file.resume() // 开始上传
-      // this.statusRemove(file.id)
     }
-    /**
-             * 新增的自定义的状态: 'md5'、'transcoding'、'failed'
-             * @param id
-             * @param status
-             */
-    // statusSet (id, status) {
-    //   id = id + 2
-    //   const statusMap = {
-    //     md5: {
-    //       text: '校验MD5',
-    //       bgc: '#fff'
-    //     },
-    //     merging: {
-    //       text: '合并中',
-    //       bgc: '#e2eeff'
-    //     },
-    //     transcoding: {
-    //       text: '转码中',
-    //       bgc: '#e2eeff'
-    //     },
-    //     failed: {
-    //       text: '上传失败',
-    //       bgc: '#e2eeff'
-    //     }
-    //   }
-    //   this.$nextTick(() => {
-    //     $(`<p class="myStatus_${id}"></p>`).appendTo(`.file_${id} .uploader-file-status`).css({
-    //       position: 'absolute',
-    //       top: '0',
-    //       left: '0',
-    //       right: '0',
-    //       bottom: '0',
-    //       zIndex: '1',
-    //       backgroundColor: statusMap[status].bgc
-    //     }).text(statusMap[status].text)
-    //   })
-    // },
-    // statusRemove (id) {
-    //   this.$nextTick(() => {
-    //     $(`.myStatus_${id}`).remove()
-    //   })
-    // }
   }
 }
 </script>
