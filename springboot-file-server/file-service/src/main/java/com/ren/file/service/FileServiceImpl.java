@@ -70,6 +70,7 @@ public class FileServiceImpl implements IFileService {
         String identifier = chunk.getIdentifier();
         List<File> mergeFileList = this.getMergeFileList(identifier);
         if (fileinfo != null) {
+            fileinfo.setPath(fastDfsFileClient.getWebServerUrl() + fileinfo.getPath());
             mergeRes.setFileinfo(fileinfo);
             //删除可能存在的临时文件
             mergeRes.setMerge(false);

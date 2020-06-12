@@ -16,6 +16,7 @@
     </uploader-drop>
     <uploader-list></uploader-list>
   </uploader>
+
 </template>
 
 <script>
@@ -80,8 +81,7 @@ export default {
           console.log(response.data.data)
         })
       } else {
-        // 上传错误
-        console.log(res.message)
+        console.log(res.data)
       }
     },
 
