@@ -25,7 +25,6 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.compilerVersion>1.8</maven.compiler.compilerVersion>
-        <skipTests>true</skipTests>
         <spring.boot.version>2.3.0.RELEASE</spring.boot.version>
         <spring.cloud.version>Hoxton.SR3</spring.cloud.version>
         <fastjson.version>1.2.68</fastjson.version>
@@ -95,11 +94,26 @@
             <artifactId>guava</artifactId>
         </dependency>
     </dependencies>
+    <!--指定使用maven打包-->
     <build>
         <plugins>
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <skipTests>true</skipTests>  <!--默认关掉单元测试 -->
+                </configuration>
             </plugin>
         </plugins>
     </build>

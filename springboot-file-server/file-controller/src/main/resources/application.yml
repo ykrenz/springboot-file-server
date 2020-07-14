@@ -3,3 +3,6 @@ spring:
     name: file-server
   profiles:
     active: dev
+# 日志
+logging:
+  config: classpath:logback-spring.xml

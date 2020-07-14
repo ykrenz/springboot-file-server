@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * @author RenYinKui
  * @Description:
  * @date 2020/6/2 15:35
  */
