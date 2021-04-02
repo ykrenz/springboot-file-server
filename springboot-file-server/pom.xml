@@ -1,71 +1,77 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <modules>
-        <module>file-entity</module>
-        <module>file-service</module>
-        <module>file-controller</module>
+        <module>file-client-starter</module>
+        <module>file-server</module>
     </modules>
-
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.4.4</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
     <groupId>com.github.ren</groupId>
-    <artifactId>file-server</artifactId>
+    <artifactId>springboot-file-server</artifactId>
     <version>1.0</version>
-    <name>${artifactId}</name>
-    <description>文件服务中心</description>
+    <name>springboot-file-server</name>
+    <description>file server project for Spring Boot</description>
     <packaging>pom</packaging>
-
-
     <properties>
-        <com.github.ren.file.server.version>1.0</com.github.ren.file.server.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <maven.compiler.compilerVersion>1.8</maven.compiler.compilerVersion>
-        <spring.boot.version>2.3.0.RELEASE</spring.boot.version>
-        <spring.cloud.version>Hoxton.SR3</spring.cloud.version>
-        <fastjson.version>1.2.68</fastjson.version>
-        <guava.version>22.0</guava.version>
-        <hutool.version>5.3.1</hutool.version>
-        <commons.io.version>2.6</commons.io.version>
-        <mybatis.plus.version>3.3.1</mybatis.plus.version>
-        <mybatis.plus.generator.version>3.3.1</mybatis.plus.generator.version>
-        <swagger.version>2.9.2</swagger.version>
+        <fastdfs-client.version>1.27.2</fastdfs-client.version>
+        <aliyun-sdk-oss.version>3.9.1</aliyun-sdk-oss.version>
+        <qiniu-java-sdk.version>7.2.9</qiniu-java-sdk.version>
         <mysql.version>5.1.46</mysql.version>
-        <swagger.bootstrap.ui.version>1.9.6</swagger.bootstrap.ui.version>
-        <freemarker.version>2.3.23</freemarker.version>
-        <velocity.engine.core.version>2.2</velocity.engine.core.version>
+        <mybatis.plus.version>3.4.2</mybatis.plus.version>
+        <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
+        <knife4j.version>2.0.8</knife4j.version>
+        <guava.version>22.0</guava.version>
     </properties>
-
 
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring.cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
+                <groupId>com.github.ren</groupId>
+                <artifactId>file-client-starter</artifactId>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring.boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
+                <groupId>com.github.tobato</groupId>
+                <artifactId>fastdfs-client</artifactId>
+                <version>${fastdfs-client.version}</version>
             </dependency>
             <dependency>
-                <groupId>cn.hutool</groupId>
-                <artifactId>hutool-all</artifactId>
-                <version>${hutool.version}</version>
+                <groupId>com.aliyun.oss</groupId>
+                <artifactId>aliyun-sdk-oss</artifactId>
+                <version>${aliyun-sdk-oss.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.alibaba</groupId>
-                <artifactId>fastjson</artifactId>
-                <version>${fastjson.version}</version>
+                <groupId>com.qiniu</groupId>
+                <artifactId>qiniu-java-sdk</artifactId>
+                <version>${qiniu-java-sdk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <scope>runtime</scope>
+                <version>${mysql.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <version>${mybatis.plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-boot-starter</artifactId>
+                <version>${springfox-boot-starter.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-spring-boot-starter</artifactId>
+                <version>${knife4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.google.guava</groupId>
@@ -74,47 +80,4 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>cn.hutool</groupId>
-            <artifactId>hutool-all</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>fastjson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
-    </dependencies>
-    <!--指定使用maven打包-->
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
-                <configuration>
-                    <skipTests>true</skipTests>  <!--默认关掉单元测试 -->
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>
