@@ -60,9 +60,9 @@ fdfs:
     height: 150
   #TrackerList参数,支持多个
   tracker-list:
-    - 10.10.10.76:22122
+    -
   #返回访问文件的地址前缀,一般是nginx域名
-  web-server-url: 'http://10.10.10.76:7681'
+  web-server-url:
 
 logging:
   level:
