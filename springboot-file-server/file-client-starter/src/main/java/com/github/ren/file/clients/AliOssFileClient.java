@@ -44,6 +44,20 @@ public class AliOssFileClient extends AbstractServerClient implements AliOssClie
     }
 
     @Override
+    public boolean isExist(String objectName) {
+        // 创建OSSClient实例。
+        OSS ossClient = this.getOssClient();
+        // 判断文件是否存在。如果返回值为true，则文件存在，否则存储空间或者文件不存在。
+        // 设置是否进行重定向或者镜像回源。默认值为true，表示忽略302重定向和镜像回源；如果设置isINoss为false，则进行302重定向或者镜像回源。
+        //boolean isINoss = true;
+        // 填写Bucket名称和Object完整路径。Object完整路径中不能包含Bucket名称。
+        boolean found = ossClient.doesObjectExist(bucketName, objectName);
+        //boolean found = ossClient.doesObjectExist("examplebucket", "exampleobject.txt", isINoss);
+        ossClient.shutdown();
+        return found;
+    }
+
+    @Override
     public String uploadFile(File file, String yourObjectName) {
         // 创建OSSClient实例。
         OSS ossClient = this.getOssClient();

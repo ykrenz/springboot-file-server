@@ -25,6 +25,11 @@ public class QiNiuFileClient extends AbstractServerClient implements QiNiuClient
     }
 
     @Override
+    public boolean isExist(String objectName) {
+        return false;
+    }
+
+    @Override
     public String uploadFile(File file, String yourObjectName) {
         return null;
     }

@@ -21,7 +21,7 @@
 
 <script>
 import SparkMD5 from 'spark-md5'
-import { merge } from '../api/upload'
+// import { merge } from '../api/upload'
 export default {
   data () {
     return {
@@ -31,7 +31,8 @@ export default {
         testChunks: true,
         checkChunkUploadedByResponse: function (chunk, message) {
           const objMessage = JSON.parse(message)
-          if (objMessage.data.uploaded) {
+          if (objMessage.data.file != null) {
+            // 秒传
             return true
           }
           const chunkNumbers = objMessage.data.chunkNumbers
@@ -63,25 +64,29 @@ export default {
       this.computeMD5(file)
     },
     onFileSuccess (rootFile, file, response, chunk) {
+      console.log('rootFile', rootFile)
+      console.log('file', file)
+      console.log('response', response)
+      console.log('chunk', chunk)
       const res = JSON.parse(response)
+
       // 秒传 直接展示
-      if (res.data.uploaded) {
-        console.log('秒传结果')
-        console.log(res.data.fileinfo)
-      } else if (res.data.merge) {
-        // 需要合并
-        const form = new FormData()
-        form.append('identifier', file.uniqueIdentifier)
-        form.append('filename', file.name)
-        form.append('filesize', file.size)
-        form.append('fileType', file.getType())
-        form.append('extension', file.getExtension())
-        merge(form).then(response => {
-          console.log('合并结果')
-          console.log(response.data.data)
-        })
-      } else {
-        console.log(res.data)
+      if (res.data.file != null) {
+        console.log(res.data.file)
+      // } else if (res.data.merge) {
+      //   // 需要合并
+      //   const form = new FormData()
+      //   form.append('identifier', file.uniqueIdentifier)
+      //   form.append('filename', file.name)
+      //   form.append('filesize', file.size)
+      //   form.append('fileType', file.getType())
+      //   form.append('extension', file.getExtension())
+      //   merge(form).then(response => {
+      //     console.log('合并结果')
+      //     console.log(response.data.data)
+      //     this.statusText.success = res.data.fileinfo.path
+      //   })
+      // } else {
       }
     },
 

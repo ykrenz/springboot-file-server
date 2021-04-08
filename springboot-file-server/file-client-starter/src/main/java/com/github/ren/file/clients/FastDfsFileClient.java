@@ -37,6 +37,14 @@ public class FastDfsFileClient extends AbstractServerClient implements FastDfsCl
     }
 
     @Override
+    public boolean isExist(String objectName) {
+        String[] split = objectName.split("/");
+        String group = split[0];
+        String path = split[1];
+        return fastFileStorageClient.queryFileInfo(group, path) == null;
+    }
+
+    @Override
     public String uploadFile(File file, String yourObjectName) {
         return this.getFullPath(this.uploadFileStorePath(file, yourObjectName));
     }

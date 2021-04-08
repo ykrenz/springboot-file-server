@@ -15,12 +15,15 @@ public class LocalFileClient extends AbstractServerClient implements LocalClient
 
     private final LocalFileProperties localFileProperties;
 
+    private final String fileStoragePath;
+
     public LocalFileClient(LocalFileProperties localFileProperties) {
         this.localFileProperties = localFileProperties;
+        this.fileStoragePath = localFileProperties.getFileStoragePath();
     }
 
     public File getOutFile(String yourObjectName) {
-        String relativePath = Paths.get(localFileProperties.getFileStoragePath(), yourObjectName).toString();
+        String relativePath = Paths.get(fileStoragePath, yourObjectName).toString();
         File fileDir = new File(relativePath).getParentFile();
         if (!fileDir.exists() && !fileDir.mkdirs()) {
             throw new RuntimeException("local mkdirs error");
@@ -34,6 +37,11 @@ public class LocalFileClient extends AbstractServerClient implements LocalClient
     }
 
     @Override
+    public boolean isExist(String objectName) {
+        return new File(fileStoragePath, objectName).exists();
+    }
+
+    @Override
     public String uploadFile(File file, String yourObjectName) {
         File outFile = this.getOutFile(yourObjectName);
         try {
@@ -41,7 +49,7 @@ public class LocalFileClient extends AbstractServerClient implements LocalClient
         } catch (IOException e) {
             throw new FileIOException(e);
         }
-        return outFile.getName();
+        return yourObjectName;
     }
 
     @Override
@@ -52,7 +60,7 @@ public class LocalFileClient extends AbstractServerClient implements LocalClient
         } catch (IOException e) {
             throw new FileIOException(e);
         }
-        return outFile.getName();
+        return yourObjectName;
     }
 
     @Override
@@ -63,7 +71,7 @@ public class LocalFileClient extends AbstractServerClient implements LocalClient
         } catch (IOException e) {
             throw new FileIOException(e);
         }
-        return outFile.getName();
+        return yourObjectName;
     }
 
     @Override
@@ -91,7 +99,7 @@ public class LocalFileClient extends AbstractServerClient implements LocalClient
         } catch (IOException e) {
             throw new FileIOException(e);
         }
-        return outFile.getName();
+        return yourObjectName;
     }
 
     @Override

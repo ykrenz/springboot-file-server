@@ -19,4 +19,12 @@ public interface AccessClient {
      * @return
      */
     String getAccessPath(String objectName);
+
+    /**
+     * 判断文件是否存在
+     *
+     * @param objectName
+     * @return
+     */
+    boolean isExist(String objectName);
 }

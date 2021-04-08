@@ -57,5 +57,5 @@
         <appender-ref ref="fileInfo" />
         <appender-ref ref="fileError" />
     </root>
-    <logger name="com.ren.file.mapper" level="DEBUG"/>
+    <logger name="com.github.ren.file.mapper" level="DEBUG"/>
 </configuration>

@@ -67,8 +67,3 @@ fdfs:
 logging:
   level:
     root: info
-
-mybatis-plus:
-  global-config:
-    db-config:
-      id-type: assign_id

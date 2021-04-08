@@ -1,6 +1,5 @@
 package com.github.ren.file.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,7 +10,6 @@ import java.io.Serializable;
  *
  * @param <T>
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
 @Setter
 @Getter
 public class ResultUtil<T> implements Serializable {
@@ -22,9 +20,6 @@ public class ResultUtil<T> implements Serializable {
     private T data;
     private String message;
 
-    private ResultUtil() {
-    }
-
     private ResultUtil(T data) {
         this.code = 200;
         this.data = data;
@@ -34,6 +29,18 @@ public class ResultUtil<T> implements Serializable {
     private ResultUtil(ErrorCode errorCode) {
         this.code = errorCode.getCode();
         this.message = errorCode.getMessage();
+    }
+
+    private ResultUtil(ErrorCode errorCode, T data) {
+        this.code = errorCode.getCode();
+        this.data = data;
+        this.message = errorCode.getMessage();
+    }
+
+    private ResultUtil(int code, T data, String msg) {
+        this.code = code;
+        this.data = data;
+        this.message = msg;
     }
 
     /**
@@ -56,5 +63,16 @@ public class ResultUtil<T> implements Serializable {
         return new ResultUtil<>(errorCode);
     }
 
+    public static <T> ResultUtil<T> error(ErrorCode errorCode, T data) {
+        return new ResultUtil<>(errorCode, data);
+    }
+
+    public static <T> ResultUtil<T> error(int code, String msg) {
+        return new ResultUtil<>(code, null, msg);
+    }
+
+    public static <T> ResultUtil<T> error(int code, T data, String msg) {
+        return new ResultUtil<>(code, data, msg);
+    }
 
 }

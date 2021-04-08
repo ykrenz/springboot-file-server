@@ -11,6 +11,7 @@ import java.util.List;
  * fastdfs存储客户端
  */
 public interface FastDfsClient extends FileClient {
+
     /**
      * 上传file返回StorePath
      */

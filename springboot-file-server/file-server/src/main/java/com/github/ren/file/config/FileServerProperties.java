@@ -1,5 +1,6 @@
 package com.github.ren.file.config;
 
+import com.github.ren.file.model.ChunkType;
 import com.github.ren.file.model.StorageType;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -21,4 +22,9 @@ public class FileServerProperties {
      * 存储方式
      */
     private StorageType storage = StorageType.LOCAL;
+
+    /**
+     * 块文件存储方式
+     */
+    private ChunkType chunk = ChunkType.LOCAL;
 }
