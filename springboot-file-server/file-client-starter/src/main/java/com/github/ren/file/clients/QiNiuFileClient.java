@@ -7,8 +7,8 @@ import java.io.InputStream;
 import java.util.List;
 
 /**
- * @author RenYinKui
- * @Description:
+ * @author Mr Ren
+ * @Description: 七牛云客户端
  * @date 2021/4/2 16:01
  */
 public class QiNiuFileClient extends AbstractServerClient implements QiNiuClient {
@@ -45,7 +45,8 @@ public class QiNiuFileClient extends AbstractServerClient implements QiNiuClient
     }
 
     @Override
-    public String uploadPart(List<File> files, String yourObjectName) {
+    public String uploadPart(List<UploadPart> parts, String yourObjectName) {
         return null;
     }
+
 }

@@ -17,6 +17,26 @@ import java.util.List;
  * 抽象类
  */
 public abstract class AbstractServerClient implements FileClient {
+
+    public void closePartsStream(List<UploadPart> parts) {
+        if (parts != null) {
+            for (UploadPart part : parts) {
+                this.close(part.getInputStream());
+            }
+        }
+    }
+
+    @Override
+    public void close(InputStream is) {
+        if (is != null) {
+            try {
+                is.close();
+            } catch (IOException e) {
+                throw new FileIOException(e);
+            }
+        }
+    }
+
     @Override
     public String getAccessPath(String objectName) {
         String webServerUrl = this.getWebServerUrl();

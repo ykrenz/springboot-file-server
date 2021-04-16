@@ -35,7 +35,7 @@ public interface FastDfsClient extends FileClient {
     /**
      * 分片上传file返回StorePath
      */
-    StorePath uploadPartStorePath(List<File> files, String yourObjectName);
+    StorePath uploadPartStorePath(List<UploadPart> parts, String yourObjectName);
 
     /**
      * file生成缩略图

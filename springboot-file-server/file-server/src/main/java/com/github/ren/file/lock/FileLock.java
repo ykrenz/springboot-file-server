@@ -1,22 +1,22 @@
-package com.github.ren.file.service;
+package com.github.ren.file.lock;
 
 /**
  * @author Mr Ren
  * @Description: 文件锁
  * @date 2021/4/6 10:29
  */
-public interface FileLocks<T> {
+public interface FileLock {
     /**
      * 加锁
      *
      * @param key
      */
-    void lock(T key);
+    void lock(String key);
 
     /**
      * 释放锁
      *
      * @param key
      */
-    void unlock(T key);
+    void unlock(String key);
 }

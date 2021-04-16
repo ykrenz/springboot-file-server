@@ -1,4 +1,6 @@
-package com.github.ren.file.service;
+package com.github.ren.file.lock;
+
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,7 +12,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * @Description: 分段锁
  * @date 2021/4/1 21:20
  */
-public class SegmentLock<T> implements FileLocks<T> {
+@Slf4j
+public class SegmentLock implements FileLock {
 
     /**
      * 默认锁数量
@@ -47,18 +50,19 @@ public class SegmentLock<T> implements FileLocks<T> {
         }
     }
 
-    public Lock getLock(T key) {
+    public Lock getLock(String key) {
         return this.lockMap.get((key.hashCode() >>> 1) % count);
     }
 
     @Override
-    public void lock(T key) {
+    public void lock(String key) {
         Lock lock = this.getLock(key);
+        log.info("key={} lock={}", key, lock.toString());
         lock.lock();
     }
 
     @Override
-    public void unlock(T key) {
+    public void unlock(String key) {
         Lock lock = this.getLock(key);
         lock.unlock();
     }

@@ -1,10 +1,11 @@
 package com.github.ren.file.ex;
 
 import com.github.ren.file.model.ErrorCode;
-import com.github.ren.file.model.ResultUtil;
+import com.github.ren.file.model.result.ResultUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -29,11 +30,18 @@ public class ExceptionAdvice {
     /**
      * 返回状态码:400
      */
-    @ExceptionHandler(value = MethodArgumentNotValidException.class)
+    @ExceptionHandler(value = {MethodArgumentNotValidException.class, BindException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResultUtil<String> handleFieldError(MethodArgumentNotValidException e) {
+    public ResultUtil<String> handleFieldError(Exception e) {
         StringBuilder builder = new StringBuilder();
-        List<FieldError> fieldErrors = e.getBindingResult().getFieldErrors();
+        List<FieldError> fieldErrors = null;
+        if (e instanceof MethodArgumentNotValidException) {
+            MethodArgumentNotValidException ex = (MethodArgumentNotValidException) e;
+            fieldErrors = ex.getBindingResult().getFieldErrors();
+        } else {
+            BindException ex = (BindException) e;
+            fieldErrors = ex.getBindingResult().getFieldErrors();
+        }
         for (FieldError fieldError : fieldErrors) {
             builder.append(fieldError.getField()).append(fieldError.getDefaultMessage());
         }

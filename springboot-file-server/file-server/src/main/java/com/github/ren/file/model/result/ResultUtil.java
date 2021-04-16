@@ -1,5 +1,6 @@
-package com.github.ren.file.model;
+package com.github.ren.file.model.result;
 
+import com.github.ren.file.model.ErrorCode;
 import lombok.Getter;
 import lombok.Setter;
 

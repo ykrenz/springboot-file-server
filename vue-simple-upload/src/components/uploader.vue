@@ -1,11 +1,12 @@
 <template>
   <uploader
     :options="options"
-    :autoStart="false"
-    :file-status-text="statusText"
+    :autoStart="true"
+    :file-status-text="fileStatusText"
     class="uploader-example"
     @file-added="onFileAdded"
     @file-success="onFileSuccess"
+    @file-complete="onfileComplete"
   >
     <uploader-unsupport></uploader-unsupport>
     <uploader-drop>
@@ -21,34 +22,61 @@
 
 <script>
 import SparkMD5 from 'spark-md5'
-// import { merge } from '../api/upload'
+import { merge } from '../api/upload'
 export default {
   data () {
     return {
       options: {
-        target: '//localhost:3000/api/upload/chunk',
+        target: '///localhost:3000/upload/chunk',
         chunkSize: 1024 * 1024,
         testChunks: true,
         checkChunkUploadedByResponse: function (chunk, message) {
           const objMessage = JSON.parse(message)
-          if (objMessage.data.file != null) {
+          if (objMessage.data.exist) {
             // 秒传
+            // console.log('秒传' + objMessage.data.file)
             return true
           }
           const chunkNumbers = objMessage.data.chunkNumbers
           return (chunkNumbers || []).indexOf(chunk.offset + 1) >= 0
         },
-        query: {
-          fileType: '',
-          extension: ''
+        // generateUniqueIdentifier: function (file) {
+        //   console.log('sdfasdf')
+        //   const chunkSize = 10 * 1024 * 1000
+        //   const data = await md5(file, chunkSize).then(value => {
+        //     console.log(value)
+        //   })
+        //   console.log(data)
+        //   return data
+        // },
+        query (file) {
+          return { md5: file.uniqueIdentifier }
         }
       },
-      statusText: {
-        success: '上传成功',
-        error: '上传失败',
-        uploading: '上传中',
-        paused: '暂停中',
-        waiting: '等待中'
+      fileStatusText (status, response) {
+        const statusTextMap = {
+          success: '上传成功',
+          error: '上传失败',
+          uploading: '上传中',
+          paused: '暂停中',
+          waiting: '等待中'
+        }
+        console.log('status=' + status)
+        console.log('fileStatusText=' + JSON.stringify(response))
+        // 分片合并完成
+        if (status === 'merge') {
+          console.log('merge')
+          return '校验文件中'
+        }
+        return statusTextMap[status]
+        // if (status === 'success' || status === 'error') {
+        //   // 只有status为success或者error的时候可以使用 response
+        //   // eg:
+        //   // return response data ?
+        //   return response.data
+        // } else {
+        //   return statusTextMap[status]
+        // }
       },
       attrs: {
         accept: 'image/*'
@@ -57,37 +85,38 @@ export default {
   },
   methods: {
     onFileAdded (file) {
-      this.options.query.fileType = file.fileType
-      this.options.query.extension = file.getExtension()
-      // this.panelShow = true
+      // this.options.query.fileType = file.fileType
+      // this.options.query.extension = file.getExtension()
       // 计算MD5，下文会提到
+      console.log(file)
       this.computeMD5(file)
     },
     onFileSuccess (rootFile, file, response, chunk) {
-      console.log('rootFile', rootFile)
-      console.log('file', file)
-      console.log('response', response)
-      console.log('chunk', chunk)
+      // console.log('rootFile', rootFile)
+      // console.log('file', file)
+      // console.log('chunk', chunk)
+      console.log('onFileSuccess')
       const res = JSON.parse(response)
-
-      // 秒传 直接展示
-      if (res.data.file != null) {
-        console.log(res.data.file)
-      // } else if (res.data.merge) {
-      //   // 需要合并
-      //   const form = new FormData()
-      //   form.append('identifier', file.uniqueIdentifier)
-      //   form.append('filename', file.name)
-      //   form.append('filesize', file.size)
-      //   form.append('fileType', file.getType())
-      //   form.append('extension', file.getExtension())
-      //   merge(form).then(response => {
-      //     console.log('合并结果')
-      //     console.log(response.data.data)
-      //     this.statusText.success = res.data.fileinfo.path
-      //   })
-      // } else {
+      console.log(res)
+      console.log(res.data.exist)
+      if (res.code === 200 && !res.data.exist) {
+        this.fileStatusText('merge')
+        // 合并
+        const form = new FormData()
+        form.append('md5', file.uniqueIdentifier)
+        form.append('filename', file.name)
+        form.append('size', file.size)
+        // form.append('fileType', file.getType())
+        // form.append('extension', file.getExtension())
+        merge(form).then(response => {
+          console.log('合并结果')
+          console.log(response.data)
+          console.log(response.data.code)
+        })
       }
+    },
+    onfileComplete (rootFile) {
+      console.log('完毕')
     },
 
     /**
@@ -96,12 +125,6 @@ export default {
      */
     computeMD5 (file) {
       // 大文件的md5计算时间比较长，显示个进度条
-      // const loading = this.$loading({
-      //   lock: true,
-      //   text: '正在计算MD5',
-      //   spinner: 'el-icon-loading',
-      //   background: 'rgba(0, 0, 0, 0.7)'
-      // })
       const fileReader = new FileReader()
       const time = new Date().getTime()
       const blobSlice =
@@ -127,7 +150,6 @@ export default {
           })
         } else {
           const md5 = spark.end()
-          // loading.close()
           this.computeMD5Success(md5, file)
           console.log(
             `MD5计算完毕：${file.name} \nMD5：${md5} \n分片：${chunks} 大小:${
@@ -138,7 +160,6 @@ export default {
       }
       fileReader.onerror = function () {
         this.error(`文件${file.name}读取出错，请检查该文件`)
-        // loading.close()
         file.cancel()
       }
       function loadNext () {
@@ -155,6 +176,38 @@ export default {
     }
   }
 }
+
+// function md5 (file, chunkSize) {
+//   return new Promise((resolve, reject) => {
+//     const blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice
+//     const chunks = Math.ceil(file.size / chunkSize)
+//     let currentChunk = 0
+//     const spark = new SparkMD5.ArrayBuffer()
+//     const fileReader = new FileReader()
+//     fileReader.onload = function (e) {
+//       spark.append(e.target.result)
+//       currentChunk++
+//       if (currentChunk < chunks) {
+//         loadNext()
+//       } else {
+//         const md5 = spark.end()
+//         resolve(md5)
+//       }
+//     }
+//     fileReader.onerror = function (e) {
+//       reject(e)
+//     }
+//     function loadNext () {
+//       const start = currentChunk * chunkSize
+//       let end = start + chunkSize
+//       if (end > file.size) {
+//         end = file.size
+//       }
+//       fileReader.readAsArrayBuffer(blobSlice.call(file, start, end))
+//     }
+//     loadNext()
+//   })
+// }
 </script>
 <style >
 .uploader-example {

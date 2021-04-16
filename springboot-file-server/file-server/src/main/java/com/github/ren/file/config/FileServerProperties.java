@@ -27,4 +27,6 @@ public class FileServerProperties {
      * 块文件存储方式
      */
     private ChunkType chunk = ChunkType.LOCAL;
+
+
 }

@@ -15,5 +15,6 @@ import org.springframework.stereotype.Service;
 @Service("TbFileInfoServiceImpl")
 @Slf4j
 public class TbFileInfoServiceImpl extends ServiceImpl<TbFileInfoMapper, TbFileInfo> implements TbFileInfoService {
+
 }
 

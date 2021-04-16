@@ -11,8 +11,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -60,8 +64,8 @@ public class FastDfsFileClient extends AbstractServerClient implements FastDfsCl
     }
 
     @Override
-    public String uploadPart(List<File> files, String yourObjectName) {
-        return this.getFullPath(this.uploadPartStorePath(files, yourObjectName));
+    public String uploadPart(List<UploadPart> parts, String yourObjectName) {
+        return this.getFullPath(this.uploadPartStorePath(parts, yourObjectName));
     }
 
     @Override
@@ -81,6 +85,8 @@ public class FastDfsFileClient extends AbstractServerClient implements FastDfsCl
                     FilenameUtils.getExtension(yourObjectName), null);
         } catch (IOException e) {
             throw new FileIOException(e);
+        } finally {
+            super.close(is);
         }
     }
 
@@ -103,21 +109,22 @@ public class FastDfsFileClient extends AbstractServerClient implements FastDfsCl
     }
 
     @Override
-    public StorePath uploadPartStorePath(List<File> files, String yourObjectName) {
+    public StorePath uploadPartStorePath(List<UploadPart> parts, String yourObjectName) {
         StorePath storePath = null;
-        for (int i = 0; i < files.size(); i++) {
-            File file = files.get(i);
-            try (FileInputStream in = FileUtils.openInputStream(file)) {
+        try {
+            parts.sort(Comparator.comparingInt(UploadPart::getPartNumber));
+            for (int i = 0; i < parts.size(); i++) {
+                UploadPart uploadPart = parts.get(i);
                 if (i == 0) {
-                    storePath = appendFileStorageClient.uploadAppenderFile(null, in,
-                            file.length(), FilenameUtils.getExtension(yourObjectName));
+                    storePath = appendFileStorageClient.uploadAppenderFile(null, uploadPart.getInputStream(),
+                            uploadPart.getPartSize(), FilenameUtils.getExtension(yourObjectName));
                 } else {
                     appendFileStorageClient.appendFile(storePath.getGroup(), storePath.getPath(),
-                            in, file.length());
+                            uploadPart.getInputStream(), uploadPart.getPartSize());
                 }
-            } catch (IOException e) {
-                throw new FileIOException(e);
             }
+        } finally {
+            super.closePartsStream(parts);
         }
         return storePath;
     }
@@ -162,16 +169,25 @@ public class FastDfsFileClient extends AbstractServerClient implements FastDfsCl
 
     @Override
     public String getFullPath(StorePath storePath) {
+        if (storePath == null) {
+            return null;
+        }
         return storePath.getFullPath();
     }
 
     @Override
     public String getPath(StorePath storePath) {
+        if (storePath == null) {
+            return null;
+        }
         return storePath.getPath();
     }
 
     @Override
     public String getGroup(StorePath storePath) {
+        if (storePath == null) {
+            return null;
+        }
         return storePath.getGroup();
     }
 }

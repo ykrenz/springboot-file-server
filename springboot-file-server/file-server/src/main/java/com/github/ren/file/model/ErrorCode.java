@@ -35,19 +35,19 @@ public enum ErrorCode {
     UPLOAD_ERROR(10000, "上传失败,请重试"),
 
     /**
-     * 分片检测失败
-     */
-    UPLOAD_CHUNK_CHECK_ERROR(10001, "分片检测错误,请重试"),
-
-    /**
      * 上传分片失败
      */
-    UPLOAD_CHUNK_ERROR(10002, "上传分片失败,请重试"),
+    UPLOAD_CHUNK_ERROR(10001, "上传分片失败,请重试"),
+
+    /**
+     * 分片检测失败
+     */
+    UPLOAD_CHUNK_CHECK_ERROR(10002, "检测到分片不完整,请重试"),
 
     /**
      * 合并文件失败
      */
-    UPLOAD_MERGE_ERROR(10002, "合并分片失败,请重试"),
+    UPLOAD_MERGE_ERROR(10003, "合并分片失败,请重试"),
 
     /**
      * 文件过大

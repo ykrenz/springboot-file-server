@@ -27,7 +27,7 @@ public class TbFileInfo extends BaseEntity {
     private String id;
 
     @ApiModelProperty(value = "外键 关联tb_file表中主键")
-    private String fid;
+    private String md5;
 
     @ApiModelProperty(value = "文件或文件夹名称")
     private String filename;

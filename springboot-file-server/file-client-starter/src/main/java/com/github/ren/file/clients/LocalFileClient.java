@@ -6,6 +6,7 @@ import org.apache.commons.io.FileUtils;
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -53,12 +54,14 @@ public class LocalFileClient extends AbstractServerClient implements LocalClient
     }
 
     @Override
-    public String uploadFile(InputStream inputStream, String yourObjectName) {
+    public String uploadFile(InputStream is, String yourObjectName) {
         File outFile = this.getOutFile(yourObjectName);
         try {
-            super.copyFile(inputStream, outFile);
+            super.copyFile(is, outFile);
         } catch (IOException e) {
             throw new FileIOException(e);
+        } finally {
+            super.close(is);
         }
         return yourObjectName;
     }
@@ -75,16 +78,17 @@ public class LocalFileClient extends AbstractServerClient implements LocalClient
     }
 
     @Override
-    public String uploadPart(List<File> files, String yourObjectName) {
+    public String uploadPart(List<UploadPart> parts, String yourObjectName) {
+        parts.sort(Comparator.comparingInt(UploadPart::getPartNumber));
         File outFile = this.getOutFile(yourObjectName);
         try (FileChannel outChannel = new FileOutputStream(outFile).getChannel()) {
             //同步nio 方式对分片进行合并, 有效的避免文件过大导致内存溢出
-            for (File file : files) {
+            for (UploadPart uploadPart : parts) {
                 long chunkSize = 1L << 32;
-                if (file.length() >= chunkSize) {
+                if (uploadPart.getPartSize() >= chunkSize) {
                     throw new RuntimeException("文件分片必须<4G");
                 }
-                try (FileChannel inChannel = new FileInputStream(file).getChannel()) {
+                try (FileChannel inChannel = ((FileInputStream) uploadPart.getInputStream()).getChannel()) {
                     int position = 0;
                     long size = inChannel.size();
                     while (0 < size) {
@@ -98,6 +102,8 @@ public class LocalFileClient extends AbstractServerClient implements LocalClient
             }
         } catch (IOException e) {
             throw new FileIOException(e);
+        } finally {
+            super.closePartsStream(parts);
         }
         return yourObjectName;
     }

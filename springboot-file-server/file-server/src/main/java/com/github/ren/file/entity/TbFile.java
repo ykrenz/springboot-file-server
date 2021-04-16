@@ -1,6 +1,5 @@
 package com.github.ren.file.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -22,10 +21,7 @@ public class TbFile extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
 
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    @ApiModelProperty(value = "主键")
-    private String id;
-
+    @TableId
     @ApiModelProperty(value = "文件md5值")
     private String md5;
 

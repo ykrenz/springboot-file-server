@@ -1,4 +1,4 @@
-package com.github.ren.file.model;
+package com.github.ren.file.model.result;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Builder;
@@ -24,7 +24,12 @@ public class FileUploadResult {
     @ApiModelProperty(value = "文件大小b")
     private Long filesize;
 
-    @ApiModelProperty(value = "访问路径")
-    private String path;
+    @ApiModelProperty(value = "文件路径")
+    private String filepath;
 
+    @ApiModelProperty(value = "访问地址")
+    private String accessPath;
+
+    @ApiModelProperty(value = "下载地址")
+    private String downloadPath;
 }

@@ -38,6 +38,12 @@ public interface UploadClient {
     /**
      * 分片上传
      */
-    String uploadPart(List<File> files, String yourObjectName);
+    String uploadPart(List<UploadPart> parts, String yourObjectName);
 
+    /**
+     * 关闭流信息
+     *
+     * @param is
+     */
+    void close(InputStream is);
 }

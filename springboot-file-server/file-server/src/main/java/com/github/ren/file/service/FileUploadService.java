@@ -1,19 +1,19 @@
 package com.github.ren.file.service;
 
-import com.github.ren.file.model.ChunkRequest;
-import com.github.ren.file.model.ChunkResult;
-import com.github.ren.file.model.FileUploadResult;
+import com.github.ren.file.model.request.CheckChunkRequest;
+import com.github.ren.file.model.request.ChunkMergeRequest;
+import com.github.ren.file.model.request.ChunkRequest;
+import com.github.ren.file.model.result.CheckFileResult;
+import com.github.ren.file.model.result.ChunkUploadResult;
+import com.github.ren.file.model.result.FileUploadResult;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.Serializable;
 
 /**
  * @author Mr Ren
- * @Description: 文件接口
- * @date 2021/4/6 16:23
+ * @Description: upload接口
+ * @date 2021/4/11 0:25
  */
-public interface FileUploadService extends Serializable {
-
+public interface FileUploadService {
     /**
      * 上传简单小文件
      *
@@ -23,20 +23,27 @@ public interface FileUploadService extends Serializable {
     FileUploadResult upload(MultipartFile file);
 
     /**
-     * 检查分片
+     * 检测分片结果 秒传
      *
-     * @param chunkRequest
+     * @param request
      * @return
      */
-    ChunkResult check(ChunkRequest chunkRequest);
+    CheckFileResult check(CheckChunkRequest request);
 
     /**
-     * 分片上传
+     * 上传分片
      *
-     * @param chunkRequest
+     * @param request
      * @param file
      * @return
      */
-    FileUploadResult upload(ChunkRequest chunkRequest, MultipartFile file);
+    ChunkUploadResult uploadChunk(ChunkRequest request, MultipartFile file);
 
+    /**
+     * 合并分片
+     *
+     * @param request
+     * @return
+     */
+    FileUploadResult merge(ChunkMergeRequest request);
 }
