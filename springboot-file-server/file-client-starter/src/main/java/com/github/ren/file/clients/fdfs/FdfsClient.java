@@ -3,9 +3,8 @@ package com.github.ren.file.clients.fdfs;
 import com.github.ren.file.clients.FileIOException;
 import com.github.ren.file.clients.UploadClient;
 import com.github.ren.file.clients.UploadPart;
-import com.github.tobato.fastdfs.service.AppendFileStorageClient;
-import com.github.tobato.fastdfs.service.FastFileStorageClient;
-import com.github.tobato.fastdfs.service.GenerateStorageClient;
+import com.github.tobato.fastdfs.service.DefaultAppendFileStorageClient;
+import com.github.tobato.fastdfs.service.DefaultFastFileStorageClient;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
@@ -22,10 +21,9 @@ import java.util.List;
  */
 public class FdfsClient extends FdfsAdapter implements UploadClient {
 
-    public FdfsClient(GenerateStorageClient generateStorageClient,
-                      FastFileStorageClient fastFileStorageClient,
-                      AppendFileStorageClient appendFileStorageClient) {
-        super(generateStorageClient, fastFileStorageClient, appendFileStorageClient);
+    public FdfsClient(DefaultFastFileStorageClient fastFileStorageClient,
+                      DefaultAppendFileStorageClient appendFileStorageClient) {
+        super(fastFileStorageClient, appendFileStorageClient);
     }
 
     public String getFileExtName(String yourObjectName){

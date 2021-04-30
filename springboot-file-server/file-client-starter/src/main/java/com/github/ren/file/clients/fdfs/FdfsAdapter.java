@@ -7,8 +7,9 @@ import com.github.tobato.fastdfs.domain.proto.storage.DownloadCallback;
 import com.github.tobato.fastdfs.domain.upload.FastFile;
 import com.github.tobato.fastdfs.domain.upload.FastImageFile;
 import com.github.tobato.fastdfs.service.AppendFileStorageClient;
+import com.github.tobato.fastdfs.service.DefaultAppendFileStorageClient;
+import com.github.tobato.fastdfs.service.DefaultFastFileStorageClient;
 import com.github.tobato.fastdfs.service.FastFileStorageClient;
-import com.github.tobato.fastdfs.service.GenerateStorageClient;
 
 import java.io.InputStream;
 import java.util.Set;
@@ -18,18 +19,15 @@ import java.util.Set;
  * @Author ren
  * @Since 1.0
  */
-public class FdfsAdapter implements FastFileStorageClient, AppendFileStorageClient {
 
-    protected final GenerateStorageClient generateStorageClient;
+public class FdfsAdapter implements FastFileStorageClient, AppendFileStorageClient {
 
     protected final FastFileStorageClient fastFileStorageClient;
 
     protected final AppendFileStorageClient appendFileStorageClient;
 
-    public FdfsAdapter(GenerateStorageClient generateStorageClient,
-                       FastFileStorageClient fastFileStorageClient,
-                       AppendFileStorageClient appendFileStorageClient) {
-        this.generateStorageClient = generateStorageClient;
+    public FdfsAdapter(DefaultFastFileStorageClient fastFileStorageClient,
+                       DefaultAppendFileStorageClient appendFileStorageClient) {
         this.fastFileStorageClient = fastFileStorageClient;
         this.appendFileStorageClient = appendFileStorageClient;
     }
@@ -84,49 +82,48 @@ public class FdfsAdapter implements FastFileStorageClient, AppendFileStorageClie
         fastFileStorageClient.deleteFile(filePath);
     }
 
-
     @Override
     public StorePath uploadFile(String groupName, InputStream inputStream, long fileSize, String fileExtName) {
-        return generateStorageClient.uploadFile(groupName, inputStream, fileSize, fileExtName);
+        return fastFileStorageClient.uploadFile(groupName, inputStream, fileSize, fileExtName);
     }
 
     @Override
     public StorePath uploadSlaveFile(String groupName, String masterFilename, InputStream inputStream, long fileSize, String prefixName, String fileExtName) {
-        return generateStorageClient.uploadSlaveFile(groupName, masterFilename, inputStream, fileSize, prefixName, fileExtName);
+        return fastFileStorageClient.uploadSlaveFile(groupName, masterFilename, inputStream, fileSize, prefixName, fileExtName);
     }
 
     @Override
     public Set<MetaData> getMetadata(String groupName, String path) {
-        return generateStorageClient.getMetadata(groupName, path);
+        return fastFileStorageClient.getMetadata(groupName, path);
     }
 
     @Override
     public void overwriteMetadata(String groupName, String path, Set<MetaData> metaDataSet) {
-        generateStorageClient.overwriteMetadata(groupName, path, metaDataSet);
+        fastFileStorageClient.overwriteMetadata(groupName, path, metaDataSet);
     }
 
     @Override
     public void mergeMetadata(String groupName, String path, Set<MetaData> metaDataSet) {
-        generateStorageClient.mergeMetadata(groupName, path, metaDataSet);
+        fastFileStorageClient.mergeMetadata(groupName, path, metaDataSet);
     }
 
     @Override
     public FileInfo queryFileInfo(String groupName, String path) {
-        return generateStorageClient.queryFileInfo(groupName, path);
+        return fastFileStorageClient.queryFileInfo(groupName, path);
     }
 
     @Override
     public void deleteFile(String groupName, String path) {
-        generateStorageClient.deleteFile(groupName, path);
+        fastFileStorageClient.deleteFile(groupName, path);
     }
 
     @Override
     public <T> T downloadFile(String groupName, String path, DownloadCallback<T> callback) {
-        return generateStorageClient.downloadFile(groupName, path, callback);
+        return fastFileStorageClient.downloadFile(groupName, path, callback);
     }
 
     @Override
     public <T> T downloadFile(String groupName, String path, long fileOffset, long fileSize, DownloadCallback<T> callback) {
-        return generateStorageClient.downloadFile(groupName, path, fileOffset, fileSize, callback);
+        return fastFileStorageClient.downloadFile(groupName, path, fileOffset, fileSize, callback);
     }
 }

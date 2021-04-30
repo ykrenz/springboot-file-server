@@ -5,6 +5,7 @@
     <modules>
         <module>file-client-starter</module>
         <module>file-server</module>
+        <module>file-sdk</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
