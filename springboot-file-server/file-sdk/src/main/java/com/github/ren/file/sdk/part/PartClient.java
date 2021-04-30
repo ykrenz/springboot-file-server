@@ -1,5 +1,6 @@
 package com.github.ren.file.sdk.part;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -7,7 +8,7 @@ import java.util.List;
  * @Author ren
  * @Since 1.0
  */
-public interface PartClient {
+public interface PartClient extends Serializable {
     /**
      * 初始化上传
      *
