@@ -3,9 +3,9 @@ package com.github.ren.file.sdk.part;
 import java.io.Serializable;
 
 /**
- * @author RenYinKui
- * @Description: 分片信息
- * @date 2021/4/30 13:25
+ * @Description 分片信息
+ * @Author ren
+ * @Since 1.0
  */
 public class PartInfo implements Serializable {
     /**
@@ -24,7 +24,7 @@ public class PartInfo implements Serializable {
     private long partSize;
 
     /**
-     * 分片md5值 如果添加了则会校验md5是否正确
+     * 分片md5值
      */
     private String md5Digest;
 

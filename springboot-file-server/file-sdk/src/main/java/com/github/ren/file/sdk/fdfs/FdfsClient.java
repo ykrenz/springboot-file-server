@@ -1,8 +1,11 @@
 package com.github.ren.file.sdk.fdfs;
 
+import com.github.ren.file.sdk.FileClient;
 import com.github.ren.file.sdk.FileIOException;
-import com.github.ren.file.sdk.UploadClient;
-import com.github.ren.file.sdk.part.*;
+import com.github.ren.file.sdk.part.PartCancel;
+import com.github.ren.file.sdk.part.PartInfo;
+import com.github.ren.file.sdk.part.PartStore;
+import com.github.ren.file.sdk.part.UploadPart;
 import com.github.tobato.fastdfs.domain.fdfs.FileInfo;
 import com.github.tobato.fastdfs.domain.fdfs.MetaData;
 import com.github.tobato.fastdfs.domain.fdfs.StorePath;
@@ -26,13 +29,14 @@ import java.net.URL;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Description fastdfs文件客戶端适配器
  * @Author ren
  * @Since 1.0
  */
-public class FdfsClient implements FastFileStorageClient, AppendFileStorageClient, UploadClient, FdfsUploadPartClient {
+public class FdfsClient implements FastFileStorageClient, AppendFileStorageClient, FileClient {
 
     private static final Logger logger = LoggerFactory.getLogger(FdfsClient.class);
 
@@ -40,14 +44,48 @@ public class FdfsClient implements FastFileStorageClient, AppendFileStorageClien
 
     private final AppendFileStorageClient appendFileStorageClient;
 
-    private final UploadPartClient uploadPartClient;
+    private PartStore partStore;
+
+    private PartCancel partCancel;
+
+    public FdfsClient(DefaultFastFileStorageClient fastFileStorageClient,
+                      DefaultAppendFileStorageClient appendFileStorageClient) {
+        this.fastFileStorageClient = fastFileStorageClient;
+        this.appendFileStorageClient = appendFileStorageClient;
+    }
 
     public FdfsClient(DefaultFastFileStorageClient fastFileStorageClient,
                       DefaultAppendFileStorageClient appendFileStorageClient,
-                      UploadPartClient uploadPartClient) {
+                      PartStore partStore) {
         this.fastFileStorageClient = fastFileStorageClient;
         this.appendFileStorageClient = appendFileStorageClient;
-        this.uploadPartClient = uploadPartClient;
+        this.partStore = partStore;
+    }
+
+    public FdfsClient(DefaultFastFileStorageClient fastFileStorageClient,
+                      DefaultAppendFileStorageClient appendFileStorageClient,
+                      PartStore partStore,
+                      PartCancel partCancel) {
+        this.fastFileStorageClient = fastFileStorageClient;
+        this.appendFileStorageClient = appendFileStorageClient;
+        this.partStore = partStore;
+        this.partCancel = partCancel;
+    }
+
+    public PartStore getPartStore() {
+        return partStore;
+    }
+
+    public void setPartStore(PartStore partStore) {
+        this.partStore = partStore;
+    }
+
+    public PartCancel getPartCancel() {
+        return partCancel;
+    }
+
+    public void setPartCancel(PartCancel partCancel) {
+        this.partCancel = partCancel;
     }
 
     @Override
@@ -189,36 +227,40 @@ public class FdfsClient implements FastFileStorageClient, AppendFileStorageClien
 
     @Override
     public String initUpload() {
-        return uploadPartClient.initUpload();
+        return partStore.initUpload();
     }
 
     @Override
     public void uploadPart(UploadPart part) {
-        uploadPartClient.uploadPart(part);
-    }
-
-    @Override
-    public void uploadParts(List<UploadPart> parts) {
-        uploadPartClient.uploadParts(parts);
+        partStore.uploadPart(part);
     }
 
     @Override
     public List<PartInfo> listParts(String uploadId) {
-        return uploadPartClient.listParts(uploadId);
+        return partStore.listParts(uploadId);
     }
 
     @Override
-    public String complete(String uploadId, String ext) {
+    public String merge(String uploadId, String yourObjectName) {
         StorePath storePath = null;
         List<UploadPart> parts = null;
         try {
-            parts = uploadPartClient.listUploadParts(uploadId);
+            parts = partStore.listUploadParts(uploadId);
             parts.sort(Comparator.comparingInt(UploadPart::getPartNumber));
             for (int i = 0; i < parts.size(); i++) {
+                if (partCancel.needCancel(uploadId)) {
+                    partStore.del(uploadId);
+                    if (storePath != null) {
+                        appendFileStorageClient.deleteFile(storePath.getGroup(), storePath.getPath());
+                    }
+                    partCancel.cancelComplete(uploadId);
+                    break;
+                }
+
                 UploadPart uploadPart = parts.get(i);
                 if (i == 0) {
                     storePath = appendFileStorageClient.uploadAppenderFile(null, uploadPart.getInputStream(),
-                            uploadPart.getPartSize(), ext);
+                            uploadPart.getPartSize(), getFileExtName(yourObjectName));
                 } else {
                     appendFileStorageClient.appendFile(storePath.getGroup(), storePath.getPath(),
                             uploadPart.getInputStream(), uploadPart.getPartSize());
@@ -235,17 +277,24 @@ public class FdfsClient implements FastFileStorageClient, AppendFileStorageClien
                 }
             }
         }
-        if (storePath == null) {
-            throw new FileIOException("fdfs complete part upload file error storePath is null");
+        if (storePath != null) {
+            return storePath.getFullPath();
         }
-        return storePath.getFullPath();
+        return null;
     }
 
     @Override
-    public void cancel(String uploadId, String yourObjectName, String groupName, String path) {
-        //删除分片文件
-        uploadPartClient.cancel(uploadId, yourObjectName);
-        appendFileStorageClient.deleteFile(groupName, path);
+    public void cancel(String uploadId, String yourObjectName) {
+        partCancel.setCancel(uploadId);
+        while (true) {
+            if (partCancel.cancelSuccess(uploadId)) {
+                return;
+            }
+            try {
+                TimeUnit.MILLISECONDS.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
-
 }

@@ -121,6 +121,7 @@ public class AliOssFileClient extends AbstractServerClient implements AliOssClie
             List<PartETag> eTags = new ArrayList<PartETag>();
             parts.forEach(uploadPart -> {
                 UploadPartRequest uploadPartRequest = new UploadPartRequest();
+
                 uploadPartRequest.setBucketName(bucketName);
                 uploadPartRequest.setKey(yourObjectName);
                 uploadPartRequest.setUploadId(uploadId);

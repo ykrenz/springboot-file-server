@@ -5,7 +5,7 @@ package com.github.ren.file.sdk.part;
  * @Author ren
  * @Since 1.0
  */
-public interface FdfsUploadPartClient extends PartClient {
+public interface FdfsUploadPartClient extends OssPartClient {
 
     /**
      * 完成分片上传

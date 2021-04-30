@@ -8,70 +8,44 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.nio.channels.FileChannel;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * @Description 本地分片客户端
  * @Author ren
  * @Since 1.0
  */
-public class LocalPartClient implements UploadPartClient {
+public class LocalPartClient implements PartStore {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalPartClient.class);
 
     /**
-     * 分块文件存放目录
+     * 分片文件存放目录
      */
-    private String partDir;
+    private String partStore;
 
-    /**
-     * 文件存储目录
-     */
-    private String localStore;
-
-    public LocalPartClient(String partDir, String localStore) {
-        this.partDir = partDir;
-        this.localStore = localStore;
+    public LocalPartClient(String partStore) {
+        this.partStore = partStore;
     }
 
-    public String getPartDir() {
-        File fileDir = new File(partDir);
+    public String getPartStore() {
+        File fileDir = new File(partStore);
         if (!fileDir.exists() && !fileDir.mkdirs()) {
             throw new RuntimeException("local partDir mkdirs error");
         }
-        return partDir;
+        return partStore;
     }
 
-    public void setPartDir(String partDir) {
-        this.partDir = partDir;
-    }
-
-    public String getLocalStore() {
-        File fileDir = new File(localStore);
-        if (!fileDir.exists() && !fileDir.mkdirs()) {
-            throw new RuntimeException("localStore mkdirs error");
-        }
-        return localStore;
-    }
-
-    public void setLocalStore(String localStore) {
-        this.localStore = localStore;
-    }
-
-    public File getOutFile(String yourObjectName) {
-        String relativePath = Paths.get(getLocalStore(), yourObjectName).toString();
-        File fileDir = new File(relativePath).getParentFile();
-        if (!fileDir.exists() && !fileDir.mkdirs()) {
-            throw new RuntimeException("local mkdirs error");
-        }
-        return new File(relativePath);
+    public void setPartStore(String partStore) {
+        this.partStore = partStore;
     }
 
     private File getFile(UploadPart part) {
         String uploadId = part.getUploadId();
-        return new File(getPartDir(), uploadId + "-" + part.getPartNumber());
+        return new File(getPartStore(), uploadId + "-" + part.getPartNumber());
     }
 
     @Override
@@ -93,13 +67,8 @@ public class LocalPartClient implements UploadPartClient {
         }
     }
 
-    @Override
-    public void uploadParts(List<UploadPart> parts) {
-        parts.forEach(this::uploadPart);
-    }
-
     private List<File> listFile(String uploadId) {
-        File chunkFolder = new File(getPartDir());
+        File chunkFolder = new File(getPartStore());
         //分块列表
         File[] fileArray = chunkFolder.listFiles(f -> f.getName().startsWith(uploadId));
         if (fileArray == null || fileArray.length == 0) {
@@ -132,46 +101,6 @@ public class LocalPartClient implements UploadPartClient {
     }
 
     @Override
-    public String complete(String uploadId, String yourObjectName) {
-        List<UploadPart> parts = listUploadParts(uploadId);
-        parts.sort(Comparator.comparingInt(UploadPart::getPartNumber));
-        File outFile = this.getOutFile(yourObjectName);
-        try (FileChannel outChannel = new FileOutputStream(outFile).getChannel()) {
-            //同步nio 方式对分片进行合并, 有效的避免文件过大导致内存溢出
-            for (UploadPart uploadPart : parts) {
-                long chunkSize = 1L << 32;
-                if (uploadPart.getPartSize() >= chunkSize) {
-                    throw new RuntimeException("文件分片必须<4G");
-                }
-                try (FileChannel inChannel = ((FileInputStream) uploadPart.getInputStream()).getChannel()) {
-                    int position = 0;
-                    long size = inChannel.size();
-                    while (0 < size) {
-                        long count = inChannel.transferTo(position, size, outChannel);
-                        if (count > 0) {
-                            position += count;
-                            size -= count;
-                        }
-                    }
-                }
-            }
-        } catch (IOException e) {
-            throw new FileIOException("local complete file error", e);
-        } finally {
-            for (UploadPart part : parts) {
-                LocalFileOperation.close(part.getInputStream());
-            }
-        }
-        return yourObjectName;
-    }
-
-    @Override
-    public void cancel(String uploadId, String yourObjectName) {
-        listFile(uploadId).forEach(FileUtils::deleteQuietly);
-        FileUtils.deleteQuietly(new File(getPartDir(), yourObjectName));
-    }
-
-    @Override
     public List<UploadPart> listUploadParts(String uploadId) {
         List<File> files = listFile(uploadId);
         List<UploadPart> parts = new ArrayList<>(files.size());
@@ -189,5 +118,10 @@ public class LocalPartClient implements UploadPartClient {
             parts.add(uploadPart);
         }
         return parts;
+    }
+
+    @Override
+    public void del(String uploadId) {
+        listFile(uploadId).forEach(FileUtils::deleteQuietly);
     }
 }
