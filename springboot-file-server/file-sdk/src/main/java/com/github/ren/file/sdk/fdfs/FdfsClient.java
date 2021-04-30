@@ -32,7 +32,7 @@ import java.util.Set;
  * @Author ren
  * @Since 1.0
  */
-public class FdfsClient implements FastFileStorageClient, AppendFileStorageClient, UploadClient, PartClient {
+public class FdfsClient implements FastFileStorageClient, AppendFileStorageClient, UploadClient, FdfsUploadPartClient {
 
     private static final Logger logger = LoggerFactory.getLogger(FdfsClient.class);
 
@@ -208,7 +208,7 @@ public class FdfsClient implements FastFileStorageClient, AppendFileStorageClien
     }
 
     @Override
-    public String complete(String uploadId, String yourObjectName) {
+    public String complete(String uploadId, String ext) {
         StorePath storePath = null;
         List<UploadPart> parts = null;
         try {
@@ -218,7 +218,7 @@ public class FdfsClient implements FastFileStorageClient, AppendFileStorageClien
                 UploadPart uploadPart = parts.get(i);
                 if (i == 0) {
                     storePath = appendFileStorageClient.uploadAppenderFile(null, uploadPart.getInputStream(),
-                            uploadPart.getPartSize(), FilenameUtils.getExtension(yourObjectName));
+                            uploadPart.getPartSize(), ext);
                 } else {
                     appendFileStorageClient.appendFile(storePath.getGroup(), storePath.getPath(),
                             uploadPart.getInputStream(), uploadPart.getPartSize());
@@ -242,7 +242,10 @@ public class FdfsClient implements FastFileStorageClient, AppendFileStorageClien
     }
 
     @Override
-    public void cancel(String uploadId, String yourObjectName) {
-
+    public void cancel(String uploadId, String yourObjectName, String groupName, String path) {
+        //删除分片文件
+        uploadPartClient.cancel(uploadId, yourObjectName);
+        appendFileStorageClient.deleteFile(groupName, path);
     }
+
 }

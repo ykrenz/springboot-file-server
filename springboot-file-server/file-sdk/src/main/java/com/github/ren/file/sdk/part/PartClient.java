@@ -36,21 +36,4 @@ public interface PartClient {
      * @return
      */
     List<PartInfo> listParts(String uploadId);
-
-    /**
-     * 完成分片上传
-     *
-     * @param uploadId
-     * @param yourObjectName 文件位置
-     * @return
-     */
-    String complete(String uploadId, String yourObjectName);
-
-    /**
-     * 取消分片数据
-     *
-     * @param uploadId
-     * @param yourObjectName 文件位置
-     */
-    void cancel(String uploadId, String yourObjectName);
 }
