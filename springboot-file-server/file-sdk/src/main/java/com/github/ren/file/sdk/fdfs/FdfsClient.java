@@ -1,11 +1,9 @@
 package com.github.ren.file.sdk.fdfs;
 
-import com.github.ren.file.sdk.FileClient;
+import com.github.ren.file.sdk.AbstractFileClient;
 import com.github.ren.file.sdk.FileIOException;
-import com.github.ren.file.sdk.part.PartCancel;
-import com.github.ren.file.sdk.part.PartInfo;
-import com.github.ren.file.sdk.part.PartStore;
-import com.github.ren.file.sdk.part.UploadPart;
+import com.github.ren.file.sdk.lock.FileLock;
+import com.github.ren.file.sdk.part.*;
 import com.github.tobato.fastdfs.domain.fdfs.FileInfo;
 import com.github.tobato.fastdfs.domain.fdfs.MetaData;
 import com.github.tobato.fastdfs.domain.fdfs.StorePath;
@@ -13,8 +11,6 @@ import com.github.tobato.fastdfs.domain.proto.storage.DownloadCallback;
 import com.github.tobato.fastdfs.domain.upload.FastFile;
 import com.github.tobato.fastdfs.domain.upload.FastImageFile;
 import com.github.tobato.fastdfs.service.AppendFileStorageClient;
-import com.github.tobato.fastdfs.service.DefaultAppendFileStorageClient;
-import com.github.tobato.fastdfs.service.DefaultFastFileStorageClient;
 import com.github.tobato.fastdfs.service.FastFileStorageClient;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -29,14 +25,13 @@ import java.net.URL;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
- * @Description fastdfs文件客戶端适配器
+ * @Description fastdfs文件客戶端
  * @Author ren
  * @Since 1.0
  */
-public class FdfsClient implements FastFileStorageClient, AppendFileStorageClient, FileClient {
+public class FdfsClient extends AbstractFileClient implements FastFileStorageClient, AppendFileStorageClient {
 
     private static final Logger logger = LoggerFactory.getLogger(FdfsClient.class);
 
@@ -44,48 +39,19 @@ public class FdfsClient implements FastFileStorageClient, AppendFileStorageClien
 
     private final AppendFileStorageClient appendFileStorageClient;
 
-    private PartStore partStore;
-
-    private PartCancel partCancel;
-
-    public FdfsClient(DefaultFastFileStorageClient fastFileStorageClient,
-                      DefaultAppendFileStorageClient appendFileStorageClient) {
+    public FdfsClient(FastFileStorageClient fastFileStorageClient,
+                      AppendFileStorageClient appendFileStorageClient) {
+        super();
         this.fastFileStorageClient = fastFileStorageClient;
         this.appendFileStorageClient = appendFileStorageClient;
     }
 
-    public FdfsClient(DefaultFastFileStorageClient fastFileStorageClient,
-                      DefaultAppendFileStorageClient appendFileStorageClient,
-                      PartStore partStore) {
+    public FdfsClient(FastFileStorageClient fastFileStorageClient,
+                      AppendFileStorageClient appendFileStorageClient,
+                      PartStore partStore, PartCancel partCancel, FileLock fileLock) {
+        super(partStore, partCancel, fileLock);
         this.fastFileStorageClient = fastFileStorageClient;
         this.appendFileStorageClient = appendFileStorageClient;
-        this.partStore = partStore;
-    }
-
-    public FdfsClient(DefaultFastFileStorageClient fastFileStorageClient,
-                      DefaultAppendFileStorageClient appendFileStorageClient,
-                      PartStore partStore,
-                      PartCancel partCancel) {
-        this.fastFileStorageClient = fastFileStorageClient;
-        this.appendFileStorageClient = appendFileStorageClient;
-        this.partStore = partStore;
-        this.partCancel = partCancel;
-    }
-
-    public PartStore getPartStore() {
-        return partStore;
-    }
-
-    public void setPartStore(PartStore partStore) {
-        this.partStore = partStore;
-    }
-
-    public PartCancel getPartCancel() {
-        return partCancel;
-    }
-
-    public void setPartCancel(PartCancel partCancel) {
-        this.partCancel = partCancel;
     }
 
     @Override
@@ -226,35 +192,28 @@ public class FdfsClient implements FastFileStorageClient, AppendFileStorageClien
     }
 
     @Override
-    public String initUpload() {
-        return partStore.initUpload();
+    public String initiateMultipartUpload(String yourObjectName) {
+        return partStore.initiateMultipartUpload(yourObjectName);
     }
 
     @Override
-    public void uploadPart(UploadPart part) {
+    protected void uploadPartFile(UploadPart part) {
         partStore.uploadPart(part);
     }
 
     @Override
-    public List<PartInfo> listParts(String uploadId) {
-        return partStore.listParts(uploadId);
-    }
-
-    @Override
-    public String merge(String uploadId, String yourObjectName) {
+    protected CompleteMultipart merge(String uploadId, String yourObjectName) {
         StorePath storePath = null;
         List<UploadPart> parts = null;
         try {
-            parts = partStore.listUploadParts(uploadId);
+            parts = partStore.listUploadParts(uploadId, yourObjectName);
             parts.sort(Comparator.comparingInt(UploadPart::getPartNumber));
             for (int i = 0; i < parts.size(); i++) {
                 if (partCancel.needCancel(uploadId)) {
-                    partStore.del(uploadId);
                     if (storePath != null) {
                         appendFileStorageClient.deleteFile(storePath.getGroup(), storePath.getPath());
                     }
-                    partCancel.cancelComplete(uploadId);
-                    break;
+                    return null;
                 }
 
                 UploadPart uploadPart = parts.get(i);
@@ -272,29 +231,21 @@ public class FdfsClient implements FastFileStorageClient, AppendFileStorageClien
                     try {
                         part.getInputStream().close();
                     } catch (IOException e) {
-                        logger.error("complete part InputStream close error", e);
+                        logger.error("completeMultipartUpload part InputStream close error", e);
                     }
                 }
             }
         }
+        CompleteMultipart completeMultipart = new CompleteMultipart();
         if (storePath != null) {
-            return storePath.getFullPath();
+            completeMultipart.setObjectName(storePath.getFullPath());
         }
-        return null;
+        return completeMultipart;
     }
 
     @Override
-    public void cancel(String uploadId, String yourObjectName) {
-        partCancel.setCancel(uploadId);
-        while (true) {
-            if (partCancel.cancelSuccess(uploadId)) {
-                return;
-            }
-            try {
-                TimeUnit.MILLISECONDS.sleep(10);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+    public List<PartInfo> listParts(String uploadId, String yourObjectName) {
+        return partStore.listParts(uploadId, yourObjectName);
     }
+
 }

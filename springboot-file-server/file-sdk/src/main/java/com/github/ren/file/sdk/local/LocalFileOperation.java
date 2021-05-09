@@ -8,8 +8,6 @@ import javax.activation.MimetypesFileTypeMap;
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -69,15 +67,16 @@ public final class LocalFileOperation {
         }
     }
 
-    public static void chunkFile(File file, String chunkPath, long chunkSize) throws IOException {
+    public static List<File> chunkFile(File file, String chunkPath, long chunkSize) throws IOException {
         // 分割文件的数量
         int chunkNum = Math.max(1, (int) Math.ceil(file.length() / (float) chunkSize));
+        List<File> chunks = new ArrayList<>(chunkNum);
         //缓冲区大小
         byte[] buff = new byte[1024 * 1024];
         //使用RandomAccessFile访问文件
         RandomAccessFile rafRead = new RandomAccessFile(file, "r");
         //分块
-        for (int i = 0; i < chunkNum; i++) {
+        for (int i = 1; i <= chunkNum; i++) {
             //创建分块文件
             File chunkFile = new File(chunkPath, String.valueOf(i));
             if (chunkFile.exists() && !chunkFile.delete()) {
@@ -88,16 +87,18 @@ public final class LocalFileOperation {
             int len = -1;
             while ((len = rafRead.read(buff)) != -1) {
                 rafWrite.write(buff, 0, len);
-                if (chunkFile.length() > chunkSize) {
+                if (chunkFile.length() >= chunkSize) {
                     break;
                 }
             }
             rafWrite.close();
+            chunks.add(chunkFile);
         }
         rafRead.close();
+        return chunks;
     }
 
-    public static String mergeFile(String chunkPath, File mergeFile) throws IOException {
+    public static String mergeFile(List<File> files, File mergeFile) throws IOException {
         //合并文件
         if (mergeFile.exists() && !mergeFile.delete()) {
             throw new RuntimeException("文件删除失败");
@@ -108,10 +109,8 @@ public final class LocalFileOperation {
         rafWrite.seek(0);
         //缓冲区
         byte[] b = new byte[1024];
-        //分块列表
-        List<File> mergeFileList = getMergeFileList(chunkPath, Comparator.comparing(o -> Integer.parseInt(o.getName())));
         //合并文件
-        for (File chunkFile : mergeFileList) {
+        for (File chunkFile : files) {
             RandomAccessFile rafRead2 = new RandomAccessFile(chunkFile, "rw");
             int len = -1;
             while ((len = rafRead2.read(b)) != -1) {
@@ -123,48 +122,6 @@ public final class LocalFileOperation {
         try (FileInputStream inputStream = FileUtils.openInputStream(mergeFile)) {
             return MD5.create().digestHex(inputStream);
         }
-    }
-
-    private static List<File> getFileList(String chunkPath) {
-        //块文件目录
-        File chunkFolder = new File(chunkPath);
-        //分块列表
-        File[] fileArray = chunkFolder.listFiles();
-        if (fileArray == null || fileArray.length == 0) {
-            return new ArrayList<>(0);
-        }
-        return Arrays.asList(fileArray);
-    }
-
-    public static List<File> getMergeFileListByNumber(String chunkPath) {
-        List<File> files = getFileList(chunkPath);
-        files.sort(Comparator.comparingInt(o -> Integer.parseInt(o.getName())));
-        return files;
-    }
-
-    public static List<File> getMergeFileListByName(String chunkPath) {
-        List<File> files = getFileList(chunkPath);
-        files.sort(Comparator.comparing(File::getName));
-        return files;
-    }
-
-    public static List<File> getMergeFileList(String chunkPath, Comparator<File> comparator) {
-        List<File> files = getFileList(chunkPath);
-        files.sort(comparator);
-        return files;
-    }
-
-    public static List<File> getMergeFileList(String chunkPath, FileFilter fileFilter, Comparator<File> comparator) {
-        //块文件目录
-        File chunkFolder = new File(chunkPath);
-        //分块列表
-        File[] fileArray = chunkFolder.listFiles(fileFilter);
-        if (fileArray == null || fileArray.length == 0) {
-            return new ArrayList<>(0);
-        }
-        List<File> files = Arrays.asList(fileArray);
-        files.sort(comparator);
-        return files;
     }
 
     public static String getContentType(File file) {

@@ -5,25 +5,6 @@ package com.github.ren.file.sdk.part;
  * @Author ren
  * @Since 1.0
  */
-public class RedisCancel implements PartCancel {
+public class RedisCancel  {
 
-    @Override
-    public void setCancel(String uploadId) {
-
-    }
-
-    @Override
-    public boolean needCancel(String uploadId) {
-        return false;
-    }
-
-    @Override
-    public void cancelComplete(String uploadId) {
-
-    }
-
-    @Override
-    public boolean cancelSuccess(String uploadId) {
-        return false;
-    }
 }

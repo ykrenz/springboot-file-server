@@ -9,10 +9,6 @@ import java.io.Serializable;
  */
 public interface PartCancel extends Serializable {
 
-    int cancel = 1;
-
-    int cancel_complete = 1;
-
     /**
      * 设置取消状态
      *
@@ -33,12 +29,5 @@ public interface PartCancel extends Serializable {
      * @param uploadId
      */
     void cancelComplete(String uploadId);
-
-    /**
-     * 取消成功
-     *
-     * @param uploadId
-     */
-    boolean cancelSuccess(String uploadId);
 
 }

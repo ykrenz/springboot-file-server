@@ -1,11 +1,10 @@
 package com.github.ren.file.sdk.local;
 
-import com.github.ren.file.sdk.FileClient;
+import cn.hutool.crypto.digest.MD5;
+import com.github.ren.file.sdk.AbstractFileClient;
 import com.github.ren.file.sdk.FileIOException;
-import com.github.ren.file.sdk.part.PartCancel;
-import com.github.ren.file.sdk.part.PartInfo;
-import com.github.ren.file.sdk.part.PartStore;
-import com.github.ren.file.sdk.part.UploadPart;
+import com.github.ren.file.sdk.lock.FileLock;
+import com.github.ren.file.sdk.part.*;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,14 +15,13 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @Description 本地文件客户端
  * @Author ren
  * @Since 1.0
  */
-public class LocalClient implements FileClient {
+public class LocalClient extends AbstractFileClient {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalClient.class);
 
@@ -32,23 +30,18 @@ public class LocalClient implements FileClient {
      */
     private String localStore;
 
-    private PartStore partStore;
-
-    private PartCancel partCancel;
-
     public LocalClient(String localStore) {
+        super();
         this.localStore = localStore;
     }
 
-    public LocalClient(String localStore, PartStore partStore) {
+    public LocalClient(String localStore, PartStore partStore, PartCancel partCancel, FileLock fileLock) {
+        super(partStore, partCancel, fileLock);
         this.localStore = localStore;
-        this.partStore = partStore;
     }
 
-    public LocalClient(String localStore, PartStore partStore, PartCancel partCancel) {
+    public void setLocalStore(String localStore) {
         this.localStore = localStore;
-        this.partStore = partStore;
-        this.partCancel = partCancel;
     }
 
     public String getLocalStore() {
@@ -57,26 +50,6 @@ public class LocalClient implements FileClient {
             throw new RuntimeException("localStore mkdirs error");
         }
         return localStore;
-    }
-
-    public void setLocalStore(String localStore) {
-        this.localStore = localStore;
-    }
-
-    public PartStore getPartStore() {
-        return partStore;
-    }
-
-    public void setPartStore(PartStore partStore) {
-        this.partStore = partStore;
-    }
-
-    public PartCancel getPartCancel() {
-        return partCancel;
-    }
-
-    public void setPartCancel(PartCancel partCancel) {
-        this.partCancel = partCancel;
     }
 
     public File getOutFile(String yourObjectName) {
@@ -131,16 +104,34 @@ public class LocalClient implements FileClient {
     }
 
     @Override
-    public String merge(String uploadId, String yourObjectName) {
-        List<UploadPart> parts = partStore.listUploadParts(uploadId);
+    public String initiateMultipartUpload(String yourObjectName) {
+        return partStore.initiateMultipartUpload(yourObjectName);
+    }
+
+    @Override
+    public List<PartInfo> listParts(String uploadId, String yourObjectName) {
+        return partStore.listParts(uploadId, yourObjectName);
+    }
+
+    @Override
+    protected void uploadPartFile(UploadPart part) {
+        partStore.uploadPart(part);
+    }
+
+    @Override
+    protected CompleteMultipart merge(String uploadId, String yourObjectName) {
+        List<UploadPart> parts = partStore.listUploadParts(uploadId, yourObjectName);
         parts.sort(Comparator.comparingInt(UploadPart::getPartNumber));
         File outFile = this.getOutFile(yourObjectName);
         try (FileChannel outChannel = new FileOutputStream(outFile).getChannel()) {
             //同步nio 方式对分片进行合并, 有效的避免文件过大导致内存溢出
             for (UploadPart uploadPart : parts) {
+                if (partCancel.needCancel(uploadId)) {
+                    break;
+                }
                 long chunkSize = 1L << 32;
                 if (uploadPart.getPartSize() >= chunkSize) {
-                    throw new RuntimeException("文件分片必须<4G");
+                    throw new IllegalArgumentException("文件分片必须<4G");
                 }
                 try (FileChannel inChannel = ((FileInputStream) uploadPart.getInputStream()).getChannel()) {
                     int position = 0;
@@ -161,39 +152,12 @@ public class LocalClient implements FileClient {
                 LocalFileOperation.close(part.getInputStream());
             }
         }
-        return yourObjectName;
-    }
-
-    @Override
-    public void cancel(String uploadId, String yourObjectName) {
-        partCancel.setCancel(uploadId);
-        while (true) {
-            if (partCancel.cancelSuccess(uploadId)) {
-                partStore.del(uploadId);
-                FileUtils.deleteQuietly(new File(getLocalStore(), yourObjectName));
-                return;
-            }
-            try {
-                TimeUnit.MILLISECONDS.sleep(10);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        if (partCancel.needCancel(uploadId) && FileUtils.deleteQuietly(outFile)) {
+            return null;
         }
-    }
-
-
-    @Override
-    public String initUpload() {
-        return partStore.initUpload();
-    }
-
-    @Override
-    public void uploadPart(UploadPart part) {
-        partStore.uploadPart(part);
-    }
-
-    @Override
-    public List<PartInfo> listParts(String uploadId) {
-        return partStore.listParts(uploadId);
+        CompleteMultipart completeMultipart = new CompleteMultipart();
+        completeMultipart.setObjectName(yourObjectName);
+        completeMultipart.setETag(MD5.create().digestHex(outFile));
+        return completeMultipart;
     }
 }

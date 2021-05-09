@@ -24,9 +24,9 @@ public class PartInfo implements Serializable {
     private long partSize;
 
     /**
-     * 分片md5值
+     * 分片eTag值
      */
-    private String md5Digest;
+    private String eTag;
 
     public String getUploadId() {
         return uploadId;
@@ -52,11 +52,11 @@ public class PartInfo implements Serializable {
         this.partSize = partSize;
     }
 
-    public String getMd5Digest() {
-        return md5Digest;
+    public String getETag() {
+        return eTag;
     }
 
-    public void setMd5Digest(String md5Digest) {
-        this.md5Digest = md5Digest;
+    public void setETag(String eTag) {
+        this.eTag = eTag;
     }
 }
