@@ -5,6 +5,7 @@ import com.github.ren.file.FileServerApplication;
 import com.github.ren.file.sdk.FileClient;
 import com.github.ren.file.sdk.fdfs.FastDFSClient;
 import com.github.ren.file.sdk.local.LocalFileOperation;
+import com.github.ren.file.sdk.model.FdfsUploadResult;
 import com.github.ren.file.sdk.objectname.Md5Generator;
 import com.github.ren.file.sdk.part.CompleteMultipart;
 import com.github.ren.file.sdk.part.UploadPart;
@@ -114,7 +115,7 @@ public class FileClientTest {
     void upload() {
         FastDFSClient fastDFSClient = new FastDFSClient();
         String filename = "F:\\oss\\test\\test2.mp4";
-        String upload = fastDFSClient.upload(new File(filename), filename);
+        FdfsUploadResult upload = fastDFSClient.upload(new File(filename), filename);
         System.out.println(upload);
     }
 
