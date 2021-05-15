@@ -1,6 +1,6 @@
 package com.github.ren.file.sdk.objectname;
 
-import com.github.ren.file.sdk.UploadUtil;
+import com.github.ren.file.sdk.Util;
 import lombok.Data;
 import org.apache.commons.io.FilenameUtils;
 
@@ -22,7 +22,7 @@ public class UuidGenerator implements ObjectNameGenerator {
 
     @Override
     public String generator() {
-        String uuid = UUID.randomUUID().toString().replace(UploadUtil.DASHED, "");
-        return uuid.substring(0, 4) + UploadUtil.SLASH + uuid + UploadUtil.DOT + FilenameUtils.getExtension(filename);
+        String uuid = UUID.randomUUID().toString().replace(Util.DASHED, "");
+        return uuid.substring(0, 4) + Util.SLASH + uuid + Util.DOT + FilenameUtils.getExtension(filename);
     }
 }

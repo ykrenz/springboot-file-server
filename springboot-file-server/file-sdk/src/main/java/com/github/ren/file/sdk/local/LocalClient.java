@@ -2,8 +2,9 @@ package com.github.ren.file.sdk.local;
 
 import com.github.ren.file.sdk.AbstractFileClient;
 import com.github.ren.file.sdk.FileIOException;
-import com.github.ren.file.sdk.UploadUtil;
+import com.github.ren.file.sdk.Util;
 import com.github.ren.file.sdk.lock.FileLock;
+import com.github.ren.file.sdk.model.UploadGenericResult;
 import com.github.ren.file.sdk.part.*;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -67,40 +68,41 @@ public class LocalClient extends AbstractFileClient {
     }
 
     @Override
-    public String upload(File file, String yourObjectName) {
+    public UploadGenericResult upload(File file, String yourObjectName) {
         try {
-            LocalFileOperation.copyFile(file, getOutFile(yourObjectName));
+            File outFile = getOutFile(yourObjectName);
+            LocalFileOperation.copyFile(file, outFile);
+            return new UploadGenericResult(yourObjectName, Util.eTag(outFile));
         } catch (IOException e) {
             throw new FileIOException("local upload file error", e);
         }
-        return yourObjectName;
     }
 
     @Override
-    public String upload(InputStream is, String yourObjectName) {
+    public UploadGenericResult upload(InputStream is, String yourObjectName) {
         try {
             LocalFileOperation.copyFile(is, getOutFile(yourObjectName));
+            return new UploadGenericResult(yourObjectName, Util.eTag(is));
         } catch (IOException e) {
             throw new FileIOException("local upload InputStream error", e);
         } finally {
-            UploadUtil.close(is);
+            Util.close(is);
         }
-        return yourObjectName;
     }
 
     @Override
-    public String upload(byte[] content, String yourObjectName) {
+    public UploadGenericResult upload(byte[] content, String yourObjectName) {
         File outFile = this.getOutFile(yourObjectName);
         try (ByteArrayInputStream is = new ByteArrayInputStream(content)) {
             LocalFileOperation.copyFile(is, outFile);
+            return new UploadGenericResult(yourObjectName, Util.eTag(outFile));
         } catch (IOException e) {
             throw new FileIOException("local byte[] upload error", e);
         }
-        return yourObjectName;
     }
 
     @Override
-    public String upload(String url, String yourObjectName) {
+    public UploadGenericResult upload(String url, String yourObjectName) {
         try (InputStream is = new URL(url).openStream()) {
             return this.upload(is, yourObjectName);
         } catch (IOException e) {
@@ -152,7 +154,7 @@ public class LocalClient extends AbstractFileClient {
                         }
                     }
                 } finally {
-                    UploadUtil.close(uploadPart.getInputStream());
+                    Util.close(uploadPart.getInputStream());
                 }
 
             }
@@ -165,7 +167,7 @@ public class LocalClient extends AbstractFileClient {
         }
         CompleteMultipart completeMultipart = new CompleteMultipart();
         completeMultipart.setObjectName(yourObjectName);
-        completeMultipart.setETag(UploadUtil.eTag(outFile));
+        completeMultipart.setETag(Util.eTag(outFile));
         return completeMultipart;
     }
 }

@@ -1,6 +1,6 @@
 package com.github.ren.file.sdk.objectname;
 
-import com.github.ren.file.sdk.UploadUtil;
+import com.github.ren.file.sdk.Util;
 import lombok.Data;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +22,6 @@ public class TimestampGenerator implements ObjectNameGenerator {
     @Override
     public String generator() {
         long millis = System.currentTimeMillis();
-        return StringUtils.reverse(String.valueOf(millis)) + UploadUtil.DOT + FilenameUtils.getExtension(filename);
+        return StringUtils.reverse(String.valueOf(millis)) + Util.DOT + FilenameUtils.getExtension(filename);
     }
 }

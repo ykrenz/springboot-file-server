@@ -2,8 +2,9 @@ package com.github.ren.file.sdk.fdfs;
 
 import com.github.ren.file.sdk.AbstractFileClient;
 import com.github.ren.file.sdk.FileIOException;
-import com.github.ren.file.sdk.UploadUtil;
+import com.github.ren.file.sdk.Util;
 import com.github.ren.file.sdk.lock.FileLock;
+import com.github.ren.file.sdk.model.FdfsUploadResult;
 import com.github.ren.file.sdk.part.*;
 import com.github.tobato.fastdfs.domain.fdfs.FileInfo;
 import com.github.tobato.fastdfs.domain.fdfs.MetaData;
@@ -163,36 +164,39 @@ public class FdfsClient extends AbstractFileClient implements FastFileStorageCli
     }
 
     @Override
-    public String upload(File file, String yourObjectName) {
+    public FdfsUploadResult upload(File file, String yourObjectName) {
         try (InputStream is = FileUtils.openInputStream(file)) {
-            return fastFileStorageClient.uploadFile(is, file.length(),
-                    FilenameUtils.getExtension(yourObjectName), null).getFullPath();
+            StorePath storePath = fastFileStorageClient.uploadFile(is, file.length(),
+                    FilenameUtils.getExtension(yourObjectName), null);
+            return new FdfsUploadResult(storePath.getGroup(), storePath.getPath());
         } catch (IOException e) {
             throw new FileIOException("fdfs upload local file error", e);
         }
     }
 
     @Override
-    public String upload(InputStream is, String yourObjectName) {
+    public FdfsUploadResult upload(InputStream is, String yourObjectName) {
         try {
-            return fastFileStorageClient.uploadFile(is, is.available(),
-                    getFileExtName(yourObjectName), null).getFullPath();
+            StorePath storePath = fastFileStorageClient.uploadFile(is, is.available(),
+                    getFileExtName(yourObjectName), null);
+            return new FdfsUploadResult(storePath.getGroup(), storePath.getPath());
         } catch (IOException e) {
             throw new FileIOException("fdfs upload InputStream error", e);
         }
     }
 
     @Override
-    public String upload(byte[] content, String yourObjectName) {
+    public FdfsUploadResult upload(byte[] content, String yourObjectName) {
         try (ByteArrayInputStream is = new ByteArrayInputStream(content)) {
-            return fastFileStorageClient.uploadFile(is, content.length, getFileExtName(yourObjectName), null).getFullPath();
+            StorePath storePath = fastFileStorageClient.uploadFile(is, content.length, getFileExtName(yourObjectName), null);
+            return new FdfsUploadResult(storePath.getGroup(), storePath.getPath());
         } catch (IOException e) {
             throw new FileIOException("fdfs upload byte[] error", e);
         }
     }
 
     @Override
-    public String upload(String url, String yourObjectName) {
+    public FdfsUploadResult upload(String url, String yourObjectName) {
         try (InputStream is = new URL(url).openStream()) {
             return this.upload(is, yourObjectName);
         } catch (IOException e) {
@@ -247,7 +251,7 @@ public class FdfsClient extends AbstractFileClient implements FastFileStorageCli
         CompleteMultipart completeMultipart = new CompleteMultipart();
         if (storePath != null) {
             //参考 ali oss的做法
-            completeMultipart.setETag(UploadUtil.eTag(eTagBuilder.toString()).toUpperCase() + UploadUtil.DASHED + partInfos.size());
+            completeMultipart.setETag(Util.eTag(eTagBuilder.toString()).toUpperCase() + Util.DASHED + partInfos.size());
             completeMultipart.setObjectName(storePath.getFullPath());
         }
         return completeMultipart;

@@ -1,6 +1,6 @@
 package com.github.ren.file.sdk.objectname;
 
-import com.github.ren.file.sdk.UploadUtil;
+import com.github.ren.file.sdk.Util;
 import lombok.Data;
 import org.apache.commons.io.FilenameUtils;
 
@@ -24,6 +24,6 @@ public class Md5Generator implements ObjectNameGenerator {
     @Override
     public String generator() {
         //https://help.aliyun.com/document_detail/64945.html?spm=a2c4g.11186623.6.1779.75e151b6GRk0Ab
-        return md5.substring(0, 4) + UploadUtil.SLASH + md5 + UploadUtil.DOT + FilenameUtils.getExtension(filename);
+        return md5.substring(0, 4) + Util.SLASH + md5 + Util.DOT + FilenameUtils.getExtension(filename);
     }
 }

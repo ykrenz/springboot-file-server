@@ -1,6 +1,6 @@
 package com.github.ren.file.sdk.local;
 
-import com.github.ren.file.sdk.UploadUtil;
+import com.github.ren.file.sdk.Util;
 
 import javax.activation.MimetypesFileTypeMap;
 import java.io.*;
@@ -107,7 +107,7 @@ public final class LocalFileOperation {
             rafRead2.close();
         }
         rafWrite.close();
-        return UploadUtil.eTag(mergeFile);
+        return Util.eTag(mergeFile);
     }
 
     public static String getContentType(File file) {

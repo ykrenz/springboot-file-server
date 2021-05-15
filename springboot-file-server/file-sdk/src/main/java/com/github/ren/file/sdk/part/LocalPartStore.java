@@ -1,7 +1,7 @@
 package com.github.ren.file.sdk.part;
 
 import com.github.ren.file.sdk.FileIOException;
-import com.github.ren.file.sdk.UploadUtil;
+import com.github.ren.file.sdk.Util;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,11 +46,11 @@ public class LocalPartStore extends AbstractPartStore {
     private final static String complete = "complete";
 
     private File getUploadingFile(String uploadId, Integer partNumber) {
-        return new File(getPartDir(), uploadId + UploadUtil.SLASH + uploading + UploadUtil.DASHED + partNumber);
+        return new File(getPartDir(), uploadId + Util.SLASH + uploading + Util.DASHED + partNumber);
     }
 
     private File getCompleteFile(String uploadId, Integer partNumber) {
-        return new File(getPartDir(), uploadId + UploadUtil.SLASH + complete + UploadUtil.DASHED + partNumber);
+        return new File(getPartDir(), uploadId + Util.SLASH + complete + Util.DASHED + partNumber);
     }
 
     @Override
@@ -62,11 +62,11 @@ public class LocalPartStore extends AbstractPartStore {
             if (!uploadingFile.renameTo(completeFile) && !completeFile.setReadOnly()) {
                 throw new FileIOException("LocalPart upload rename File error");
             }
-            return UploadUtil.eTag(completeFile);
+            return Util.eTag(completeFile);
         } catch (IOException e) {
             throw new FileIOException("LocalPart upload InputStream error", e);
         } finally {
-            UploadUtil.close(part.getInputStream());
+            Util.close(part.getInputStream());
         }
     }
 
@@ -89,7 +89,7 @@ public class LocalPartStore extends AbstractPartStore {
     }
 
     private Integer getPartNumber(String filename) {
-        return Integer.parseInt(filename.substring(filename.lastIndexOf(UploadUtil.DASHED) + 1));
+        return Integer.parseInt(filename.substring(filename.lastIndexOf(Util.DASHED) + 1));
     }
 
     @Override
@@ -100,7 +100,7 @@ public class LocalPartStore extends AbstractPartStore {
             PartInfo partInfo = new PartInfo();
             partInfo.setPartNumber(getPartNumber(file.getName()));
             partInfo.setPartSize(file.length());
-            partInfo.setETag(UploadUtil.eTag(file));
+            partInfo.setETag(Util.eTag(file));
             partInfo.setUploadId(uploadId);
             list.add(partInfo);
         }
@@ -117,7 +117,7 @@ public class LocalPartStore extends AbstractPartStore {
                 inputStream = new FileInputStream(file);
             } catch (FileNotFoundException e) {
                 for (UploadPart part : parts) {
-                    UploadUtil.close(part.getInputStream());
+                    Util.close(part.getInputStream());
                 }
                 throw new FileIOException("get local part file InputStream error", e);
             }

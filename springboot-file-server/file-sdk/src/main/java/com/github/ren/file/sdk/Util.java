@@ -12,7 +12,7 @@ import java.io.InputStream;
  * @Author ren
  * @Since 1.0
  */
-public class UploadUtil implements StrPool {
+public class Util implements StrPool {
 
     public static void close(InputStream is) {
         if (is != null) {

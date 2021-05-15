@@ -1,5 +1,7 @@
 package com.github.ren.file.sdk;
 
+import com.github.ren.file.sdk.model.UploadGenericResult;
+
 import java.io.File;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -22,7 +24,7 @@ public interface UploadClient extends Serializable {
      * @param yourObjectName
      * @return
      */
-    String upload(File file, String yourObjectName);
+    UploadGenericResult upload(File file, String yourObjectName);
 
     /**
      * 上传文件流
@@ -31,7 +33,7 @@ public interface UploadClient extends Serializable {
      * @param yourObjectName
      * @return
      */
-    String upload(InputStream is, String yourObjectName);
+    UploadGenericResult upload(InputStream is, String yourObjectName);
 
     /**
      * 上传字节数组
@@ -40,7 +42,7 @@ public interface UploadClient extends Serializable {
      * @param yourObjectName
      * @return
      */
-    String upload(byte[] content, String yourObjectName);
+    UploadGenericResult upload(byte[] content, String yourObjectName);
 
     /**
      * 上传网络流
@@ -49,6 +51,6 @@ public interface UploadClient extends Serializable {
      * @param yourObjectName
      * @return
      */
-    String upload(String url, String yourObjectName);
+    UploadGenericResult upload(String url, String yourObjectName);
 
 }

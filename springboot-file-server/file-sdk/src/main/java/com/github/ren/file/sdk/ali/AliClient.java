@@ -5,6 +5,7 @@ import com.aliyun.oss.internal.OSSHeaders;
 import com.aliyun.oss.model.*;
 import com.github.ren.file.sdk.FileClient;
 import com.github.ren.file.sdk.FileIOException;
+import com.github.ren.file.sdk.model.UploadGenericResult;
 import com.github.ren.file.sdk.part.CompleteMultipart;
 import com.github.ren.file.sdk.part.PartInfo;
 import com.github.ren.file.sdk.part.UploadPart;
@@ -76,37 +77,37 @@ public class AliClient implements FileClient {
     }
 
     @Override
-    public String upload(File file, String yourObjectName) {
+    public UploadGenericResult upload(File file, String yourObjectName) {
         PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, yourObjectName, file);
-        oss.putObject(putObjectRequest);
+        PutObjectResult putObjectResult = oss.putObject(putObjectRequest);
         shutDown();
-        return yourObjectName;
+        return new UploadGenericResult(yourObjectName, putObjectResult.getETag());
     }
 
     @Override
-    public String upload(InputStream is, String yourObjectName) {
+    public UploadGenericResult upload(InputStream is, String yourObjectName) {
         PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, yourObjectName, is);
-        oss.putObject(putObjectRequest);
+        PutObjectResult putObjectResult = oss.putObject(putObjectRequest);
         shutDown();
-        return yourObjectName;
+        return new UploadGenericResult(yourObjectName, putObjectResult.getETag());
     }
 
     @Override
-    public String upload(byte[] content, String yourObjectName) {
+    public UploadGenericResult upload(byte[] content, String yourObjectName) {
         try (InputStream is = new ByteArrayInputStream(content)) {
             PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, yourObjectName, is);
-            oss.putObject(putObjectRequest);
+            PutObjectResult putObjectResult = oss.putObject(putObjectRequest);
             shutDown();
-            return yourObjectName;
+            return new UploadGenericResult(yourObjectName, putObjectResult.getETag());
         } catch (IOException e) {
             throw new FileIOException("ali oss upload byte[] error", e);
         }
     }
 
     @Override
-    public String upload(String url, String yourObjectName) {
+    public UploadGenericResult upload(String url, String yourObjectName) {
         try (InputStream is = new URL(url).openStream()) {
-            String result = this.upload(is, yourObjectName);
+            UploadGenericResult result = this.upload(is, yourObjectName);
             shutDown();
             return result;
         } catch (IOException e) {
