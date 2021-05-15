@@ -29,7 +29,7 @@ import java.util.List;
 public class FileClientTest {
 
     @Autowired
-    @Qualifier("AliClient")
+    @Qualifier("LocalClient")
     private FileClient fileClient;
 
     @Test
