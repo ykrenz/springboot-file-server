@@ -1,9 +1,6 @@
 package com.github.ren.file;
 
-import com.aliyun.oss.OSS;
-import com.aliyun.oss.OSSClientBuilder;
 import com.github.ren.file.sdk.FileClient;
-import com.github.ren.file.sdk.ali.AliClient;
 import com.github.ren.file.sdk.local.LocalClient;
 import com.github.ren.file.sdk.part.LocalPartStore;
 import org.springframework.boot.SpringApplication;
@@ -30,12 +27,12 @@ public class FileServerApplication {
         return new LocalClient("F:\\oss\\upload",new LocalPartStore("F:\\oss\\part"));
     }
 
-    @Bean("AliClient")
-    public FileClient aliClient() {
-        OSS oss = new OSSClientBuilder()
-                .build("",
-                        "",
-                        "");
-        return new AliClient(oss, "");
-    }
+//    @Bean("AliClient")
+//    public FileClient aliClient() {
+//        OSS oss = new OSSClientBuilder()
+//                .build("",
+//                        "",
+//                        "");
+//        return new AliClient(oss, "");
+//    }
 }

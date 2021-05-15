@@ -25,13 +25,21 @@ public class FastDFSClient extends AbstractFileClient {
 
     private static final Logger logger = LoggerFactory.getLogger(FastDFSClient.class);
 
+    private static final String CONFIG_FILE = "fdfs_client.conf";
+
+    private static final String CONFIG_PROPERTIES = "fastdfs-client.properties";
+
     static {
         try {
-            //加载配置
-            ClientGlobal.init("fdfs_client.conf");
-            ClientGlobal.initByProperties("fastdfs-client.properties");
+            InputStream inputStream = FastDFSClient.class.getClassLoader().getResourceAsStream(CONFIG_FILE);
+            if (inputStream != null) {
+                //加载配置
+                ClientGlobal.init(CONFIG_FILE);
+            } else {
+                ClientGlobal.initByProperties(CONFIG_PROPERTIES);
+            }
         } catch (IOException | MyException e) {
-            logger.error("fdfs_client config load error " + e.getMessage());
+            logger.error("fdfs client config load error " + e.getMessage());
             throw new IllegalStateException("fdfs_client config load error " + e.getMessage());
         }
     }
