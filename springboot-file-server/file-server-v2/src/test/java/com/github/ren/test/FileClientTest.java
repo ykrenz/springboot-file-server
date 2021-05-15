@@ -3,6 +3,7 @@ package com.github.ren.test;
 import cn.hutool.crypto.digest.MD5;
 import com.github.ren.file.FileServerApplication;
 import com.github.ren.file.sdk.FileClient;
+import com.github.ren.file.sdk.fdfs.FastDFSClient;
 import com.github.ren.file.sdk.local.LocalFileOperation;
 import com.github.ren.file.sdk.objectname.Md5Generator;
 import com.github.ren.file.sdk.part.CompleteMultipart;
@@ -95,7 +96,7 @@ public class FileClientTest {
         List<File> files = LocalFileOperation.chunkFile(sourceFile, chunkPath, 1024L * 1024L * 5);
         File file = files.get(0);
 //        appendFileStorageClient.appendFile(group1, path, FileUtils.openInputStream(file), file.length());
-        appendFileStorageClient.truncateFile(group1, path,2);
+        appendFileStorageClient.truncateFile(group1, path, 2);
 //        File file1 = files.get(0);
 //        appendFileStorageClient.modifyFile(group1,path,FileUtils.openInputStream(file1),file1.length(),0);
         for (int i = 0; i < files.size(); i++) {
@@ -107,6 +108,14 @@ public class FileClientTest {
 //            appendFileStorageClient.appendFile(group1, path, FileUtils.openInputStream(file), file.length());
         }
 
+    }
+
+    @Test
+    void upload() {
+        FastDFSClient fastDFSClient = new FastDFSClient();
+        String filename = "F:\\oss\\test\\test2.mp4";
+        String upload = fastDFSClient.upload(new File(filename), filename);
+        System.out.println(upload);
     }
 
     @Test
@@ -132,7 +141,7 @@ public class FileClientTest {
 //            System.out.println("路径: " + fileIds[1]);
             String group1 = "group1";
             String path = "M00/01/4B/CgoKTGCee1iEM2qyAAAAAAAAAAA995.mp4";
-            int s = storageClient.truncate_file(group1, path,1);
+            int s = storageClient.truncate_file(group1, path, 1);
             System.out.println(s);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
