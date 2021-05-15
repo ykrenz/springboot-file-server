@@ -1,8 +1,6 @@
 package com.github.ren.file.sdk.local;
 
-import cn.hutool.crypto.digest.MD5;
-import com.github.ren.file.sdk.FileIOException;
-import org.apache.commons.io.FileUtils;
+import com.github.ren.file.sdk.UploadUtil;
 
 import javax.activation.MimetypesFileTypeMap;
 import java.io.*;
@@ -16,16 +14,6 @@ import java.util.List;
  * @Since 1.0
  */
 public final class LocalFileOperation {
-
-    public static void close(InputStream is) {
-        if (is != null) {
-            try {
-                is.close();
-            } catch (IOException e) {
-                throw new FileIOException("close InputStream error ", e);
-            }
-        }
-    }
 
     public static void copyFile(File inputFile, File outFile) throws IOException {
         // <2G 采用Channel方式高效率复制文件
@@ -119,9 +107,7 @@ public final class LocalFileOperation {
             rafRead2.close();
         }
         rafWrite.close();
-        try (FileInputStream inputStream = FileUtils.openInputStream(mergeFile)) {
-            return MD5.create().digestHex(inputStream);
-        }
+        return UploadUtil.eTag(mergeFile);
     }
 
     public static String getContentType(File file) {

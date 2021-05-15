@@ -2,6 +2,7 @@ package com.github.ren.file.sdk.fdfs;
 
 import com.github.ren.file.sdk.AbstractFileClient;
 import com.github.ren.file.sdk.FileIOException;
+import com.github.ren.file.sdk.UploadUtil;
 import com.github.ren.file.sdk.lock.FileLock;
 import com.github.ren.file.sdk.part.*;
 import com.github.tobato.fastdfs.domain.fdfs.FileInfo;
@@ -42,6 +43,14 @@ public class FdfsClient extends AbstractFileClient implements FastFileStorageCli
     public FdfsClient(FastFileStorageClient fastFileStorageClient,
                       AppendFileStorageClient appendFileStorageClient) {
         super();
+        this.fastFileStorageClient = fastFileStorageClient;
+        this.appendFileStorageClient = appendFileStorageClient;
+    }
+
+    public FdfsClient(FastFileStorageClient fastFileStorageClient,
+                      AppendFileStorageClient appendFileStorageClient,
+                      PartStore partStore) {
+        super(partStore);
         this.fastFileStorageClient = fastFileStorageClient;
         this.appendFileStorageClient = appendFileStorageClient;
     }
@@ -197,26 +206,27 @@ public class FdfsClient extends AbstractFileClient implements FastFileStorageCli
     }
 
     @Override
-    protected void uploadPartFile(UploadPart part) {
-        partStore.uploadPart(part);
+    protected String uploadPartFile(UploadPart part) {
+        return partStore.uploadPart(part);
     }
 
     @Override
     protected CompleteMultipart merge(String uploadId, String yourObjectName) {
         StorePath storePath = null;
-        List<UploadPart> parts = null;
-        try {
-            parts = partStore.listUploadParts(uploadId, yourObjectName);
-            parts.sort(Comparator.comparingInt(UploadPart::getPartNumber));
-            for (int i = 0; i < parts.size(); i++) {
-                if (partCancel.needCancel(uploadId)) {
-                    if (storePath != null) {
-                        appendFileStorageClient.deleteFile(storePath.getGroup(), storePath.getPath());
-                    }
-                    return null;
-                }
+        List<PartInfo> partInfos = listParts(uploadId, yourObjectName);
+        partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
+        StringBuilder eTagBuilder = new StringBuilder();
 
-                UploadPart uploadPart = parts.get(i);
+        for (int i = 0; i < partInfos.size(); i++) {
+            if (partCancel.needCancel(uploadId)) {
+                if (storePath != null) {
+                    appendFileStorageClient.deleteFile(storePath.getGroup(), storePath.getPath());
+                }
+                return null;
+            }
+            PartInfo partInfo = partInfos.get(i);
+            UploadPart uploadPart = partStore.getUploadPart(partInfo.getUploadId(), yourObjectName, partInfo.getPartNumber());
+            try {
                 if (i == 0) {
                     storePath = appendFileStorageClient.uploadAppenderFile(null, uploadPart.getInputStream(),
                             uploadPart.getPartSize(), getFileExtName(yourObjectName));
@@ -224,20 +234,20 @@ public class FdfsClient extends AbstractFileClient implements FastFileStorageCli
                     appendFileStorageClient.appendFile(storePath.getGroup(), storePath.getPath(),
                             uploadPart.getInputStream(), uploadPart.getPartSize());
                 }
-            }
-        } finally {
-            if (parts != null) {
-                for (UploadPart part : parts) {
-                    try {
-                        part.getInputStream().close();
-                    } catch (IOException e) {
-                        logger.error("completeMultipartUpload part InputStream close error", e);
-                    }
+                logger.info("上传第分片完毕 index={}", i);
+                eTagBuilder.append(partInfo.getETag().toUpperCase());
+            } finally {
+                try {
+                    uploadPart.getInputStream().close();
+                } catch (IOException e) {
+                    logger.error("fdfs completeMultipartUpload part InputStream close error", e);
                 }
             }
         }
         CompleteMultipart completeMultipart = new CompleteMultipart();
         if (storePath != null) {
+            //参考 ali oss的做法
+            completeMultipart.setETag(UploadUtil.eTag(eTagBuilder.toString()).toUpperCase() + UploadUtil.DASHED + partInfos.size());
             completeMultipart.setObjectName(storePath.getFullPath());
         }
         return completeMultipart;

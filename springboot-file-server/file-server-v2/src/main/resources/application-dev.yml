@@ -1,0 +1,35 @@
+server:
+  port: 3000
+  tomcat:
+    uri-encoding: UTF-8
+    accept-count: 1000
+    max-connections: 10000
+    threads:
+      max: 2500
+      min-spare: 100
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 1024MB
+  datasource:
+    url: jdbc:mysql://localhost:3306/filedb?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&autoReconnect=true&failOverReadOnly=false
+    username: root
+    password: 123456
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.jdbc.Driver
+
+#fastdfs配置
+fdfs:
+  so-timeout: 5000
+  connect-timeout: 5000
+  #缩略图生成参数
+  thumb-image:
+    width: 150
+    height: 150
+  #TrackerList参数,支持多个
+  tracker-list:
+    - 10.10.10.76:22122
+  #返回访问文件的地址前缀,一般是nginx域名
+  web-server-url:

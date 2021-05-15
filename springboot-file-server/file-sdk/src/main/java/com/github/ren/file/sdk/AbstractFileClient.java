@@ -28,6 +28,10 @@ public abstract class AbstractFileClient implements FileClient {
     public AbstractFileClient() {
     }
 
+    public AbstractFileClient(PartStore partStore) {
+        this.partStore = partStore;
+    }
+
     public AbstractFileClient(PartStore partStore, PartCancel partCancel, FileLock fileLock) {
         this.partStore = partStore;
         this.partCancel = partCancel;
@@ -59,6 +63,11 @@ public abstract class AbstractFileClient implements FileClient {
     }
 
     @Override
+    public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName, String md5) {
+        return null;
+    }
+
+    @Override
     public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName) {
         try {
             fileLock.lock(uploadId);
@@ -71,13 +80,18 @@ public abstract class AbstractFileClient implements FileClient {
     }
 
     @Override
-    public void uploadPart(UploadPart part) {
+    public PartInfo uploadPart(UploadPart part) {
         String uploadId = part.getUploadId();
         int partNumber = part.getPartNumber();
         String key = uploadId + partNumber;
         try {
             fileLock.lock(key);
-            uploadPartFile(part);
+            PartInfo partInfo = new PartInfo();
+            partInfo.setPartSize(part.getPartSize());
+            partInfo.setUploadId(part.getUploadId());
+            partInfo.setPartNumber(part.getPartNumber());
+            partInfo.setETag(uploadPartFile(part));
+            return partInfo;
         } finally {
             fileLock.unlock(key);
         }
@@ -86,9 +100,10 @@ public abstract class AbstractFileClient implements FileClient {
     /**
      * 上传分片文件
      *
-     * @param part
+     * @param part 分片信息
+     * @return md5值
      */
-    protected abstract void uploadPartFile(UploadPart part);
+    protected abstract String uploadPartFile(UploadPart part);
 
     /**
      * 合并文件

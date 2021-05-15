@@ -1,8 +1,8 @@
 package com.github.ren.file.sdk.local;
 
-import cn.hutool.crypto.digest.MD5;
 import com.github.ren.file.sdk.AbstractFileClient;
 import com.github.ren.file.sdk.FileIOException;
+import com.github.ren.file.sdk.UploadUtil;
 import com.github.ren.file.sdk.lock.FileLock;
 import com.github.ren.file.sdk.part.*;
 import org.apache.commons.io.FileUtils;
@@ -32,6 +32,11 @@ public class LocalClient extends AbstractFileClient {
 
     public LocalClient(String localStore) {
         super();
+        this.localStore = localStore;
+    }
+
+    public LocalClient(String localStore, PartStore partStore) {
+        super(partStore);
         this.localStore = localStore;
     }
 
@@ -78,7 +83,7 @@ public class LocalClient extends AbstractFileClient {
         } catch (IOException e) {
             throw new FileIOException("local upload InputStream error", e);
         } finally {
-            LocalFileOperation.close(is);
+            UploadUtil.close(is);
         }
         return yourObjectName;
     }
@@ -114,50 +119,53 @@ public class LocalClient extends AbstractFileClient {
     }
 
     @Override
-    protected void uploadPartFile(UploadPart part) {
-        partStore.uploadPart(part);
+    protected String uploadPartFile(UploadPart part) {
+        return partStore.uploadPart(part);
     }
 
     @Override
     protected CompleteMultipart merge(String uploadId, String yourObjectName) {
-        List<UploadPart> parts = partStore.listUploadParts(uploadId, yourObjectName);
-        parts.sort(Comparator.comparingInt(UploadPart::getPartNumber));
+        List<PartInfo> partInfos = listParts(uploadId, yourObjectName);
+        partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
         File outFile = this.getOutFile(yourObjectName);
         try (FileChannel outChannel = new FileOutputStream(outFile).getChannel()) {
             //同步nio 方式对分片进行合并, 有效的避免文件过大导致内存溢出
-            for (UploadPart uploadPart : parts) {
-                if (partCancel.needCancel(uploadId)) {
-                    break;
-                }
-                long chunkSize = 1L << 32;
-                if (uploadPart.getPartSize() >= chunkSize) {
-                    throw new IllegalArgumentException("文件分片必须<4G");
-                }
-                try (FileChannel inChannel = ((FileInputStream) uploadPart.getInputStream()).getChannel()) {
-                    int position = 0;
-                    long size = inChannel.size();
-                    while (0 < size) {
-                        long count = inChannel.transferTo(position, size, outChannel);
-                        if (count > 0) {
-                            position += count;
-                            size -= count;
+            for (PartInfo partInfo : partInfos) {
+                UploadPart uploadPart = partStore.getUploadPart(partInfo.getUploadId(), yourObjectName, partInfo.getPartNumber());
+                try {
+                    if (partCancel.needCancel(uploadId)) {
+                        break;
+                    }
+                    long chunkSize = 1L << 32;
+                    if (uploadPart.getPartSize() >= chunkSize) {
+                        throw new IllegalArgumentException("文件分片必须<4G");
+                    }
+                    try (FileChannel inChannel = ((FileInputStream) uploadPart.getInputStream()).getChannel()) {
+                        int position = 0;
+                        long size = inChannel.size();
+                        while (0 < size) {
+                            long count = inChannel.transferTo(position, size, outChannel);
+                            if (count > 0) {
+                                position += count;
+                                size -= count;
+                            }
                         }
                     }
+                } finally {
+                    UploadUtil.close(uploadPart.getInputStream());
                 }
+
             }
         } catch (IOException e) {
             throw new FileIOException("local complete file error", e);
-        } finally {
-            for (UploadPart part : parts) {
-                LocalFileOperation.close(part.getInputStream());
-            }
         }
-        if (partCancel.needCancel(uploadId) && FileUtils.deleteQuietly(outFile)) {
+        if (partCancel.needCancel(uploadId)) {
+            FileUtils.deleteQuietly(outFile);
             return null;
         }
         CompleteMultipart completeMultipart = new CompleteMultipart();
         completeMultipart.setObjectName(yourObjectName);
-        completeMultipart.setETag(MD5.create().digestHex(outFile));
+        completeMultipart.setETag(UploadUtil.eTag(outFile));
         return completeMultipart;
     }
 }

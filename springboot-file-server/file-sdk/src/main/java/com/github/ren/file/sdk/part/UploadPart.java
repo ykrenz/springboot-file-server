@@ -44,11 +44,11 @@ public class UploadPart implements Serializable {
      */
     private String md5Digest;
 
-    public UploadPart(String uploadId, int partNumber, long partSize, InputStream inputStream) {
+    public UploadPart(String uploadId, String key, int partNumber, long partSize, InputStream inputStream) {
         this.uploadId = uploadId;
+        this.key = key;
         this.partNumber = partNumber;
         this.partSize = partSize;
         this.inputStream = inputStream;
     }
-
 }

@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 
 /**
- * @Description 上传文件客户端
+ * @Description 简单上传文件客户端
  * @Author ren
  * @Since 1.0
  */

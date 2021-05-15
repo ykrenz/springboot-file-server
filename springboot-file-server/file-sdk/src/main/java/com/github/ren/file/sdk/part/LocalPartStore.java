@@ -1,9 +1,7 @@
 package com.github.ren.file.sdk.part;
 
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.crypto.digest.MD5;
 import com.github.ren.file.sdk.FileIOException;
-import com.github.ren.file.sdk.local.LocalFileOperation;
+import com.github.ren.file.sdk.UploadUtil;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,31 +45,28 @@ public class LocalPartStore extends AbstractPartStore {
 
     private final static String complete = "complete";
 
-    private File getUploadingFile(UploadPart part) {
-        String uploadId = part.getUploadId();
-        return new File(getPartDir(), uploadId + StrUtil.SLASH + uploading + StrUtil.DASHED + part.getPartNumber());
+    private File getUploadingFile(String uploadId, Integer partNumber) {
+        return new File(getPartDir(), uploadId + UploadUtil.SLASH + uploading + UploadUtil.DASHED + partNumber);
     }
 
-    private File getCompleteFile(UploadPart part) {
-        String uploadId = part.getUploadId();
-        return new File(getPartDir(), uploadId + StrUtil.SLASH + complete + StrUtil.DASHED + part.getPartNumber());
+    private File getCompleteFile(String uploadId, Integer partNumber) {
+        return new File(getPartDir(), uploadId + UploadUtil.SLASH + complete + UploadUtil.DASHED + partNumber);
     }
 
     @Override
-    public void uploadPart(UploadPart part) {
-        InputStream is = null;
-        try {
-            is = part.getInputStream();
-            File uploadingFile = getUploadingFile(part);
+    public String uploadPart(UploadPart part) {
+        try (InputStream is = part.getInputStream()) {
+            File uploadingFile = getUploadingFile(part.getUploadId(), part.getPartNumber());
             FileUtils.copyInputStreamToFile(is, uploadingFile);
-            File completeFile = getCompleteFile(part);
+            File completeFile = getCompleteFile(part.getUploadId(), part.getPartNumber());
             if (!uploadingFile.renameTo(completeFile) && !completeFile.setReadOnly()) {
                 throw new FileIOException("LocalPart upload rename File error");
             }
+            return UploadUtil.eTag(completeFile);
         } catch (IOException e) {
             throw new FileIOException("LocalPart upload InputStream error", e);
         } finally {
-            LocalFileOperation.close(part.getInputStream());
+            UploadUtil.close(part.getInputStream());
         }
     }
 
@@ -94,11 +89,7 @@ public class LocalPartStore extends AbstractPartStore {
     }
 
     private Integer getPartNumber(String filename) {
-        return Integer.parseInt(filename.substring(filename.lastIndexOf(StrUtil.DASHED) + 1));
-    }
-
-    private String getMd5Digest(File file) {
-        return MD5.create().digestHex(file);
+        return Integer.parseInt(filename.substring(filename.lastIndexOf(UploadUtil.DASHED) + 1));
     }
 
     @Override
@@ -109,7 +100,7 @@ public class LocalPartStore extends AbstractPartStore {
             PartInfo partInfo = new PartInfo();
             partInfo.setPartNumber(getPartNumber(file.getName()));
             partInfo.setPartSize(file.length());
-            partInfo.setETag(getMd5Digest(file));
+            partInfo.setETag(UploadUtil.eTag(file));
             partInfo.setUploadId(uploadId);
             list.add(partInfo);
         }
@@ -126,14 +117,24 @@ public class LocalPartStore extends AbstractPartStore {
                 inputStream = new FileInputStream(file);
             } catch (FileNotFoundException e) {
                 for (UploadPart part : parts) {
-                    LocalFileOperation.close(part.getInputStream());
+                    UploadUtil.close(part.getInputStream());
                 }
                 throw new FileIOException("get local part file InputStream error", e);
             }
-            UploadPart uploadPart = new UploadPart(uploadId, getPartNumber(file.getName()), file.length(), inputStream);
+            UploadPart uploadPart = new UploadPart(uploadId, yourObjectName, getPartNumber(file.getName()), file.length(), inputStream);
             parts.add(uploadPart);
         }
         return parts;
+    }
+
+    @Override
+    public UploadPart getUploadPart(String uploadId, String yourObjectName, Integer partNumber) {
+        File completeFile = getCompleteFile(uploadId, partNumber);
+        try {
+            return new UploadPart(uploadId, yourObjectName, partNumber, completeFile.length(), new FileInputStream(completeFile));
+        } catch (FileNotFoundException e) {
+            throw new FileIOException("get local part file InputStream error", e);
+        }
     }
 
     @Override
