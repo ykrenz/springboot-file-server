@@ -33,9 +33,9 @@ public class FileServerApplication {
     @Bean("AliClient")
     public FileClient aliClient() {
         OSS oss = new OSSClientBuilder()
-                .build("oss-cn-hangzhou.aliyuncs.com",
-                        "LTAI3t0ueH4n0p5k",
-                        "VLbmeVJApAdgtPKeMVL8Us11dXqoBG");
-        return new AliClient(oss, "renyin");
+                .build("",
+                        "",
+                        "");
+        return new AliClient(oss, "");
     }
 }
