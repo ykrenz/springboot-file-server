@@ -1,6 +1,6 @@
 package com.github.ren.file.sdk.model;
 
-import com.github.ren.file.sdk.Util;
+import com.github.ren.file.sdk.util.Util;
 import lombok.*;
 
 /**
@@ -16,6 +16,12 @@ public class FdfsUploadResult extends UploadGenericResult {
     private String group;
 
     private String path;
+
+    public FdfsUploadResult(String group, String path, String eTag) {
+        super(null, eTag);
+        this.group = group;
+        this.path = path;
+    }
 
     @Override
     public String getObjectName() {

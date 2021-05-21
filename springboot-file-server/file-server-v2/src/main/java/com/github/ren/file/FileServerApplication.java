@@ -16,23 +16,14 @@ public class FileServerApplication {
         SpringApplication.run(FileServerApplication.class, args);
     }
 
-//    @Bean("FdfsClient")
-//    public FdfsClient fileClient(FastFileStorageClient fastFileStorageClient,
-//                                 AppendFileStorageClient appendFileStorageClient) {
-//        return new FdfsClient(fastFileStorageClient, appendFileStorageClient);
-//    }
-
-    @Bean("LocalClient")
-    public FileClient localClient() {
-        return new LocalClient("F:\\oss\\upload",new LocalPartStore("F:\\oss\\part"));
-    }
-
-//    @Bean("AliClient")
-//    public FileClient aliClient() {
+    @Bean
+    public FileClient fileClient() {
 //        OSS oss = new OSSClientBuilder()
 //                .build("",
 //                        "",
 //                        "");
 //        return new AliClient(oss, "");
-//    }
+        return new LocalClient("F:\\oss\\upload",new LocalPartStore("F:\\oss\\part"));
+//        return FastDFSClient.getInstance();
+    }
 }

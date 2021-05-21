@@ -14,23 +14,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-        </dependency>
-        <!--  FastDFS -->
-        <dependency>
-            <groupId>com.github.tobato</groupId>
-            <artifactId>fastdfs-client</artifactId>
-        </dependency>
-        <!--        <dependency>-->
-        <!--            <groupId>com.alibaba.cloud</groupId>-->
-        <!--            <artifactId>aliyun-oss-spring-boot-starter</artifactId>-->
-        <!--        </dependency>-->
         <dependency>
             <groupId>com.aliyun.oss</groupId>
             <artifactId>aliyun-sdk-oss</artifactId>
@@ -38,16 +24,10 @@
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
-            <version>7.0.2</version>
         </dependency>
-        <!--        https://github.com/happyfish100/fastdfs-client-java -->
-        <!--        git clone https://github.com/happyfish100/fastdfs-client-java.git   -->
-        <!--        cd fastdfs-client-java  -->
-        <!--        mvn clean install   -->
         <dependency>
             <groupId>org.csource</groupId>
             <artifactId>fastdfs-client-java</artifactId>
-            <version>1.29-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

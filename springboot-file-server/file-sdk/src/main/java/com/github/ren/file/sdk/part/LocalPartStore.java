@@ -1,7 +1,7 @@
 package com.github.ren.file.sdk.part;
 
-import com.github.ren.file.sdk.FileIOException;
-import com.github.ren.file.sdk.Util;
+import com.github.ren.file.sdk.ex.FileIOException;
+import com.github.ren.file.sdk.util.Util;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,7 @@ import java.util.List;
  * @Author ren
  * @Since 1.0
  */
-public class LocalPartStore extends AbstractPartStore {
+public class LocalPartStore implements PartStore {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalPartStore.class);
 
@@ -105,26 +105,6 @@ public class LocalPartStore extends AbstractPartStore {
             list.add(partInfo);
         }
         return list;
-    }
-
-    @Override
-    public List<UploadPart> listUploadParts(String uploadId, String yourObjectName) {
-        List<File> files = listCompleteFile(uploadId);
-        List<UploadPart> parts = new ArrayList<>(files.size());
-        for (File file : files) {
-            FileInputStream inputStream = null;
-            try {
-                inputStream = new FileInputStream(file);
-            } catch (FileNotFoundException e) {
-                for (UploadPart part : parts) {
-                    Util.close(part.getInputStream());
-                }
-                throw new FileIOException("get local part file InputStream error", e);
-            }
-            UploadPart uploadPart = new UploadPart(uploadId, yourObjectName, getPartNumber(file.getName()), file.length(), inputStream);
-            parts.add(uploadPart);
-        }
-        return parts;
     }
 
     @Override

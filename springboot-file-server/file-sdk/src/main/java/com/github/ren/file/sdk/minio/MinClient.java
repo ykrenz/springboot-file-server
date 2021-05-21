@@ -1,67 +1,79 @@
 //package com.github.ren.file.sdk.minio;
 //
+//import com.github.ren.file.sdk.FileClient;
+//import com.github.ren.file.sdk.model.UploadGenericResult;
+//import com.github.ren.file.sdk.part.CompleteMultipart;
+//import com.github.ren.file.sdk.part.PartInfo;
+//import com.github.ren.file.sdk.part.UploadPart;
 //import io.minio.MinioClient;
-//import io.minio.errors.InvalidEndpointException;
-//import io.minio.errors.InvalidPortException;
-//import okhttp3.HttpUrl;
-//import okhttp3.OkHttpClient;
 //
-//import java.net.URL;
+//import java.io.File;
+//import java.io.InputStream;
+//import java.util.List;
 //
 ///**
 // * @Description minio文件客户端
 // * @Author ren
 // * @Since 1.0
 // */
-//public class MinClient {
+//public class MinClient implements FileClient {
 //
-//    private MinioClient minioClient;
-//
-//    public MinClient(String endpoint) throws InvalidEndpointException, InvalidPortException {
-//        minioClient = new MinioClient(endpoint);
+//    @Override
+//    public UploadGenericResult upload(File file, String yourObjectName) {
+//        return null;
 //    }
 //
-//    public MinClient(URL url) throws InvalidEndpointException, InvalidPortException {
-//        super(url);
+//    @Override
+//    public UploadGenericResult upload(InputStream is, String yourObjectName) {
+//        return null;
 //    }
 //
-//    public MinClient(HttpUrl url) throws InvalidEndpointException, InvalidPortException {
-//        super(url);
+//    @Override
+//    public UploadGenericResult upload(byte[] content, String yourObjectName) {
+//        return null;
 //    }
 //
-//    public MinClient(String endpoint, String accessKey, String secretKey) throws InvalidEndpointException, InvalidPortException {
-//        super(endpoint, accessKey, secretKey);
+//    @Override
+//    public UploadGenericResult upload(String url, String yourObjectName) {
+//        return null;
 //    }
 //
-//    public MinClient(String endpoint, String accessKey, String secretKey, String region) throws InvalidEndpointException, InvalidPortException {
-//        super(endpoint, accessKey, secretKey, region);
+//    @Override
+//    public String initiateMultipartUpload(String yourObjectName) {
+//        return null;
 //    }
 //
-//    public MinClient(URL url, String accessKey, String secretKey) throws InvalidEndpointException, InvalidPortException {
-//        super(url, accessKey, secretKey);
+//    @Override
+//    public PartInfo uploadPart(UploadPart part) {
+//        MinioClient minioClient = MinioClient.builder().endpoint("192.168.231.140:9000")
+//                .credentials("admin","12345678")
+//                .build();
+////        ComposeObjectArgs build = ComposeObjectArgs.builder()
+////                .bucket("my-bucketname")
+////                .object("my-objectname")
+////                .sources(sourceObjectList)
+////                .build();
+////        minioClient.composeObject()
+//        return null;
 //    }
 //
-//    public MinClient(HttpUrl url, String accessKey, String secretKey) throws InvalidEndpointException, InvalidPortException {
-//        super(url, accessKey, secretKey);
+//    @Override
+//    public List<PartInfo> listParts(String uploadId, String yourObjectName) {
+//        return null;
 //    }
 //
-//    public MinClient(String endpoint, int port, String accessKey, String secretKey) throws InvalidEndpointException, InvalidPortException {
-//        super(endpoint, port, accessKey, secretKey);
+//    @Override
+//    public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName) {
+//        return null;
 //    }
 //
-//    public MinClient(String endpoint, String accessKey, String secretKey, boolean secure) throws InvalidEndpointException, InvalidPortException {
-//        super(endpoint, accessKey, secretKey, secure);
+//    @Override
+//    public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName, String md5) {
+//        return null;
 //    }
 //
-//    public MinClient(String endpoint, int port, String accessKey, String secretKey, boolean secure) throws InvalidEndpointException, InvalidPortException {
-//        super(endpoint, port, accessKey, secretKey, secure);
-//    }
+//    @Override
+//    public void abortMultipartUpload(String uploadId, String yourObjectName) {
 //
-//    public MinClient(String endpoint, int port, String accessKey, String secretKey, String region, boolean secure) throws InvalidEndpointException, InvalidPortException {
-//        super(endpoint, port, accessKey, secretKey, region, secure);
-//    }
-//
-//    public MinClient(String endpoint, int port, String accessKey, String secretKey, String region, boolean secure, OkHttpClient httpClient) throws InvalidEndpointException, InvalidPortException {
-//        super(endpoint, port, accessKey, secretKey, region, secure, httpClient);
 //    }
 //}

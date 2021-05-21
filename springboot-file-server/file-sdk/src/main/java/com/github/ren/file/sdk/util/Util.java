@@ -1,11 +1,14 @@
-package com.github.ren.file.sdk;
+package com.github.ren.file.sdk.util;
 
+import com.github.ren.file.sdk.ex.FileIOException;
+import com.github.ren.file.sdk.part.PartInfo;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * @Description 上传工具类
@@ -42,5 +45,18 @@ public class Util implements StrPool {
 
     public static String eTag(String str) {
         return DigestUtils.md5Hex(str);
+    }
+
+    public static String eTag(byte[] data) {
+        return DigestUtils.md5Hex(data);
+    }
+
+    public static String completeMultipartMd5(List<PartInfo> partInfos) {
+        StringBuilder md5Builder = new StringBuilder();
+        for (PartInfo partInfo : partInfos) {
+            String eTag = partInfo.getETag();
+            md5Builder.append(eTag);
+        }
+        return eTag(md5Builder.toString()) + DASHED + partInfos.size();
     }
 }

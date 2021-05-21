@@ -1,4 +1,4 @@
-package com.github.ren.file.sdk;
+package com.github.ren.file.sdk.ex;
 
 /**
  * 本地文件读取异常

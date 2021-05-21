@@ -13,14 +13,6 @@ public interface PartStore extends Serializable {
     // <yourObjectName>表示上传文件到OSS时需要指定包含文件后缀在内的完整路径，例如abc/efg/123.jpg
 
     /**
-     * 初始化上传 获取上传唯一标识
-     *
-     * @param yourObjectName 上传yourObjectName
-     * @return 上传唯一标识
-     */
-    String initiateMultipartUpload(String yourObjectName);
-
-    /**
      * 上传分片
      *
      * @param part 分片
@@ -35,15 +27,6 @@ public interface PartStore extends Serializable {
      * @return 分片信息
      */
     List<PartInfo> listParts(String uploadId, String yourObjectName);
-
-    /**
-     * 获取上传分片列表
-     *
-     * @param uploadId       分片标识
-     * @param yourObjectName 上传yourObjectName
-     * @return 分片数据
-     */
-    List<UploadPart> listUploadParts(String uploadId, String yourObjectName);
 
     /**
      * 获取上传分片

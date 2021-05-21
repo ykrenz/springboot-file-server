@@ -1,6 +1,7 @@
 package com.github.ren.file.sdk.lock;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,17 +9,18 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * @Description 分段锁
+ * @Description 本地文件锁
  * @Author ren
  * @Since 1.0
  */
-@Slf4j
-public class SegmentLock implements FileLock {
+public class LocalLock implements FileLock {
+
+    private static final Logger logger = LoggerFactory.getLogger(LocalLock.class);
 
     /**
      * 默认锁数量
      */
-    private static final int DEFAULT_LOCK_COUNT = 16;
+    private static final int DEFAULT_LOCK_COUNT = 64;
 
     private final Map<Integer, ReentrantLock> lockMap = new HashMap<>();
 
@@ -26,15 +28,15 @@ public class SegmentLock implements FileLock {
 
     private boolean isFair;
 
-    public SegmentLock() {
+    public LocalLock() {
         this(DEFAULT_LOCK_COUNT, false);
     }
 
-    public SegmentLock(boolean isFair) {
+    public LocalLock(boolean isFair) {
         this(DEFAULT_LOCK_COUNT, isFair);
     }
 
-    public SegmentLock(int count, boolean isFair) {
+    public LocalLock(int count, boolean isFair) {
         this.count = count;
         this.isFair = isFair;
         this.init();

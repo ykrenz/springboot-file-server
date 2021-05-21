@@ -1,6 +1,6 @@
 package com.github.ren.file.sdk.objectname;
 
-import com.github.ren.file.sdk.Util;
+import com.github.ren.file.sdk.util.Util;
 import lombok.Data;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;

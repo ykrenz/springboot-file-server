@@ -54,17 +54,13 @@ public class FileController {
     @ApiOperation("合并文件分片")
     @PostMapping("/completeMultipartUpload")
     public CompleteMultipart completeMultipartUpload(String uploadId, String md5) {
-        //TODO 查询数据库 uploadId
         String objectName = null;
-        //TODO 保存文件 并 删除分片记录
         return null;
     }
 
     @ApiOperation("取消上传")
     @PostMapping("/abortMultipartUpload")
     public String abortMultipartUpload(String uploadId) {
-        //TODO 查询数据库 uploadId
-        String objectName = null;
 //        fileClient.abortMultipartUpload(uploadId, objectName);
         return "success";
     }

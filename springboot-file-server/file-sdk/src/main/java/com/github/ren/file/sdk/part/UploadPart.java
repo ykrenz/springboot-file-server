@@ -22,7 +22,7 @@ public class UploadPart implements Serializable {
     /**
      * 上传唯一标识
      */
-    private String key;
+    private String objectName;
 
     /**
      * 分片索引
@@ -44,9 +44,9 @@ public class UploadPart implements Serializable {
      */
     private String md5Digest;
 
-    public UploadPart(String uploadId, String key, int partNumber, long partSize, InputStream inputStream) {
+    public UploadPart(String uploadId, String objectName, int partNumber, long partSize, InputStream inputStream) {
         this.uploadId = uploadId;
-        this.key = key;
+        this.objectName = objectName;
         this.partNumber = partNumber;
         this.partSize = partSize;
         this.inputStream = inputStream;

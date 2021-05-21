@@ -1,12 +1,12 @@
 package com.github.ren.file.sdk.ali;
 
 import com.aliyun.oss.OSS;
-import com.aliyun.oss.internal.OSSHeaders;
 import com.aliyun.oss.model.*;
 import com.github.ren.file.sdk.FileClient;
-import com.github.ren.file.sdk.FileIOException;
+import com.github.ren.file.sdk.ex.FileIOException;
 import com.github.ren.file.sdk.model.UploadGenericResult;
 import com.github.ren.file.sdk.part.CompleteMultipart;
+import com.github.ren.file.sdk.part.InitMultipartResult;
 import com.github.ren.file.sdk.part.PartInfo;
 import com.github.ren.file.sdk.part.UploadPart;
 import org.slf4j.Logger;
@@ -116,13 +116,13 @@ public class AliClient implements FileClient {
     }
 
     @Override
-    public String initiateMultipartUpload(String yourObjectName) {
+    public InitMultipartResult initiateMultipartUpload(String yourObjectName) {
         // 创建InitiateMultipartUploadRequest对象。
         InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest(bucketName, yourObjectName);
         InitiateMultipartUploadResult upresult = oss.initiateMultipartUpload(request);
         // 返回uploadId，它是分片上传事件的唯一标识，您可以根据这个uploadId发起相关的操作，如取消分片上传、查询分片上传等。
         shutDown();
-        return upresult.getUploadId();
+        return new InitMultipartResult(upresult.getUploadId(), upresult.getKey());
     }
 
     @Override
@@ -132,7 +132,7 @@ public class AliClient implements FileClient {
             inputStream = part.getInputStream();
             UploadPartRequest uploadPartRequest = new UploadPartRequest();
             uploadPartRequest.setBucketName(bucketName);
-            uploadPartRequest.setKey(part.getKey());
+            uploadPartRequest.setKey(part.getObjectName());
             uploadPartRequest.setUploadId(part.getUploadId());
             uploadPartRequest.setInputStream(inputStream);
             // 设置分片大小。除了最后一个分片没有大小限制，其他的分片最小为100 KB。
@@ -179,26 +179,6 @@ public class AliClient implements FileClient {
         } while (partListing.isTruncated());
         shutDown();
         return partInfos;
-    }
-
-    @Override
-    public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName, String md5) {
-        List<PartInfo> partInfos = listParts(uploadId, yourObjectName);
-        List<PartETag> eTags = new ArrayList<>(partInfos.size());
-        for (PartInfo partInfo : partInfos) {
-            PartETag eTag = new PartETag(partInfo.getPartNumber(), partInfo.getETag());
-            eTags.add(eTag);
-        }
-        /* 步骤3：完成分片上传。 */
-        // 排序。partETags必须按分片号升序排列。
-        eTags.sort(Comparator.comparingInt(PartETag::getPartNumber));
-        // 在执行该操作时，需要提供所有有效的partETags。OSS收到提交的partETags后，会逐一验证每个分片的有效性。当所有的数据分片验证通过后，OSS将把这些分片组合成一个完整的文件。
-        CompleteMultipartUploadRequest completeMultipartUploadRequest =
-                new CompleteMultipartUploadRequest(bucketName, yourObjectName, uploadId, eTags);
-        completeMultipartUploadRequest.getHeaders().put(OSSHeaders.CONTENT_MD5, md5);
-        CompleteMultipartUploadResult uploadResult = oss.completeMultipartUpload(completeMultipartUploadRequest);
-        shutDown();
-        return new CompleteMultipart(uploadResult.getETag(), yourObjectName);
     }
 
     @Override

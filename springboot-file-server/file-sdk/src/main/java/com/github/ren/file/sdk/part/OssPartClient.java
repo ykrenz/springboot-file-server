@@ -16,9 +16,9 @@ public interface OssPartClient extends Serializable {
      * 初始化上传 获取上传唯一标识
      *
      * @param yourObjectName 上传yourObjectName
-     * @return 上传唯一标识
+     * @return InitMultipartResult
      */
-    String initiateMultipartUpload(String yourObjectName);
+    InitMultipartResult initiateMultipartUpload(String yourObjectName);
 
     /**
      * 上传分片
@@ -45,25 +45,6 @@ public interface OssPartClient extends Serializable {
      * @return
      */
     CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName);
-
-    /**
-     * 完成上传
-     *
-     * @param uploadId       上传唯一标识
-     * @param yourObjectName 上传yourObjectName
-     * @return
-     */
-//    CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName, List<PartInfo> partInfos);
-
-    /**
-     * 完成上传
-     *
-     * @param uploadId       上传唯一标识
-     * @param yourObjectName 上传yourObjectName
-     * @param md5            文件md5值 用于校验MD5一致性
-     * @return
-     */
-    CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName, String md5);
 
     /**
      * 终止上传

@@ -1,12 +1,10 @@
 package com.github.ren.file.sdk.local;
 
-import com.github.ren.file.sdk.AbstractFileClient;
-import com.github.ren.file.sdk.FileIOException;
-import com.github.ren.file.sdk.Util;
-import com.github.ren.file.sdk.lock.FileLock;
+import com.github.ren.file.sdk.FileClient;
+import com.github.ren.file.sdk.ex.FileIOException;
 import com.github.ren.file.sdk.model.UploadGenericResult;
 import com.github.ren.file.sdk.part.*;
-import org.apache.commons.io.FileUtils;
+import com.github.ren.file.sdk.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,13 +14,14 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @Description 本地文件客户端
  * @Author ren
  * @Since 1.0
  */
-public class LocalClient extends AbstractFileClient {
+public class LocalClient implements FileClient {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalClient.class);
 
@@ -31,23 +30,29 @@ public class LocalClient extends AbstractFileClient {
      */
     private String localStore;
 
+    protected static final String PART_DIR = "/data/part";
+
+    private PartStore partStore = new LocalPartStore(PART_DIR);
+
     public LocalClient(String localStore) {
-        super();
         this.localStore = localStore;
     }
 
     public LocalClient(String localStore, PartStore partStore) {
-        super(partStore);
         this.localStore = localStore;
-    }
-
-    public LocalClient(String localStore, PartStore partStore, PartCancel partCancel, FileLock fileLock) {
-        super(partStore, partCancel, fileLock);
-        this.localStore = localStore;
+        this.partStore = partStore;
     }
 
     public void setLocalStore(String localStore) {
         this.localStore = localStore;
+    }
+
+    public PartStore getPartStore() {
+        return partStore;
+    }
+
+    public void setPartStore(PartStore partStore) {
+        this.partStore = partStore;
     }
 
     public String getLocalStore() {
@@ -111,8 +116,19 @@ public class LocalClient extends AbstractFileClient {
     }
 
     @Override
-    public String initiateMultipartUpload(String yourObjectName) {
-        return partStore.initiateMultipartUpload(yourObjectName);
+    public InitMultipartResult initiateMultipartUpload(String yourObjectName) {
+        String uploadId = UUID.randomUUID().toString().replace("-", "");
+        return new InitMultipartResult(uploadId, yourObjectName);
+    }
+
+    @Override
+    public PartInfo uploadPart(UploadPart part) {
+        PartInfo partInfo = new PartInfo();
+        partInfo.setPartSize(part.getPartSize());
+        partInfo.setUploadId(part.getUploadId());
+        partInfo.setPartNumber(part.getPartNumber());
+        partInfo.setETag(partStore.uploadPart(part));
+        return partInfo;
     }
 
     @Override
@@ -121,12 +137,7 @@ public class LocalClient extends AbstractFileClient {
     }
 
     @Override
-    protected String uploadPartFile(UploadPart part) {
-        return partStore.uploadPart(part);
-    }
-
-    @Override
-    protected CompleteMultipart merge(String uploadId, String yourObjectName) {
+    public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName) {
         List<PartInfo> partInfos = listParts(uploadId, yourObjectName);
         partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
         File outFile = this.getOutFile(yourObjectName);
@@ -135,9 +146,6 @@ public class LocalClient extends AbstractFileClient {
             for (PartInfo partInfo : partInfos) {
                 UploadPart uploadPart = partStore.getUploadPart(partInfo.getUploadId(), yourObjectName, partInfo.getPartNumber());
                 try {
-                    if (partCancel.needCancel(uploadId)) {
-                        break;
-                    }
                     long chunkSize = 1L << 32;
                     if (uploadPart.getPartSize() >= chunkSize) {
                         throw new IllegalArgumentException("文件分片必须<4G");
@@ -161,13 +169,15 @@ public class LocalClient extends AbstractFileClient {
         } catch (IOException e) {
             throw new FileIOException("local complete file error", e);
         }
-        if (partCancel.needCancel(uploadId)) {
-            FileUtils.deleteQuietly(outFile);
-            return null;
-        }
         CompleteMultipart completeMultipart = new CompleteMultipart();
         completeMultipart.setObjectName(yourObjectName);
         completeMultipart.setETag(Util.eTag(outFile));
         return completeMultipart;
     }
+
+    @Override
+    public void abortMultipartUpload(String uploadId, String yourObjectName) {
+        //TODO abortMultipartUpload
+    }
+
 }

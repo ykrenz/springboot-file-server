@@ -1,6 +1,6 @@
 package com.github.ren.file.sdk.local;
 
-import com.github.ren.file.sdk.Util;
+import com.github.ren.file.sdk.util.Util;
 
 import javax.activation.MimetypesFileTypeMap;
 import java.io.*;
