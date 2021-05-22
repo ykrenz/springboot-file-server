@@ -48,7 +48,7 @@ public class FastDFSClient implements FileClient {
     private String bucketName;
 
     private static class SingletonHolder {
-        private static FastDFSClient instance = new FastDFSClient();
+        private static final FastDFSClient instance = new FastDFSClient();
     }
 
     public static FastDFSClient getInstance() {
@@ -204,12 +204,12 @@ public class FastDFSClient implements FileClient {
         partInfo.setUploadId(uploadId);
         partInfo.setGroup(group);
         String lockKey = uploadId + partNumber;
+        //源文件为 xxx.mp4 分片文件为 xxx-1.mp4
+        String partPath = getPartPath(path, partNumber);
         try {
             lock.lock(lockKey);
             //判断uploadId是否存在
             checkUploadId(uploadId, objectName);
-            //源文件为 xxx.mp4 分片文件为 xxx-1.mp4
-            String partPath = getPartPath(path, partNumber);
             FileInfo fileInfo = client.query_file_info(group, partPath);
             byte[] body = IOUtils.toByteArray(part.getInputStream());
             if (fileInfo == null) {
@@ -217,8 +217,6 @@ public class FastDFSClient implements FileClient {
                         FilenameUtils.getExtension(path), null);
                 partInfo.setPath(partFile[1]);
                 partInfo.setETag(Util.eTag(body));
-                //处理append文件 metadata
-                setPartMetadata(group, path, String.valueOf(partNumber), JSON.toJSONString(partInfo));
             } else {
                 client.delete_file(group, partPath);
                 String[] partFile = client.upload_file(group, path, Util.DASHED + partNumber, body,
@@ -229,14 +227,19 @@ public class FastDFSClient implements FileClient {
             //处理part文件 metadata
             setPartMetadata(group, partPath, String.valueOf(partNumber), JSON.toJSONString(partInfo));
         } catch (IOException | MyException e) {
-            throw new ClientException(e);
+            try {
+                client.delete_file(group, partPath);
+            } catch (IOException | MyException ioException) {
+                logger.error("delete upload part error", e);
+            }
+            throw new ClientException("upload part error", e);
         } finally {
             lock.unlock(lockKey);
         }
         try {
-            appendPartBackground(uploadId, part.getObjectName());
+            appendPartBackground(uploadId, part.getObjectName(), partInfo);
         } catch (MyException | IOException e) {
-            throw new ClientException(e);
+            throw new ClientException("appendPartBackground error", e);
         }
         return partInfo;
 
@@ -255,7 +258,7 @@ public class FastDFSClient implements FileClient {
         client.set_metadata(group, path, metaList, ProtoCommon.STORAGE_SET_METADATA_FLAG_MERGE);
     }
 
-    protected void appendPartBackground(String uploadId, String objectName) throws MyException, IOException {
+    protected void appendPartBackground(String uploadId, String objectName, FastDfsPartInfo partInfo) throws MyException, IOException {
         try {
             lock.lock(uploadId);
             FastDFS client = client();
@@ -276,22 +279,28 @@ public class FastDFSClient implements FileClient {
                 }
                 partInfos.add(JSON.parseObject(value, FastDfsPartInfo.class));
             }
+            if (partInfo != null) {
+                partInfos.add(partInfo);
+            }
 
             //获取object文件
             partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
+            long fileOffset = 0;
             for (FastDfsPartInfo fastDfsPartInfo : partInfos) {
                 int partNumber = fastDfsPartInfo.getPartNumber();
                 if (partNumber < nextPartNumber) {
                     // Part already appended.
+                    fileOffset += fastDfsPartInfo.getPartSize();
                     continue;
                 }
                 if (partNumber > nextPartNumber) {
                     // Required part number is not yet uploaded.
                     break;
                 }
-                client.append_file(group, path, client.download_file(fastDfsPartInfo.getGroup(), fastDfsPartInfo.getPath()));
+                client.modify_file(group, path, fileOffset, client.download_file(fastDfsPartInfo.getGroup(), fastDfsPartInfo.getPath()));
                 //处理append文件 metadata
                 setPartMetadata(group, path, String.valueOf(partNumber), JSON.toJSONString(fastDfsPartInfo));
+                fileOffset += fastDfsPartInfo.getPartSize();
                 nextPartNumber++;
             }
             setPartMetadata(group, path, FastDfsConstants.NEXT_PART_NUMBER_KEY, String.valueOf(nextPartNumber));
@@ -333,67 +342,72 @@ public class FastDFSClient implements FileClient {
     }
 
     @Override
-    public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName) {
+    public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName, List<PartInfo> parts) {
         try {
-            List<PartInfo> partInfos = listParts(uploadId, yourObjectName);
-            String eTag = Util.completeMultipartMd5(partInfos);
+            //处理可能没有上传的分片
+            appendPartBackground(uploadId, yourObjectName, null);
+        } catch (IOException | MyException e) {
+            throw new ClientException("appendPartBackground error", e);
+        }
+
+        try {
+            lock.lock(uploadId);
             FastDFS client = client();
             String group = getGroup(yourObjectName);
             String path = getPath(yourObjectName);
-
-            boolean appendFallback = false;
-            //处理可能没有上传的分片
-            appendPartBackground(uploadId, yourObjectName);
-            try {
-                lock.lock(uploadId);
-                NameValuePair[] metadata = client.get_metadata(group, path);
-                if (metadata == null) {
-                    throw new ClientException("uploadId not found maybe complete or abort upload");
-                }
-                partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
-                long fileOffset = 0;
-                for (PartInfo partInfo : partInfos) {
-                    String partPath = getPartPath(path, partInfo.getPartNumber());
-                    //获取分片信息
-                    NameValuePair[] partMetadata = client.get_metadata(group, partPath);
-                    FastDfsPartInfo fastDfsPartInfo = JSON.parseObject(partMetadata[0].getValue(), FastDfsPartInfo.class);
+            NameValuePair[] metadata = client.get_metadata(group, path);
+            if (metadata == null) {
+                throw new ClientException("uploadId not found maybe complete or abort upload");
+            }
+            boolean appendFallback = true;
+            List<PartInfo> partInfos = listParts(uploadId, yourObjectName);
+            partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
+            //分片数量一致校验
+            if (partInfos.size() == parts.size()) {
+                for (int i = 0; i < parts.size(); i++) {
                     //判断文件eTag值是否一致
-                    if (!partInfo.getETag().equals(fastDfsPartInfo.getETag())) {
-                        if (partInfo.getPartSize() != fastDfsPartInfo.getPartSize()) {
-                            appendFallback = true;
-                            break;
-                        }
-                        //修复文件
-                        client.modify_file(group, path, fileOffset, client.download_file(fastDfsPartInfo.getGroup(), fastDfsPartInfo.getPath()));
+                    if (!parts.get(i).getETag().equals(partInfos.get(i).getETag())) {
+                        break;
                     }
-                    fileOffset += partInfo.getPartSize();
-                }
-                if (appendFallback) {
-                    FileInfo fileInfo = client.query_file_info(group, path);
-                    if (fileInfo.getFileSize() != 0) {
-                        client.truncate_file(group, path);
+                    //判断分片number是否一致
+                    if (parts.get(i).getPartNumber() != partInfos.get(i).getPartNumber()) {
+                        break;
                     }
-                    for (PartInfo partInfo : partInfos) {
-                        int partNumber = partInfo.getPartNumber();
-                        String partPath = getPartPath(path, partNumber);
-                        NameValuePair[] partMetadata = client.get_metadata(group, partPath);
-                        FastDfsPartInfo fastDfsPartInfo = JSON.parseObject(partMetadata[0].getValue(), FastDfsPartInfo.class);
-                        client.append_file(group, path, client.download_file(fastDfsPartInfo.getGroup(), fastDfsPartInfo.getPath()));
+
+                    if (i == parts.size() - 1) {
+                        appendFallback = false;
                     }
                 }
-                //删除分片信息
-                deleteUploadId(yourObjectName);
-                for (PartInfo partInfo : partInfos) {
+            }
+            if (appendFallback) {
+                long fileOffset = 0;
+                for (PartInfo partInfo : parts) {
                     int partNumber = partInfo.getPartNumber();
                     String partPath = getPartPath(path, partNumber);
-                    client.delete_file(group, partPath);
+                    NameValuePair[] partMetadata = client.get_metadata(group, partPath);
+                    FastDfsPartInfo fastDfsPartInfo = JSON.parseObject(partMetadata[0].getValue(), FastDfsPartInfo.class);
+                    client.modify_file(group, path, fileOffset, client.download_file(fastDfsPartInfo.getGroup(), fastDfsPartInfo.getPath()));
+                    fileOffset += partInfo.getPartSize();
                 }
-            } finally {
-                lock.unlock(uploadId);
+                FileInfo fileInfo = client.query_file_info(group, path);
+                //修正文件实际大小
+                if (fileInfo.getFileSize() != fileOffset) {
+                    client.truncate_file(group, path, fileOffset);
+                }
             }
+            //删除分片信息
+            deleteUploadId(yourObjectName);
+            for (PartInfo partInfo : partInfos) {
+                int partNumber = partInfo.getPartNumber();
+                String partPath = getPartPath(path, partNumber);
+                client.delete_file(group, partPath);
+            }
+            String eTag = Util.completeMultipartMd5(parts);
             return new CompleteMultipart(eTag, group + Util.SLASH + path);
         } catch (IOException | MyException e) {
             throw new ClientException(e);
+        } finally {
+            lock.unlock(uploadId);
         }
     }
 

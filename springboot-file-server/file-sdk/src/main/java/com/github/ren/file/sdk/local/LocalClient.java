@@ -12,7 +12,6 @@ import java.io.*;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.file.Paths;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -137,13 +136,11 @@ public class LocalClient implements FileClient {
     }
 
     @Override
-    public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName) {
-        List<PartInfo> partInfos = listParts(uploadId, yourObjectName);
-        partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
+    public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName, List<PartInfo> parts) {
         File outFile = this.getOutFile(yourObjectName);
         try (FileChannel outChannel = new FileOutputStream(outFile).getChannel()) {
             //同步nio 方式对分片进行合并, 有效的避免文件过大导致内存溢出
-            for (PartInfo partInfo : partInfos) {
+            for (PartInfo partInfo : parts) {
                 UploadPart uploadPart = partStore.getUploadPart(partInfo.getUploadId(), yourObjectName, partInfo.getPartNumber());
                 try {
                     long chunkSize = 1L << 32;

@@ -44,7 +44,7 @@ public interface OssPartClient extends Serializable {
      * @param yourObjectName 上传yourObjectName
      * @return
      */
-    CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName);
+    CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName, List<PartInfo> parts);
 
     /**
      * 终止上传

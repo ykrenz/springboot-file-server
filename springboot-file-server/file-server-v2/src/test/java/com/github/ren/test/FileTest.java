@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -76,7 +77,9 @@ public class FileTest {
 
         long l = System.currentTimeMillis();
         log.info("开始合并分片uploadId={}", uploadId);
-        CompleteMultipart completeMultipart = fileClient.completeMultipartUpload(uploadId, objectName);
+        List<PartInfo> partInfos = fileClient.listParts(uploadId, objectName);
+        partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
+        CompleteMultipart completeMultipart = fileClient.completeMultipartUpload(uploadId, objectName, partInfos);
         long l1 = System.currentTimeMillis();
         log.info("合并文件完成{} 耗时={}", completeMultipart, (l1 - l));
         FileUtils.deleteQuietly(chunkDir);
@@ -167,7 +170,9 @@ public class FileTest {
         String objectName = getObjectName();
         long l = System.currentTimeMillis();
         log.info("开始合并分片uploadId={}", uploadId);
-        CompleteMultipart completeMultipart = fileClient.completeMultipartUpload(uploadId, objectName);
+        List<PartInfo> partInfos = fileClient.listParts(uploadId, objectName);
+        partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
+        CompleteMultipart completeMultipart = fileClient.completeMultipartUpload(uploadId, objectName, partInfos);
         long l1 = System.currentTimeMillis();
         log.info("合并文件完成{} 耗时={}", completeMultipart, (l1 - l));
     }

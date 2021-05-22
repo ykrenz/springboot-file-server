@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -182,17 +181,12 @@ public class AliClient implements FileClient {
     }
 
     @Override
-    public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName) {
-        List<PartInfo> partInfos = listParts(uploadId, yourObjectName);
-        List<PartETag> eTags = new ArrayList<>(partInfos.size());
-        for (PartInfo partInfo : partInfos) {
+    public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName, List<PartInfo> parts) {
+        List<PartETag> eTags = new ArrayList<>(parts.size());
+        for (PartInfo partInfo : parts) {
             PartETag eTag = new PartETag(partInfo.getPartNumber(), partInfo.getETag());
             eTags.add(eTag);
         }
-        /* 步骤3：完成分片上传。 */
-        // 排序。partETags必须按分片号升序排列。
-        eTags.sort(Comparator.comparingInt(PartETag::getPartNumber));
-        // 在执行该操作时，需要提供所有有效的partETags。OSS收到提交的partETags后，会逐一验证每个分片的有效性。当所有的数据分片验证通过后，OSS将把这些分片组合成一个完整的文件。
         CompleteMultipartUploadRequest completeMultipartUploadRequest =
                 new CompleteMultipartUploadRequest(bucketName, yourObjectName, uploadId, eTags);
         CompleteMultipartUploadResult uploadResult = oss.completeMultipartUpload(completeMultipartUploadRequest);
