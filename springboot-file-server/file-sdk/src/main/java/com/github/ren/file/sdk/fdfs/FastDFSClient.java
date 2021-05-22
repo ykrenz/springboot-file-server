@@ -355,10 +355,6 @@ public class FastDFSClient implements FileClient {
             FastDFS client = client();
             String group = getGroup(yourObjectName);
             String path = getPath(yourObjectName);
-            NameValuePair[] metadata = client.get_metadata(group, path);
-            if (metadata == null) {
-                throw new ClientException("uploadId not found maybe complete or abort upload");
-            }
             boolean appendFallback = true;
             List<PartInfo> partInfos = listParts(uploadId, yourObjectName);
             partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
