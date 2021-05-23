@@ -171,6 +171,24 @@ public class FastDFSClient implements FileClient {
         String path = getPath(objectName);
         String metadata = getMetadata(group, path, FastDfsConstants.UPLOAD_ID);
         if (metadata == null) {
+            FastDFS client = client();
+            NameValuePair[] partMetadata = client.get_metadata(group, path);
+            List<FastDfsPartInfo> partInfos = new ArrayList<>();
+            if (partMetadata != null) {
+                for (NameValuePair pair : partMetadata) {
+                    String name = pair.getName();
+                    String value = pair.getValue();
+                    if (FastDfsConstants.constants.contains(name)) {
+                        continue;
+                    }
+                    partInfos.add(JSON.parseObject(value, FastDfsPartInfo.class));
+                }
+            }
+            for (PartInfo partInfo : partInfos) {
+                int partNumber = partInfo.getPartNumber();
+                String partPath = getPartPath(path, partNumber);
+                client.delete_file(group, partPath);
+            }
             throw new MyException("uploadId not found maybe complete or abort upload");
         }
     }

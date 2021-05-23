@@ -1,8 +1,7 @@
 package com.github.ren.file;
 
 import com.github.ren.file.sdk.FileClient;
-import com.github.ren.file.sdk.local.LocalClient;
-import com.github.ren.file.sdk.part.LocalPartStore;
+import com.github.ren.file.sdk.fdfs.FastDFSClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -23,7 +22,7 @@ public class FileServerApplication {
 //                        "",
 //                        "");
 //        return new AliClient(oss, "");
-        return new LocalClient("F:\\oss\\upload",new LocalPartStore("F:\\oss\\part"));
-//        return FastDFSClient.getInstance();
+//        return new LocalClient("F:\\oss\\upload",new LocalPartStore("F:\\oss\\part"));
+        return FastDFSClient.getInstance();
     }
 }
