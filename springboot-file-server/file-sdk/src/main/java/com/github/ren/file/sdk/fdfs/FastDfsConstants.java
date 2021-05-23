@@ -1,5 +1,8 @@
 package com.github.ren.file.sdk.fdfs;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author RenYinKui
  * @Description:
@@ -7,7 +10,12 @@ package com.github.ren.file.sdk.fdfs;
  */
 public interface FastDfsConstants {
 
-    String NEXT_PART_NUMBER_KEY = "NextPartNumber";
-
     String UPLOAD_ID = "uploadId";
+
+    String NEXT_PART_NUMBER_KEY = "nextPartNumber";
+
+    String PART = "part";
+
+    List<String> constants = Arrays.asList(UPLOAD_ID, NEXT_PART_NUMBER_KEY, PART);
+
 }

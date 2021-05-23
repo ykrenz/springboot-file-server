@@ -2,7 +2,6 @@ package com.github.ren.file.sdk.fdfs;
 
 import com.alibaba.fastjson.JSON;
 import com.github.ren.file.sdk.FileClient;
-import com.github.ren.file.sdk.util.Util;
 import com.github.ren.file.sdk.ex.ClientException;
 import com.github.ren.file.sdk.ex.FileIOException;
 import com.github.ren.file.sdk.lock.FileLock;
@@ -12,11 +11,13 @@ import com.github.ren.file.sdk.part.CompleteMultipart;
 import com.github.ren.file.sdk.part.InitMultipartResult;
 import com.github.ren.file.sdk.part.PartInfo;
 import com.github.ren.file.sdk.part.UploadPart;
+import com.github.ren.file.sdk.util.Util;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.csource.common.MyException;
 import org.csource.common.NameValuePair;
 import org.csource.fastdfs.FileInfo;
@@ -155,38 +156,46 @@ public class FastDFSClient implements FileClient {
         String uploadId = Util.eTag(objectName);
         String group = getGroup(objectName);
         String path = getPath(objectName);
-        setPartMetadata(group, path, FastDfsConstants.UPLOAD_ID, uploadId);
+        mergeMetadata(group, path, FastDfsConstants.UPLOAD_ID, uploadId);
         return uploadId;
     }
 
-    private NameValuePair[] checkUploadId(String uploadId, String objectName) throws MyException, IOException {
-        FastDFS client = client();
+    private void deleteUploadId(String objectName) throws MyException, IOException {
         String group = getGroup(objectName);
         String path = getPath(objectName);
-        NameValuePair[] metadata = client.get_metadata(group, path);
+        mergeMetadata(group, path, FastDfsConstants.UPLOAD_ID, "");
+    }
+
+    private void checkUploadId(String objectName) throws MyException, IOException {
+        String group = getGroup(objectName);
+        String path = getPath(objectName);
+        String metadata = getMetadata(group, path, FastDfsConstants.UPLOAD_ID);
         if (metadata == null) {
             throw new MyException("uploadId not found maybe complete or abort upload");
         }
-        boolean check = true;
-        for (NameValuePair pair : metadata) {
-            String name = pair.getName();
-            String value = pair.getValue();
-            if (FastDfsConstants.UPLOAD_ID.equals(name) && uploadId.equals(value)) {
-                check = false;
-                break;
-            }
-        }
-        if (check) {
-            throw new MyException("uploadId not found maybe complete or abort upload");
-        }
-        return metadata;
     }
 
-    private void deleteUploadId(String objectName) throws MyException, IOException {
+    private void mergeMetadata(String group, String path, String key, String value) throws MyException, IOException {
         FastDFS client = client();
-        String group = getGroup(objectName);
-        String path = getPath(objectName);
-        client.set_metadata(group, path, null, ProtoCommon.STORAGE_SET_METADATA_FLAG_OVERWRITE);
+        NameValuePair[] metaList = new NameValuePair[]{
+                new NameValuePair(key, value)
+        };
+        client.set_metadata(group, path, metaList, ProtoCommon.STORAGE_SET_METADATA_FLAG_MERGE);
+    }
+
+    private String getMetadata(String group, String path, String key) throws MyException, IOException {
+        FastDFS client = client();
+        NameValuePair[] metadata = client.get_metadata(group, path);
+        if (metadata != null) {
+            for (NameValuePair pair : metadata) {
+                String name = pair.getName();
+                String value = pair.getValue();
+                if (name.equals(key) && StringUtils.isNotBlank(value)) {
+                    return value;
+                }
+            }
+        }
+        return null;
     }
 
     @Override
@@ -209,7 +218,7 @@ public class FastDFSClient implements FileClient {
         try {
             lock.lock(lockKey);
             //判断uploadId是否存在
-            checkUploadId(uploadId, objectName);
+            checkUploadId(objectName);
             FileInfo fileInfo = client.query_file_info(group, partPath);
             byte[] body = IOUtils.toByteArray(part.getInputStream());
             if (fileInfo == null) {
@@ -225,10 +234,16 @@ public class FastDFSClient implements FileClient {
                 partInfo.setETag(Util.eTag(body));
             }
             //处理part文件 metadata
-            setPartMetadata(group, partPath, String.valueOf(partNumber), JSON.toJSONString(partInfo));
+            mergeMetadata(group, partPath, FastDfsConstants.PART, JSON.toJSONString(partInfo));
+            //处理append文件part metadata
+            String metadata = getMetadata(group, path, String.valueOf(partNumber));
+            if (metadata == null) {
+                mergeMetadata(group, path, String.valueOf(partNumber), JSON.toJSONString(partInfo));
+            }
         } catch (IOException | MyException e) {
             try {
                 client.delete_file(group, partPath);
+                mergeMetadata(group, path, String.valueOf(partNumber), "");
             } catch (IOException | MyException ioException) {
                 logger.error("delete upload part error", e);
             }
@@ -237,9 +252,9 @@ public class FastDFSClient implements FileClient {
             lock.unlock(lockKey);
         }
         try {
-            appendPartBackground(uploadId, part.getObjectName(), partInfo);
+            appendPartBackground(uploadId, part.getObjectName());
         } catch (MyException | IOException e) {
-            throw new ClientException("appendPartBackground error", e);
+            throw new ClientException("appendPart error", e);
         }
         return partInfo;
 
@@ -250,40 +265,31 @@ public class FastDFSClient implements FileClient {
         return path.replace(baseName, baseName + Util.DASHED + partNumber);
     }
 
-    private void setPartMetadata(String group, String path, String key, String value) throws MyException, IOException {
-        FastDFS client = client();
-        NameValuePair[] metaList = new NameValuePair[]{
-                new NameValuePair(key, value)
-        };
-        client.set_metadata(group, path, metaList, ProtoCommon.STORAGE_SET_METADATA_FLAG_MERGE);
-    }
-
-    protected void appendPartBackground(String uploadId, String objectName, FastDfsPartInfo partInfo) throws MyException, IOException {
+    protected void appendPartBackground(String uploadId, String objectName) throws MyException, IOException {
         try {
             lock.lock(uploadId);
             FastDFS client = client();
             String group = getGroup(objectName);
             String path = getPath(objectName);
-            NameValuePair[] metadata = checkUploadId(uploadId, objectName);
+            checkUploadId(objectName);
+            NameValuePair[] metadata = client.get_metadata(group, path);
             List<FastDfsPartInfo> partInfos = new ArrayList<>();
             int nextPartNumber = 1;
-            for (NameValuePair pair : metadata) {
-                String name = pair.getName();
-                String value = pair.getValue();
-                if (FastDfsConstants.UPLOAD_ID.equals(name)) {
-                    continue;
+            if (metadata != null) {
+                for (NameValuePair pair : metadata) {
+                    String name = pair.getName();
+                    String value = pair.getValue();
+                    if (FastDfsConstants.UPLOAD_ID.equals(name)) {
+                        continue;
+                    }
+                    if (FastDfsConstants.NEXT_PART_NUMBER_KEY.equals(name)) {
+                        nextPartNumber = Integer.parseInt(value);
+                        continue;
+                    }
+                    partInfos.add(JSON.parseObject(value, FastDfsPartInfo.class));
                 }
-                if (FastDfsConstants.NEXT_PART_NUMBER_KEY.equals(name)) {
-                    nextPartNumber = Integer.parseInt(value);
-                    continue;
-                }
-                partInfos.add(JSON.parseObject(value, FastDfsPartInfo.class));
             }
-            if (partInfo != null) {
-                partInfos.add(partInfo);
-            }
-
-            //获取object文件
+            //part 排序
             partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
             long fileOffset = 0;
             for (FastDfsPartInfo fastDfsPartInfo : partInfos) {
@@ -298,12 +304,10 @@ public class FastDFSClient implements FileClient {
                     break;
                 }
                 client.modify_file(group, path, fileOffset, client.download_file(fastDfsPartInfo.getGroup(), fastDfsPartInfo.getPath()));
-                //处理append文件 metadata
-                setPartMetadata(group, path, String.valueOf(partNumber), JSON.toJSONString(fastDfsPartInfo));
                 fileOffset += fastDfsPartInfo.getPartSize();
                 nextPartNumber++;
             }
-            setPartMetadata(group, path, FastDfsConstants.NEXT_PART_NUMBER_KEY, String.valueOf(nextPartNumber));
+            mergeMetadata(group, path, FastDfsConstants.NEXT_PART_NUMBER_KEY, String.valueOf(nextPartNumber));
         } finally {
             lock.unlock(uploadId);
         }
@@ -323,17 +327,20 @@ public class FastDFSClient implements FileClient {
     public List<PartInfo> listParts(String uploadId, String yourObjectName) {
         List<PartInfo> partInfos = new ArrayList<>();
         try {
-            NameValuePair[] metadata = checkUploadId(uploadId, yourObjectName);
-            for (NameValuePair pair : metadata) {
-                String name = pair.getName();
-                String value = pair.getValue();
-                if (FastDfsConstants.UPLOAD_ID.equals(name)) {
-                    continue;
+            checkUploadId(yourObjectName);
+            FastDFS client = client();
+            String group = getGroup(yourObjectName);
+            String path = getPath(yourObjectName);
+            NameValuePair[] metadata = client.get_metadata(group, path);
+            if (metadata != null) {
+                for (NameValuePair pair : metadata) {
+                    String name = pair.getName();
+                    String value = pair.getValue();
+                    if (FastDfsConstants.constants.contains(name)) {
+                        continue;
+                    }
+                    partInfos.add(JSON.parseObject(value, FastDfsPartInfo.class));
                 }
-                if (FastDfsConstants.NEXT_PART_NUMBER_KEY.equals(name)) {
-                    continue;
-                }
-                partInfos.add(JSON.parseObject(value, PartInfo.class));
             }
         } catch (IOException | MyException e) {
             throw new ClientException(e);
@@ -345,9 +352,9 @@ public class FastDFSClient implements FileClient {
     public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName, List<PartInfo> parts) {
         try {
             //处理可能没有上传的分片
-            appendPartBackground(uploadId, yourObjectName, null);
+            appendPartBackground(uploadId, yourObjectName);
         } catch (IOException | MyException e) {
-            throw new ClientException("appendPartBackground error", e);
+            throw new ClientException("appendPart error", e);
         }
 
         try {
@@ -380,8 +387,11 @@ public class FastDFSClient implements FileClient {
                 for (PartInfo partInfo : parts) {
                     int partNumber = partInfo.getPartNumber();
                     String partPath = getPartPath(path, partNumber);
-                    NameValuePair[] partMetadata = client.get_metadata(group, partPath);
-                    FastDfsPartInfo fastDfsPartInfo = JSON.parseObject(partMetadata[0].getValue(), FastDfsPartInfo.class);
+                    String partJson = getMetadata(group, partPath, FastDfsConstants.PART);
+                    FastDfsPartInfo fastDfsPartInfo = JSON.parseObject(partJson, FastDfsPartInfo.class);
+                    if (fastDfsPartInfo == null) {
+                        throw new MyException("the part seem to have got lost");
+                    }
                     client.modify_file(group, path, fileOffset, client.download_file(fastDfsPartInfo.getGroup(), fastDfsPartInfo.getPath()));
                     fileOffset += partInfo.getPartSize();
                 }
@@ -398,6 +408,7 @@ public class FastDFSClient implements FileClient {
                 String partPath = getPartPath(path, partNumber);
                 client.delete_file(group, partPath);
             }
+            client.set_metadata(group, path, null, ProtoCommon.STORAGE_SET_METADATA_FLAG_OVERWRITE);
             String eTag = Util.completeMultipartMd5(parts);
             return new CompleteMultipart(eTag, group + Util.SLASH + path);
         } catch (IOException | MyException e) {
