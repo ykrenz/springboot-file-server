@@ -7,9 +7,9 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 /**
- * @author RenYinKui
- * @Description:
- * @date 2021/5/14 12:00
+ * @Description 分片上传参数
+ * @Author ren
+ * @Since 1.0
  */
 @Data
 public class PartRequest {

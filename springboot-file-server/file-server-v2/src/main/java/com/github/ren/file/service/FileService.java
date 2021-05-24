@@ -8,9 +8,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 /**
- * @author RenYinKui
- * @Description: 文件接口
- * @date 2021/5/13 10:36
+ * @Description 文件接口
+ * @Author ren
+ * @Since 1.0
  */
 public interface FileService {
 

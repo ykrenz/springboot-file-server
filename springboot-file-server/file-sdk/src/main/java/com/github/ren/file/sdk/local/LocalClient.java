@@ -62,8 +62,8 @@ public class LocalClient implements FileClient {
         return localStore;
     }
 
-    public File getOutFile(String yourObjectName) {
-        String relativePath = Paths.get(getLocalStore(), yourObjectName).toString();
+    public File getOutFile(String objectName) {
+        String relativePath = Paths.get(getLocalStore(), objectName).toString();
         File fileDir = new File(relativePath).getParentFile();
         if (!fileDir.exists() && !fileDir.mkdirs()) {
             throw new RuntimeException("local mkdirs error");
@@ -72,21 +72,21 @@ public class LocalClient implements FileClient {
     }
 
     @Override
-    public UploadGenericResult upload(File file, String yourObjectName) {
+    public UploadGenericResult upload(File file, String objectName) {
         try {
-            File outFile = getOutFile(yourObjectName);
+            File outFile = getOutFile(objectName);
             LocalFileOperation.copyFile(file, outFile);
-            return new UploadGenericResult(yourObjectName, Util.eTag(outFile));
+            return new UploadGenericResult(objectName, Util.eTag(outFile));
         } catch (IOException e) {
             throw new FileIOException("local upload file error", e);
         }
     }
 
     @Override
-    public UploadGenericResult upload(InputStream is, String yourObjectName) {
+    public UploadGenericResult upload(InputStream is, String objectName) {
         try {
-            LocalFileOperation.copyFile(is, getOutFile(yourObjectName));
-            return new UploadGenericResult(yourObjectName, Util.eTag(is));
+            LocalFileOperation.copyFile(is, getOutFile(objectName));
+            return new UploadGenericResult(objectName, Util.eTag(is));
         } catch (IOException e) {
             throw new FileIOException("local upload InputStream error", e);
         } finally {
@@ -95,29 +95,29 @@ public class LocalClient implements FileClient {
     }
 
     @Override
-    public UploadGenericResult upload(byte[] content, String yourObjectName) {
-        File outFile = this.getOutFile(yourObjectName);
+    public UploadGenericResult upload(byte[] content, String objectName) {
+        File outFile = this.getOutFile(objectName);
         try (ByteArrayInputStream is = new ByteArrayInputStream(content)) {
             LocalFileOperation.copyFile(is, outFile);
-            return new UploadGenericResult(yourObjectName, Util.eTag(outFile));
+            return new UploadGenericResult(objectName, Util.eTag(outFile));
         } catch (IOException e) {
             throw new FileIOException("local byte[] upload error", e);
         }
     }
 
     @Override
-    public UploadGenericResult upload(String url, String yourObjectName) {
+    public UploadGenericResult upload(String url, String objectName) {
         try (InputStream is = new URL(url).openStream()) {
-            return this.upload(is, yourObjectName);
+            return this.upload(is, objectName);
         } catch (IOException e) {
             throw new FileIOException("local upload url file error", e);
         }
     }
 
     @Override
-    public InitMultipartResult initiateMultipartUpload(String yourObjectName) {
+    public InitMultipartResult initiateMultipartUpload(String objectName) {
         String uploadId = UUID.randomUUID().toString().replace("-", "");
-        return new InitMultipartResult(uploadId, yourObjectName);
+        return new InitMultipartResult(uploadId, objectName);
     }
 
     @Override
@@ -131,17 +131,17 @@ public class LocalClient implements FileClient {
     }
 
     @Override
-    public List<PartInfo> listParts(String uploadId, String yourObjectName) {
-        return partStore.listParts(uploadId, yourObjectName);
+    public List<PartInfo> listParts(String uploadId, String objectName) {
+        return partStore.listParts(uploadId, objectName);
     }
 
     @Override
-    public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName, List<PartInfo> parts) {
-        File outFile = this.getOutFile(yourObjectName);
+    public CompleteMultipart completeMultipartUpload(String uploadId, String objectName, List<PartInfo> parts) {
+        File outFile = this.getOutFile(objectName);
         try (FileChannel outChannel = new FileOutputStream(outFile).getChannel()) {
             //同步nio 方式对分片进行合并, 有效的避免文件过大导致内存溢出
             for (PartInfo partInfo : parts) {
-                UploadPart uploadPart = partStore.getUploadPart(partInfo.getUploadId(), yourObjectName, partInfo.getPartNumber());
+                UploadPart uploadPart = partStore.getUploadPart(partInfo.getUploadId(), objectName, partInfo.getPartNumber());
                 try {
                     long chunkSize = 1L << 32;
                     if (uploadPart.getPartSize() >= chunkSize) {
@@ -167,13 +167,13 @@ public class LocalClient implements FileClient {
             throw new FileIOException("local complete file error", e);
         }
         CompleteMultipart completeMultipart = new CompleteMultipart();
-        completeMultipart.setObjectName(yourObjectName);
+        completeMultipart.setObjectName(objectName);
         completeMultipart.setETag(Util.eTag(outFile));
         return completeMultipart;
     }
 
     @Override
-    public void abortMultipartUpload(String uploadId, String yourObjectName) {
+    public void abortMultipartUpload(String uploadId, String objectName) {
         //TODO abortMultipartUpload
     }
 

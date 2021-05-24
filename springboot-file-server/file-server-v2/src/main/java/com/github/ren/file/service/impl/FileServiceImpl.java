@@ -14,9 +14,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 /**
- * @author RenYinKui
- * @Description: 文件逻辑类
- * @date 2021/5/13 10:41
+ * @Description 文件接口逻辑类
+ * @Author ren
+ * @Since 1.0
  */
 @Service
 @Slf4j

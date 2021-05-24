@@ -27,13 +27,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * @author RenYinKui
- * @Description:
- * @date 2021/5/17 15:47
+ * @Description 分片上传测试文件
+ * @Author ren
+ * @Since 1.0
  */
 @Slf4j
 @SpringBootTest(classes = FileServerApplication.class)
-public class FileTest {
+public class PartUploadTest {
 
     @Autowired
     private FileClient fileClient;
@@ -80,10 +80,10 @@ public class FileTest {
         executorService.shutdown();
         long l = System.currentTimeMillis();
         log.info("开始合并分片uploadId={}", uploadId);
-        partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
-        CompleteMultipart completeMultipart = fileClient.completeMultipartUpload(uploadId, objectName, partInfos);
-        long l1 = System.currentTimeMillis();
-        log.info("合并文件完成{} 耗时={}", completeMultipart, (l1 - l));
+//        partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
+//        CompleteMultipart completeMultipart = fileClient.completeMultipartUpload(uploadId, objectName, partInfos);
+//        long l1 = System.currentTimeMillis();
+//        log.info("合并文件完成{} 耗时={}", completeMultipart, (l1 - l));
         FileUtils.deleteQuietly(chunkDir);
     }
 
@@ -98,11 +98,11 @@ public class FileTest {
     }
 
     public String getUploadId() {
-        return "4096fda434e5c2b928db8181a0e24b5a";
+        return "e4d7f19b-4bfe-455e-b0af-7067e1f66e3d";
     }
 
     public String getObjectName() {
-        return "group1/M00/01/5E/CgoKTGCngQKEDUR0AAAAAAAAAAA260.mp4";
+        return "6360172481261.mp4";
     }
 
     @Test

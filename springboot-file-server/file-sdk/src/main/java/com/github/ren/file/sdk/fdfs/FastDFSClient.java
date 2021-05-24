@@ -80,7 +80,7 @@ public class FastDFSClient implements FileClient {
     }
 
     @Override
-    public FastDFSUploadResult upload(File file, String yourObjectName) {
+    public FastDFSUploadResult upload(File file, String objectName) {
         try (InputStream is = new FileInputStream(file.getAbsolutePath())) {
             FastDFS client = client();
             String[] result = client.upload_file(group, IOUtils.toByteArray(is), FilenameUtils.getExtension(file.getName()), null);
@@ -93,10 +93,10 @@ public class FastDFSClient implements FileClient {
     }
 
     @Override
-    public FastDFSUploadResult upload(InputStream is, String yourObjectName) {
+    public FastDFSUploadResult upload(InputStream is, String objectName) {
         try {
             FastDFS client = client();
-            String[] result = client.upload_file(group, IOUtils.toByteArray(is), FilenameUtils.getExtension(yourObjectName), null);
+            String[] result = client.upload_file(group, IOUtils.toByteArray(is), FilenameUtils.getExtension(objectName), null);
             String group = result[0];
             String path = result[1];
             return new FastDFSUploadResult(group, path, Util.eTag(is));
@@ -106,10 +106,10 @@ public class FastDFSClient implements FileClient {
     }
 
     @Override
-    public FastDFSUploadResult upload(byte[] content, String yourObjectName) {
+    public FastDFSUploadResult upload(byte[] content, String objectName) {
         try {
             FastDFS client = client();
-            String[] result = client.upload_file(group, content, FilenameUtils.getExtension(yourObjectName), null);
+            String[] result = client.upload_file(group, content, FilenameUtils.getExtension(objectName), null);
             String group = result[0];
             String path = result[1];
             return new FastDFSUploadResult(group, path);
@@ -119,9 +119,9 @@ public class FastDFSClient implements FileClient {
     }
 
     @Override
-    public FastDFSUploadResult upload(String url, String yourObjectName) {
+    public FastDFSUploadResult upload(String url, String objectName) {
         try (InputStream is = new URL(url).openStream()) {
-            return this.upload(is, yourObjectName);
+            return this.upload(is, objectName);
         } catch (IOException e) {
             throw new FileIOException("fdfs upload url file error", e);
         }
@@ -136,15 +136,15 @@ public class FastDFSClient implements FileClient {
     }
 
     @Override
-    public InitMultipartResult initiateMultipartUpload(String yourObjectName) {
+    public InitMultipartResult initiateMultipartUpload(String objectName) {
         try {
             FastDFS client = client();
             //初始化 append文件信息
             String[] result = client.upload_appender_file(group, "".getBytes(StandardCharsets.UTF_8),
-                    FilenameUtils.getExtension(yourObjectName), null);
+                    FilenameUtils.getExtension(objectName), null);
             String group = result[0];
             String path = result[1];
-            String objectName = group + Util.SLASH + path;
+            objectName = group + Util.SLASH + path;
             String uploadId = initUploadId(objectName);
             return new InitMultipartResult(uploadId, objectName);
         } catch (IOException | MyException e) {
@@ -156,20 +156,20 @@ public class FastDFSClient implements FileClient {
         String uploadId = Util.eTag(objectName);
         String group = getGroup(objectName);
         String path = getPath(objectName);
-        mergeMetadata(group, path, FastDfsConstants.UPLOAD_ID, uploadId);
+        mergeMetadata(group, path, FastDFSConstants.UPLOAD_ID, uploadId);
         return uploadId;
     }
 
     private void deleteUploadId(String objectName) throws MyException, IOException {
         String group = getGroup(objectName);
         String path = getPath(objectName);
-        mergeMetadata(group, path, FastDfsConstants.UPLOAD_ID, "");
+        mergeMetadata(group, path, FastDFSConstants.UPLOAD_ID, "");
     }
 
     private void checkUploadId(String objectName) throws MyException, IOException {
         String group = getGroup(objectName);
         String path = getPath(objectName);
-        String metadata = getMetadata(group, path, FastDfsConstants.UPLOAD_ID);
+        String metadata = getMetadata(group, path, FastDFSConstants.UPLOAD_ID);
         if (metadata == null) {
             throw new MyException("uploadId not found maybe complete or abort upload");
         }
@@ -235,7 +235,7 @@ public class FastDFSClient implements FileClient {
                     partInfo.setETag(Util.eTag(body));
                 }
                 //处理part文件 metadata
-                mergeMetadata(group, partPath, FastDfsConstants.PART, JSON.toJSONString(partInfo));
+                mergeMetadata(group, partPath, FastDFSConstants.PART, JSON.toJSONString(partInfo));
                 //处理append文件part metadata
                 String metadata = getMetadata(group, path, String.valueOf(partNumber));
                 if (metadata == null) {
@@ -276,10 +276,10 @@ public class FastDFSClient implements FileClient {
                 for (NameValuePair pair : metadata) {
                     String name = pair.getName();
                     String value = pair.getValue();
-                    if (FastDfsConstants.UPLOAD_ID.equals(name)) {
+                    if (FastDFSConstants.UPLOAD_ID.equals(name)) {
                         continue;
                     }
-                    if (FastDfsConstants.NEXT_PART_NUMBER_KEY.equals(name)) {
+                    if (FastDFSConstants.NEXT_PART_NUMBER_KEY.equals(name)) {
                         nextPartNumber = Integer.parseInt(value);
                         continue;
                     }
@@ -304,7 +304,7 @@ public class FastDFSClient implements FileClient {
                 fileOffset += fastDfsPartInfo.getPartSize();
                 nextPartNumber++;
             }
-            mergeMetadata(group, path, FastDfsConstants.NEXT_PART_NUMBER_KEY, String.valueOf(nextPartNumber));
+            mergeMetadata(group, path, FastDFSConstants.NEXT_PART_NUMBER_KEY, String.valueOf(nextPartNumber));
         } finally {
             lock.unlock(uploadId);
         }
@@ -321,19 +321,19 @@ public class FastDFSClient implements FileClient {
     }
 
     @Override
-    public List<PartInfo> listParts(String uploadId, String yourObjectName) {
+    public List<PartInfo> listParts(String uploadId, String objectName) {
         try {
-            checkUploadId(yourObjectName);
+            checkUploadId(objectName);
             FastDFS client = client();
-            String group = getGroup(yourObjectName);
-            String path = getPath(yourObjectName);
+            String group = getGroup(objectName);
+            String path = getPath(objectName);
             List<PartInfo> partInfos = new ArrayList<>();
             NameValuePair[] metadata = client.get_metadata(group, path);
             if (metadata != null) {
                 for (NameValuePair pair : metadata) {
                     String name = pair.getName();
                     String value = pair.getValue();
-                    if (FastDfsConstants.constants.contains(name)) {
+                    if (FastDFSConstants.constants.contains(name)) {
                         continue;
                     }
                     partInfos.add(JSON.parseObject(value, FastDfsPartInfo.class));
@@ -347,10 +347,10 @@ public class FastDFSClient implements FileClient {
     }
 
     @Override
-    public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName, List<PartInfo> parts) {
+    public CompleteMultipart completeMultipartUpload(String uploadId, String objectName, List<PartInfo> parts) {
         try {
             //处理可能没有上传的分片
-            appendPartBackground(uploadId, yourObjectName);
+            appendPartBackground(uploadId, objectName);
         } catch (IOException | MyException e) {
             throw new ClientException("appendPart error", e);
         }
@@ -358,10 +358,10 @@ public class FastDFSClient implements FileClient {
         try {
             lock.lock(uploadId);
             FastDFS client = client();
-            String group = getGroup(yourObjectName);
-            String path = getPath(yourObjectName);
+            String group = getGroup(objectName);
+            String path = getPath(objectName);
             boolean appendFallback = true;
-            List<PartInfo> partInfos = listParts(uploadId, yourObjectName);
+            List<PartInfo> partInfos = listParts(uploadId, objectName);
             //分片数量一致校验
             if (partInfos.size() == parts.size()) {
                 for (int i = 0; i < parts.size(); i++) {
@@ -385,7 +385,7 @@ public class FastDFSClient implements FileClient {
                 for (PartInfo partInfo : parts) {
                     int partNumber = partInfo.getPartNumber();
                     String partPath = getPartPath(path, partNumber);
-                    String partJson = getMetadata(group, partPath, FastDfsConstants.PART);
+                    String partJson = getMetadata(group, partPath, FastDFSConstants.PART);
                     FastDfsPartInfo fastDfsPartInfo = JSON.parseObject(partJson, FastDfsPartInfo.class);
                     if (fastDfsPartInfo == null) {
                         throw new MyException("the part seem to have got lost");
@@ -400,7 +400,7 @@ public class FastDFSClient implements FileClient {
                 }
             }
             //删除分片信息
-            deleteUploadId(yourObjectName);
+            deleteUploadId(objectName);
             for (PartInfo partInfo : partInfos) {
                 int partNumber = partInfo.getPartNumber();
                 String partPath = getPartPath(path, partNumber);
@@ -417,15 +417,15 @@ public class FastDFSClient implements FileClient {
     }
 
     @Override
-    public void abortMultipartUpload(String uploadId, String yourObjectName) {
+    public void abortMultipartUpload(String uploadId, String objectName) {
         try {
             try {
                 lock.lock(uploadId);
                 FastDFS client = client();
-                String group = getGroup(yourObjectName);
-                String path = getPath(yourObjectName);
+                String group = getGroup(objectName);
+                String path = getPath(objectName);
                 //先删除part文件信息
-                List<PartInfo> partInfos = listParts(uploadId, yourObjectName);
+                List<PartInfo> partInfos = listParts(uploadId, objectName);
                 for (PartInfo partInfo : partInfos) {
                     String lockKey = uploadId + partInfo.getPartNumber();
                     try {
@@ -436,7 +436,7 @@ public class FastDFSClient implements FileClient {
                         lock.unlock(lockKey);
                     }
                 }
-                deleteUploadId(yourObjectName);
+                deleteUploadId(objectName);
                 //删除源文件
                 client.delete_file(group, path);
             } finally {

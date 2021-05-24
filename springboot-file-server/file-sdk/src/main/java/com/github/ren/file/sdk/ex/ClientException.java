@@ -1,7 +1,7 @@
 package com.github.ren.file.sdk.ex;
 
 /**
- * @Description
+ * @Description 客户端异常
  * @Author ren
  * @Since 1.0
  */

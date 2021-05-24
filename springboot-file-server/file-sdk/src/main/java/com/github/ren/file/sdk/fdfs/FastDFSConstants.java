@@ -4,11 +4,11 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @author RenYinKui
- * @Description:
- * @date 2021/5/21 11:17
+ * @Description fastdfs常量信息
+ * @Author ren
+ * @Since 1.0
  */
-public interface FastDfsConstants {
+public interface FastDFSConstants {
 
     String UPLOAD_ID = "uploadId";
 

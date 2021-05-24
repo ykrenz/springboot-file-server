@@ -1,5 +1,7 @@
 package com.github.ren.file.sdk.part;
 
+import lombok.Data;
+
 import java.io.Serializable;
 
 /**
@@ -7,6 +9,7 @@ import java.io.Serializable;
  * @Author ren
  * @Since 1.0
  */
+@Data
 public class PartInfo implements Serializable {
     /**
      * 上传唯一标识
@@ -28,35 +31,4 @@ public class PartInfo implements Serializable {
      */
     private String eTag;
 
-    public String getUploadId() {
-        return uploadId;
-    }
-
-    public void setUploadId(String uploadId) {
-        this.uploadId = uploadId;
-    }
-
-    public int getPartNumber() {
-        return partNumber;
-    }
-
-    public void setPartNumber(int partNumber) {
-        this.partNumber = partNumber;
-    }
-
-    public long getPartSize() {
-        return partSize;
-    }
-
-    public void setPartSize(long partSize) {
-        this.partSize = partSize;
-    }
-
-    public String getETag() {
-        return eTag;
-    }
-
-    public void setETag(String eTag) {
-        this.eTag = eTag;
-    }
 }

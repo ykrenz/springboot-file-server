@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.io.InputStream;
-import java.io.Serializable;
 
 /**
  * @Description 分片信息
@@ -13,7 +12,7 @@ import java.io.Serializable;
  */
 @Data
 @AllArgsConstructor
-public class UploadPart implements Serializable {
+public class UploadPart {
     /**
      * 上传唯一标识
      */

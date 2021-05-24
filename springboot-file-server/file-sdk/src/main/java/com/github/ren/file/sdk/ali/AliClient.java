@@ -61,43 +61,43 @@ public class AliClient implements FileClient {
     }
 
     @Override
-    public UploadGenericResult upload(File file, String yourObjectName) {
-        PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, yourObjectName, file);
+    public UploadGenericResult upload(File file, String objectName) {
+        PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, objectName, file);
         PutObjectResult putObjectResult = oss.putObject(putObjectRequest);
-        return new UploadGenericResult(yourObjectName, putObjectResult.getETag());
+        return new UploadGenericResult(objectName, putObjectResult.getETag());
     }
 
     @Override
-    public UploadGenericResult upload(InputStream is, String yourObjectName) {
-        PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, yourObjectName, is);
+    public UploadGenericResult upload(InputStream is, String objectName) {
+        PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, objectName, is);
         PutObjectResult putObjectResult = oss.putObject(putObjectRequest);
-        return new UploadGenericResult(yourObjectName, putObjectResult.getETag());
+        return new UploadGenericResult(objectName, putObjectResult.getETag());
     }
 
     @Override
-    public UploadGenericResult upload(byte[] content, String yourObjectName) {
+    public UploadGenericResult upload(byte[] content, String objectName) {
         try (InputStream is = new ByteArrayInputStream(content)) {
-            PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, yourObjectName, is);
+            PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, objectName, is);
             PutObjectResult putObjectResult = oss.putObject(putObjectRequest);
-            return new UploadGenericResult(yourObjectName, putObjectResult.getETag());
+            return new UploadGenericResult(objectName, putObjectResult.getETag());
         } catch (IOException e) {
             throw new FileIOException("ali oss upload byte[] error", e);
         }
     }
 
     @Override
-    public UploadGenericResult upload(String url, String yourObjectName) {
+    public UploadGenericResult upload(String url, String objectName) {
         try (InputStream is = new URL(url).openStream()) {
-            return this.upload(is, yourObjectName);
+            return this.upload(is, objectName);
         } catch (IOException e) {
             throw new FileIOException("ali oss upload url file error", e);
         }
     }
 
     @Override
-    public InitMultipartResult initiateMultipartUpload(String yourObjectName) {
+    public InitMultipartResult initiateMultipartUpload(String objectName) {
         // 创建InitiateMultipartUploadRequest对象。
-        InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest(bucketName, yourObjectName);
+        InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest(bucketName, objectName);
         InitiateMultipartUploadResult upresult = oss.initiateMultipartUpload(request);
         // 返回uploadId，它是分片上传事件的唯一标识，您可以根据这个uploadId发起相关的操作，如取消分片上传、查询分片上传等。
         return new InitMultipartResult(upresult.getUploadId(), upresult.getKey());
@@ -137,9 +137,9 @@ public class AliClient implements FileClient {
     }
 
     @Override
-    public List<PartInfo> listParts(String uploadId, String yourObjectName) {
+    public List<PartInfo> listParts(String uploadId, String objectName) {
         PartListing partListing;
-        ListPartsRequest listPartsRequest = new ListPartsRequest(bucketName, yourObjectName, uploadId);
+        ListPartsRequest listPartsRequest = new ListPartsRequest(bucketName, objectName, uploadId);
         List<PartInfo> partInfos = new ArrayList<>();
         do {
             partListing = oss.listParts(listPartsRequest);
@@ -158,23 +158,23 @@ public class AliClient implements FileClient {
     }
 
     @Override
-    public CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName, List<PartInfo> parts) {
+    public CompleteMultipart completeMultipartUpload(String uploadId, String objectName, List<PartInfo> parts) {
         List<PartETag> eTags = new ArrayList<>(parts.size());
         for (PartInfo partInfo : parts) {
             PartETag eTag = new PartETag(partInfo.getPartNumber(), partInfo.getETag());
             eTags.add(eTag);
         }
         CompleteMultipartUploadRequest completeMultipartUploadRequest =
-                new CompleteMultipartUploadRequest(bucketName, yourObjectName, uploadId, eTags);
+                new CompleteMultipartUploadRequest(bucketName, objectName, uploadId, eTags);
         CompleteMultipartUploadResult uploadResult = oss.completeMultipartUpload(completeMultipartUploadRequest);
-        return new CompleteMultipart(uploadResult.getETag(), yourObjectName);
+        return new CompleteMultipart(uploadResult.getETag(), objectName);
     }
 
     @Override
-    public void abortMultipartUpload(String uploadId, String yourObjectName) {
+    public void abortMultipartUpload(String uploadId, String objectName) {
         // 取消分片上传，其中uploadId源自InitiateMultipartUpload。
         AbortMultipartUploadRequest abortMultipartUploadRequest =
-                new AbortMultipartUploadRequest(bucketName, yourObjectName, uploadId);
+                new AbortMultipartUploadRequest(bucketName, objectName, uploadId);
         oss.abortMultipartUpload(abortMultipartUploadRequest);
     }
 }
