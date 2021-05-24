@@ -33,16 +33,15 @@ public class AliClient implements FileClient {
 
     private String bucketName;
 
-    private boolean autoShutdown;
-
-    public AliClient(OSS oss, String bucketName) {
-        this(oss, bucketName, false);
+    private static class SingletonHolder {
+        private static final AliClient INSTANCE = new AliClient();
     }
 
-    public AliClient(OSS oss, String bucketName, boolean autoShutdown) {
-        this.oss = oss;
-        this.bucketName = bucketName;
-        this.autoShutdown = autoShutdown;
+    public static AliClient getInstance() {
+        return AliClient.SingletonHolder.INSTANCE;
+    }
+
+    private AliClient() {
     }
 
     public OSS getOss() {
@@ -61,25 +60,10 @@ public class AliClient implements FileClient {
         this.bucketName = bucketName;
     }
 
-    public boolean isAutoShutdown() {
-        return autoShutdown;
-    }
-
-    public void setAutoShutdown(boolean autoShutdown) {
-        this.autoShutdown = autoShutdown;
-    }
-
-    private void shutDown() {
-        if (isAutoShutdown()) {
-            oss.shutdown();
-        }
-    }
-
     @Override
     public UploadGenericResult upload(File file, String yourObjectName) {
         PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, yourObjectName, file);
         PutObjectResult putObjectResult = oss.putObject(putObjectRequest);
-        shutDown();
         return new UploadGenericResult(yourObjectName, putObjectResult.getETag());
     }
 
@@ -87,7 +71,6 @@ public class AliClient implements FileClient {
     public UploadGenericResult upload(InputStream is, String yourObjectName) {
         PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, yourObjectName, is);
         PutObjectResult putObjectResult = oss.putObject(putObjectRequest);
-        shutDown();
         return new UploadGenericResult(yourObjectName, putObjectResult.getETag());
     }
 
@@ -96,7 +79,6 @@ public class AliClient implements FileClient {
         try (InputStream is = new ByteArrayInputStream(content)) {
             PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, yourObjectName, is);
             PutObjectResult putObjectResult = oss.putObject(putObjectRequest);
-            shutDown();
             return new UploadGenericResult(yourObjectName, putObjectResult.getETag());
         } catch (IOException e) {
             throw new FileIOException("ali oss upload byte[] error", e);
@@ -106,9 +88,7 @@ public class AliClient implements FileClient {
     @Override
     public UploadGenericResult upload(String url, String yourObjectName) {
         try (InputStream is = new URL(url).openStream()) {
-            UploadGenericResult result = this.upload(is, yourObjectName);
-            shutDown();
-            return result;
+            return this.upload(is, yourObjectName);
         } catch (IOException e) {
             throw new FileIOException("ali oss upload url file error", e);
         }
@@ -120,7 +100,6 @@ public class AliClient implements FileClient {
         InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest(bucketName, yourObjectName);
         InitiateMultipartUploadResult upresult = oss.initiateMultipartUpload(request);
         // 返回uploadId，它是分片上传事件的唯一标识，您可以根据这个uploadId发起相关的操作，如取消分片上传、查询分片上传等。
-        shutDown();
         return new InitMultipartResult(upresult.getUploadId(), upresult.getKey());
     }
 
@@ -145,7 +124,6 @@ public class AliClient implements FileClient {
             partInfo.setUploadId(part.getUploadId());
             partInfo.setPartNumber(uploadPartResult.getPartNumber());
             partInfo.setETag(uploadPartResult.getETag());
-            shutDown();
             return partInfo;
         } finally {
             if (inputStream != null) {
@@ -176,7 +154,6 @@ public class AliClient implements FileClient {
             // 指定List的起始位置，只有分片号大于此参数值的分片会被列出。
             listPartsRequest.setPartNumberMarker(partListing.getNextPartNumberMarker());
         } while (partListing.isTruncated());
-        shutDown();
         return partInfos;
     }
 
@@ -190,7 +167,6 @@ public class AliClient implements FileClient {
         CompleteMultipartUploadRequest completeMultipartUploadRequest =
                 new CompleteMultipartUploadRequest(bucketName, yourObjectName, uploadId, eTags);
         CompleteMultipartUploadResult uploadResult = oss.completeMultipartUpload(completeMultipartUploadRequest);
-        shutDown();
         return new CompleteMultipart(uploadResult.getETag(), yourObjectName);
     }
 
@@ -200,6 +176,5 @@ public class AliClient implements FileClient {
         AbortMultipartUploadRequest abortMultipartUploadRequest =
                 new AbortMultipartUploadRequest(bucketName, yourObjectName, uploadId);
         oss.abortMultipartUpload(abortMultipartUploadRequest);
-        shutDown();
     }
 }

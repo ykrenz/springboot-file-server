@@ -17,12 +17,15 @@ public class FileServerApplication {
 
     @Bean
     public FileClient fileClient() {
+//        return new LocalClient("F:\\oss\\upload",new LocalPartStore("F:\\oss\\part"));
+        return FastDFSClient.getInstance();
+//        AliClient aliClient = AliClient.getInstance();
 //        OSS oss = new OSSClientBuilder()
 //                .build("",
 //                        "",
 //                        "");
-//        return new AliClient(oss, "");
-//        return new LocalClient("F:\\oss\\upload",new LocalPartStore("F:\\oss\\part"));
-        return FastDFSClient.getInstance();
+//        aliClient.setOss(oss);
+//        aliClient.setBucketName("");
+//        return aliClient;
     }
 }

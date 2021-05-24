@@ -49,11 +49,11 @@ public class FastDFSClient implements FileClient {
     private String group;
 
     private static class SingletonHolder {
-        private static final FastDFSClient instance = new FastDFSClient();
+        private static final FastDFSClient INSTANCE = new FastDFSClient();
     }
 
     public static FastDFSClient getInstance() {
-        return SingletonHolder.instance;
+        return SingletonHolder.INSTANCE;
     }
 
     private FastDFSClient() {
