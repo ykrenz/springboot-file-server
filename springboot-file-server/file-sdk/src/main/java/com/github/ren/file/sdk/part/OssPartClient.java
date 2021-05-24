@@ -29,7 +29,7 @@ public interface OssPartClient extends Serializable {
     PartInfo uploadPart(UploadPart part);
 
     /**
-     * 获取分片列表
+     * 获取所有的分片列表
      *
      * @param uploadId       上传唯一标识
      * @param yourObjectName 上传yourObjectName
@@ -42,6 +42,7 @@ public interface OssPartClient extends Serializable {
      *
      * @param uploadId       上传唯一标识
      * @param yourObjectName 上传yourObjectName
+     * @param parts          合并的分片信息
      * @return
      */
     CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName, List<PartInfo> parts);

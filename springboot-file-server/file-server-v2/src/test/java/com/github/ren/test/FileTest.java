@@ -3,8 +3,6 @@ package com.github.ren.test;
 import cn.hutool.crypto.digest.MD5;
 import com.github.ren.file.FileServerApplication;
 import com.github.ren.file.sdk.FileClient;
-import com.github.ren.file.sdk.fdfs.FastDFS;
-import com.github.ren.file.sdk.fdfs.FastDFSBuilder;
 import com.github.ren.file.sdk.local.LocalFileOperation;
 import com.github.ren.file.sdk.objectname.TimestampGenerator;
 import com.github.ren.file.sdk.part.CompleteMultipart;
@@ -13,8 +11,6 @@ import com.github.ren.file.sdk.part.PartInfo;
 import com.github.ren.file.sdk.part.UploadPart;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.csource.common.MyException;
-import org.csource.fastdfs.ProtoCommon;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,7 +24,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
 
 /**
  * @author RenYinKui
@@ -44,7 +40,7 @@ public class FileTest {
 
     @Test
     public void upload() throws Exception {
-        String filename = "F:\\oss\\test\\test3.mp4";
+        String filename = "F:\\oss\\test\\test2.mp4";
         String yourObjectName = new TimestampGenerator(filename).generator();
         InitMultipartResult initMultipartResult = fileClient.initiateMultipartUpload(yourObjectName);
         String objectName = initMultipartResult.getObjectName();
@@ -59,15 +55,15 @@ public class FileTest {
         String md5 = MD5.create().digestHex(sourceFile);
         log.info(md5);
 
-        //abort
-        new Thread(() -> {
-            try {
-                TimeUnit.SECONDS.sleep(2);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            fileClient.abortMultipartUpload(uploadId, objectName);
-        }).start();
+        //abort upload test
+//        new Thread(() -> {
+//            try {
+//                TimeUnit.SECONDS.sleep(5);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//            fileClient.abortMultipartUpload(uploadId, objectName);
+//        }).start();
 
         //模拟多线程上传
         List<Callable<PartInfo>> tasks = new ArrayList<>();
@@ -76,12 +72,14 @@ public class FileTest {
             tasks.add(partTask);
         }
         ExecutorService executorService = Executors.newFixedThreadPool(3);
-        executorService.invokeAll(tasks);
+        List<Future<PartInfo>> futures = executorService.invokeAll(tasks);
+        List<PartInfo> partInfos = new ArrayList<>();
+        for (Future<PartInfo> future : futures) {
+            partInfos.add(future.get());
+        }
         executorService.shutdown();
-
         long l = System.currentTimeMillis();
         log.info("开始合并分片uploadId={}", uploadId);
-        List<PartInfo> partInfos = fileClient.listParts(uploadId, objectName);
         partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
         CompleteMultipart completeMultipart = fileClient.completeMultipartUpload(uploadId, objectName, partInfos);
         long l1 = System.currentTimeMillis();
@@ -190,19 +188,6 @@ public class FileTest {
         fileClient.abortMultipartUpload(uploadId, objectName);
         long l1 = System.currentTimeMillis();
         log.info("取消完成 耗时={}", (l1 - l));
-    }
-
-    @Test
-    public void testUPload() throws MyException, IOException {
-        FastDFS fastDFS = FastDFSBuilder.build();
-//        String file  ="C:\\Users\\Administrator\\Desktop\\2021_05_20\\枣庄项目部署汇总-第一版\\大数据看板\\枣庄大数据看板部署-任印奎.doc";
-//        String path = fastDFS.upload_file1(file, "doc", new NameValuePair[]{
-//                new NameValuePair("uploadId", "123")
-//        });
-//        log.info(path);
-         fastDFS.set_metadata1("group1/M00/01/65/CgoKTGCp2RCALva2AAEwAIIijAU3261.doc",null,
-                ProtoCommon.STORAGE_SET_METADATA_FLAG_MERGE
-        );
     }
 
 }

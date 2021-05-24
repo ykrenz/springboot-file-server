@@ -4,20 +4,20 @@ import com.github.ren.file.sdk.util.Util;
 import lombok.*;
 
 /**
- * @Description
+ * @Description FastDFSUploadResult
  * @Author ren
  * @Since 1.0
  */
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
-public class FdfsUploadResult extends UploadGenericResult {
+public class FastDFSUploadResult extends UploadGenericResult {
 
     private String group;
 
     private String path;
 
-    public FdfsUploadResult(String group, String path, String eTag) {
+    public FastDFSUploadResult(String group, String path, String eTag) {
         super(null, eTag);
         this.group = group;
         this.path = path;

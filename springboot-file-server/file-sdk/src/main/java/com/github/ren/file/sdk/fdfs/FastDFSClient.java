@@ -6,7 +6,7 @@ import com.github.ren.file.sdk.ex.ClientException;
 import com.github.ren.file.sdk.ex.FileIOException;
 import com.github.ren.file.sdk.lock.FileLock;
 import com.github.ren.file.sdk.lock.LocalLock;
-import com.github.ren.file.sdk.model.FdfsUploadResult;
+import com.github.ren.file.sdk.model.FastDFSUploadResult;
 import com.github.ren.file.sdk.part.CompleteMultipart;
 import com.github.ren.file.sdk.part.InitMultipartResult;
 import com.github.ren.file.sdk.part.PartInfo;
@@ -46,7 +46,7 @@ public class FastDFSClient implements FileClient {
 
     private FileLock lock = new LocalLock();
 
-    private String bucketName;
+    private String group;
 
     private static class SingletonHolder {
         private static final FastDFSClient instance = new FastDFSClient();
@@ -67,12 +67,12 @@ public class FastDFSClient implements FileClient {
         this.lock = lock;
     }
 
-    public String getBucketName() {
-        return bucketName;
+    public String getGroup() {
+        return group;
     }
 
-    public void setBucketName(String bucketName) {
-        this.bucketName = bucketName;
+    public void setGroup(String group) {
+        this.group = group;
     }
 
     private FastDFS client() {
@@ -80,46 +80,46 @@ public class FastDFSClient implements FileClient {
     }
 
     @Override
-    public FdfsUploadResult upload(File file, String yourObjectName) {
+    public FastDFSUploadResult upload(File file, String yourObjectName) {
         try (InputStream is = new FileInputStream(file.getAbsolutePath())) {
             FastDFS client = client();
-            String[] result = client.upload_file(bucketName, IOUtils.toByteArray(is), FilenameUtils.getExtension(file.getName()), null);
+            String[] result = client.upload_file(group, IOUtils.toByteArray(is), FilenameUtils.getExtension(file.getName()), null);
             String group = result[0];
             String path = result[1];
-            return new FdfsUploadResult(group, path, Util.eTag(is));
+            return new FastDFSUploadResult(group, path, Util.eTag(is));
         } catch (IOException | MyException e) {
             throw new ClientException(e.getMessage());
         }
     }
 
     @Override
-    public FdfsUploadResult upload(InputStream is, String yourObjectName) {
+    public FastDFSUploadResult upload(InputStream is, String yourObjectName) {
         try {
             FastDFS client = client();
-            String[] result = client.upload_file(bucketName, IOUtils.toByteArray(is), FilenameUtils.getExtension(yourObjectName), null);
+            String[] result = client.upload_file(group, IOUtils.toByteArray(is), FilenameUtils.getExtension(yourObjectName), null);
             String group = result[0];
             String path = result[1];
-            return new FdfsUploadResult(group, path, Util.eTag(is));
+            return new FastDFSUploadResult(group, path, Util.eTag(is));
         } catch (IOException | MyException e) {
             throw new ClientException(e.getMessage());
         }
     }
 
     @Override
-    public FdfsUploadResult upload(byte[] content, String yourObjectName) {
+    public FastDFSUploadResult upload(byte[] content, String yourObjectName) {
         try {
             FastDFS client = client();
-            String[] result = client.upload_file(bucketName, content, FilenameUtils.getExtension(yourObjectName), null);
+            String[] result = client.upload_file(group, content, FilenameUtils.getExtension(yourObjectName), null);
             String group = result[0];
             String path = result[1];
-            return new FdfsUploadResult(group, path);
+            return new FastDFSUploadResult(group, path);
         } catch (IOException | MyException e) {
             throw new ClientException(e.getMessage());
         }
     }
 
     @Override
-    public FdfsUploadResult upload(String url, String yourObjectName) {
+    public FastDFSUploadResult upload(String url, String yourObjectName) {
         try (InputStream is = new URL(url).openStream()) {
             return this.upload(is, yourObjectName);
         } catch (IOException e) {
@@ -140,7 +140,7 @@ public class FastDFSClient implements FileClient {
         try {
             FastDFS client = client();
             //初始化 append文件信息
-            String[] result = client.upload_appender_file(bucketName, "".getBytes(StandardCharsets.UTF_8),
+            String[] result = client.upload_appender_file(group, "".getBytes(StandardCharsets.UTF_8),
                     FilenameUtils.getExtension(yourObjectName), null);
             String group = result[0];
             String path = result[1];
@@ -171,24 +171,6 @@ public class FastDFSClient implements FileClient {
         String path = getPath(objectName);
         String metadata = getMetadata(group, path, FastDfsConstants.UPLOAD_ID);
         if (metadata == null) {
-            FastDFS client = client();
-            NameValuePair[] partMetadata = client.get_metadata(group, path);
-            List<FastDfsPartInfo> partInfos = new ArrayList<>();
-            if (partMetadata != null) {
-                for (NameValuePair pair : partMetadata) {
-                    String name = pair.getName();
-                    String value = pair.getValue();
-                    if (FastDfsConstants.constants.contains(name)) {
-                        continue;
-                    }
-                    partInfos.add(JSON.parseObject(value, FastDfsPartInfo.class));
-                }
-            }
-            for (PartInfo partInfo : partInfos) {
-                int partNumber = partInfo.getPartNumber();
-                String partPath = getPartPath(path, partNumber);
-                client.delete_file(group, partPath);
-            }
             throw new MyException("uploadId not found maybe complete or abort upload");
         }
     }
@@ -234,30 +216,36 @@ public class FastDFSClient implements FileClient {
         //源文件为 xxx.mp4 分片文件为 xxx-1.mp4
         String partPath = getPartPath(path, partNumber);
         try {
-            lock.lock(lockKey);
-            //判断uploadId是否存在
-            checkUploadId(objectName);
-            FileInfo fileInfo = client.query_file_info(group, partPath);
-            byte[] body = IOUtils.toByteArray(part.getInputStream());
-            if (fileInfo == null) {
-                String[] partFile = client.upload_file(group, path, Util.DASHED + partNumber, body,
-                        FilenameUtils.getExtension(path), null);
-                partInfo.setPath(partFile[1]);
-                partInfo.setETag(Util.eTag(body));
-            } else {
-                client.delete_file(group, partPath);
-                String[] partFile = client.upload_file(group, path, Util.DASHED + partNumber, body,
-                        FilenameUtils.getExtension(path), null);
-                partInfo.setPath(partFile[1]);
-                partInfo.setETag(Util.eTag(body));
+            try {
+                lock.lock(lockKey);
+                //判断uploadId是否存在
+                checkUploadId(objectName);
+                FileInfo fileInfo = client.query_file_info(group, partPath);
+                byte[] body = IOUtils.toByteArray(part.getInputStream());
+                if (fileInfo == null) {
+                    String[] partFile = client.upload_file(group, path, Util.DASHED + partNumber, body,
+                            FilenameUtils.getExtension(path), null);
+                    partInfo.setPath(partFile[1]);
+                    partInfo.setETag(Util.eTag(body));
+                } else {
+                    client.delete_file(group, partPath);
+                    String[] partFile = client.upload_file(group, path, Util.DASHED + partNumber, body,
+                            FilenameUtils.getExtension(path), null);
+                    partInfo.setPath(partFile[1]);
+                    partInfo.setETag(Util.eTag(body));
+                }
+                //处理part文件 metadata
+                mergeMetadata(group, partPath, FastDfsConstants.PART, JSON.toJSONString(partInfo));
+                //处理append文件part metadata
+                String metadata = getMetadata(group, path, String.valueOf(partNumber));
+                if (metadata == null) {
+                    mergeMetadata(group, path, String.valueOf(partNumber), JSON.toJSONString(partInfo));
+                }
+            } finally {
+                lock.unlock(lockKey);
             }
-            //处理part文件 metadata
-            mergeMetadata(group, partPath, FastDfsConstants.PART, JSON.toJSONString(partInfo));
-            //处理append文件part metadata
-            String metadata = getMetadata(group, path, String.valueOf(partNumber));
-            if (metadata == null) {
-                mergeMetadata(group, path, String.valueOf(partNumber), JSON.toJSONString(partInfo));
-            }
+            appendPartBackground(uploadId, part.getObjectName());
+            return partInfo;
         } catch (IOException | MyException e) {
             try {
                 client.delete_file(group, partPath);
@@ -266,16 +254,7 @@ public class FastDFSClient implements FileClient {
                 logger.error("delete upload part error", e);
             }
             throw new ClientException("upload part error", e);
-        } finally {
-            lock.unlock(lockKey);
         }
-        try {
-            appendPartBackground(uploadId, part.getObjectName());
-        } catch (MyException | IOException e) {
-            throw new ClientException("appendPart error", e);
-        }
-        return partInfo;
-
     }
 
     private String getPartPath(String path, Integer partNumber) {
@@ -283,7 +262,7 @@ public class FastDFSClient implements FileClient {
         return path.replace(baseName, baseName + Util.DASHED + partNumber);
     }
 
-    protected void appendPartBackground(String uploadId, String objectName) throws MyException, IOException {
+    private void appendPartBackground(String uploadId, String objectName) throws MyException, IOException {
         try {
             lock.lock(uploadId);
             FastDFS client = client();
@@ -343,12 +322,12 @@ public class FastDFSClient implements FileClient {
 
     @Override
     public List<PartInfo> listParts(String uploadId, String yourObjectName) {
-        List<PartInfo> partInfos = new ArrayList<>();
         try {
             checkUploadId(yourObjectName);
             FastDFS client = client();
             String group = getGroup(yourObjectName);
             String path = getPath(yourObjectName);
+            List<PartInfo> partInfos = new ArrayList<>();
             NameValuePair[] metadata = client.get_metadata(group, path);
             if (metadata != null) {
                 for (NameValuePair pair : metadata) {
@@ -360,10 +339,11 @@ public class FastDFSClient implements FileClient {
                     partInfos.add(JSON.parseObject(value, FastDfsPartInfo.class));
                 }
             }
+            partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
+            return partInfos;
         } catch (IOException | MyException e) {
             throw new ClientException(e);
         }
-        return partInfos;
     }
 
     @Override
@@ -382,7 +362,6 @@ public class FastDFSClient implements FileClient {
             String path = getPath(yourObjectName);
             boolean appendFallback = true;
             List<PartInfo> partInfos = listParts(uploadId, yourObjectName);
-            partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
             //分片数量一致校验
             if (partInfos.size() == parts.size()) {
                 for (int i = 0; i < parts.size(); i++) {
@@ -397,6 +376,7 @@ public class FastDFSClient implements FileClient {
 
                     if (i == parts.size() - 1) {
                         appendFallback = false;
+                        break;
                     }
                 }
             }
@@ -439,9 +419,9 @@ public class FastDFSClient implements FileClient {
     @Override
     public void abortMultipartUpload(String uploadId, String yourObjectName) {
         try {
-            FastDFS client = client();
             try {
                 lock.lock(uploadId);
+                FastDFS client = client();
                 String group = getGroup(yourObjectName);
                 String path = getPath(yourObjectName);
                 //先删除part文件信息
