@@ -11,8 +11,8 @@ server:
 spring:
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 1024MB
+      max-file-size: 1024MB
+      max-request-size: 2048MB
   datasource:
     url: jdbc:mysql://localhost:3306/filedb?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&autoReconnect=true&failOverReadOnly=false
     username: root
@@ -20,16 +20,10 @@ spring:
     type: com.zaxxer.hikari.HikariDataSource
     driver-class-name: com.mysql.jdbc.Driver
 
-#fastdfs配置
-fdfs:
-  so-timeout: 5000
-  connect-timeout: 5000
-  #缩略图生成参数
-  thumb-image:
-    width: 150
-    height: 150
-  #TrackerList参数,支持多个
-  tracker-list:
-    - 10.10.10.76:22122
-  #返回访问文件的地址前缀,一般是nginx域名
-  web-server-url:
+file:
+  server:
+    storage: local
+    max-upload-size: 10MB
+    multipart-min-size: 5MB
+    multipart-max-size: 100MB
+

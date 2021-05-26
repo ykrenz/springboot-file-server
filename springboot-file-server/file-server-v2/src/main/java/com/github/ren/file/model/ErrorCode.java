@@ -43,6 +43,11 @@ public enum ErrorCode {
      * 文件过大
      */
     FILE_TO_LARGE(20001, "文件大于5M,请使用分片上传"),
+
+    /**
+     * 分片文件
+     */
+    FILE_PART_SIZE_ERROR(20002, "分片文件必须在5~100M之间"),
     ;
 
     /**

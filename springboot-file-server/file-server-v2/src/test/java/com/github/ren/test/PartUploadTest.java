@@ -80,10 +80,10 @@ public class PartUploadTest {
         executorService.shutdown();
         long l = System.currentTimeMillis();
         log.info("开始合并分片uploadId={}", uploadId);
-//        partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
-//        CompleteMultipart completeMultipart = fileClient.completeMultipartUpload(uploadId, objectName, partInfos);
-//        long l1 = System.currentTimeMillis();
-//        log.info("合并文件完成{} 耗时={}", completeMultipart, (l1 - l));
+        partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
+        CompleteMultipart completeMultipart = fileClient.completeMultipartUpload(uploadId, objectName, partInfos);
+        long l1 = System.currentTimeMillis();
+        log.info("合并文件完成{} 耗时={}", completeMultipart, (l1 - l));
         FileUtils.deleteQuietly(chunkDir);
     }
 

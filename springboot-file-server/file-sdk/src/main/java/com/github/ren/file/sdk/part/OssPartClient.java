@@ -10,15 +10,15 @@ import java.util.List;
  */
 public interface OssPartClient extends Serializable {
 
-    // <yourObjectName>表示上传文件到OSS时需要指定包含文件后缀在内的完整路径，例如abc/efg/123.jpg。
+    // <objectName>表示上传文件到OSS时需要指定包含文件后缀在内的完整路径，例如abc/efg/123.jpg。
 
     /**
      * 初始化上传 获取上传唯一标识
      *
-     * @param yourObjectName 上传yourObjectName
+     * @param objectName 上传objectName
      * @return InitMultipartResult
      */
-    InitMultipartResult initiateMultipartUpload(String yourObjectName);
+    InitMultipartResult initiateMultipartUpload(String objectName);
 
     /**
      * 上传分片
@@ -32,27 +32,27 @@ public interface OssPartClient extends Serializable {
      * 获取所有的分片列表
      *
      * @param uploadId       上传唯一标识
-     * @param yourObjectName 上传yourObjectName
+     * @param objectName 上传yourObjectName
      * @return 分片信息
      */
-    List<PartInfo> listParts(String uploadId, String yourObjectName);
+    List<PartInfo> listParts(String uploadId, String objectName);
 
     /**
      * 完成上传
      *
      * @param uploadId       上传唯一标识
-     * @param yourObjectName 上传yourObjectName
+     * @param objectName 上传yourObjectName
      * @param parts          合并的分片信息
      * @return
      */
-    CompleteMultipart completeMultipartUpload(String uploadId, String yourObjectName, List<PartInfo> parts);
+    CompleteMultipart completeMultipartUpload(String uploadId, String objectName, List<PartInfo> parts);
 
     /**
      * 终止上传
      *
      * @param uploadId       上传唯一标识
-     * @param yourObjectName 上传yourObjectName
+     * @param objectName 上传yourObjectName
      */
-    void abortMultipartUpload(String uploadId, String yourObjectName);
+    void abortMultipartUpload(String uploadId, String objectName);
 
 }

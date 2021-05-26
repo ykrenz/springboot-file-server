@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
  * @author Mr Ren
  * @since 2021-05-14
  */
-@Service("TPartServiceImpl")
+@Service
 public class TPartServiceImpl extends ServiceImpl<TPartMapper, TPart> implements ITPartService {
 
 }

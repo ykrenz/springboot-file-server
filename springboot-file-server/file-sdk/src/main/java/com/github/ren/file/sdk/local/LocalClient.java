@@ -76,7 +76,8 @@ public class LocalClient implements FileClient {
         try {
             File outFile = getOutFile(objectName);
             LocalFileOperation.copyFile(file, outFile);
-            return new UploadGenericResult(objectName, Util.eTag(outFile));
+            String eTag = Util.eTag(outFile);
+            return new UploadGenericResult(objectName, eTag);
         } catch (IOException e) {
             throw new FileIOException("local upload file error", e);
         }
@@ -85,8 +86,10 @@ public class LocalClient implements FileClient {
     @Override
     public UploadGenericResult upload(InputStream is, String objectName) {
         try {
-            LocalFileOperation.copyFile(is, getOutFile(objectName));
-            return new UploadGenericResult(objectName, Util.eTag(is));
+            File outFile = getOutFile(objectName);
+            LocalFileOperation.copyFile(is, outFile);
+            String eTag = Util.eTag(outFile);
+            return new UploadGenericResult(objectName, eTag);
         } catch (IOException e) {
             throw new FileIOException("local upload InputStream error", e);
         } finally {
@@ -99,7 +102,8 @@ public class LocalClient implements FileClient {
         File outFile = this.getOutFile(objectName);
         try (ByteArrayInputStream is = new ByteArrayInputStream(content)) {
             LocalFileOperation.copyFile(is, outFile);
-            return new UploadGenericResult(objectName, Util.eTag(outFile));
+            String eTag = Util.eTag(outFile);
+            return new UploadGenericResult(objectName, eTag);
         } catch (IOException e) {
             throw new FileIOException("local byte[] upload error", e);
         }

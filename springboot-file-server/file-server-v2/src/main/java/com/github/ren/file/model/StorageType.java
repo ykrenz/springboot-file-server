@@ -17,8 +17,8 @@ public enum StorageType {
      */
     ALI,
     /**
-     * 七牛云
+     * MINIO
      */
-    QINIU,
+    MINIO,
     ;
 }

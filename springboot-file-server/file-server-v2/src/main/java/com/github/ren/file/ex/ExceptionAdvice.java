@@ -13,6 +13,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
@@ -73,6 +75,18 @@ public class ExceptionAdvice {
     @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
     @ExceptionHandler({HttpRequestMethodNotSupportedException.class})
     public ResultUtil<String> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException e) {
+        return ResultUtil.error(ErrorCode.HTTP_METHOD_ERROR);
+    }
+
+    /**
+     * 返回状态码:400
+     */
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler({MultipartException.class})
+    public ResultUtil<String> multipartException(MultipartException e) {
+        if (e instanceof MaxUploadSizeExceededException) {
+            return ResultUtil.error(ErrorCode.FILE_TO_LARGE);
+        }
         return ResultUtil.error(ErrorCode.HTTP_METHOD_ERROR);
     }
 

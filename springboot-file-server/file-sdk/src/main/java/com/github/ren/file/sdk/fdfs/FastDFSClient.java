@@ -83,10 +83,11 @@ public class FastDFSClient implements FileClient {
     public FastDFSUploadResult upload(File file, String objectName) {
         try (InputStream is = new FileInputStream(file.getAbsolutePath())) {
             FastDFS client = client();
-            String[] result = client.upload_file(group, IOUtils.toByteArray(is), FilenameUtils.getExtension(file.getName()), null);
+            byte[] content = IOUtils.toByteArray(is);
+            String[] result = client.upload_file(group, content, FilenameUtils.getExtension(file.getName()), null);
             String group = result[0];
             String path = result[1];
-            return new FastDFSUploadResult(group, path, Util.eTag(is));
+            return new FastDFSUploadResult(group, path, Util.eTag(content));
         } catch (IOException | MyException e) {
             throw new ClientException(e.getMessage());
         }
@@ -96,10 +97,11 @@ public class FastDFSClient implements FileClient {
     public FastDFSUploadResult upload(InputStream is, String objectName) {
         try {
             FastDFS client = client();
-            String[] result = client.upload_file(group, IOUtils.toByteArray(is), FilenameUtils.getExtension(objectName), null);
+            byte[] content = IOUtils.toByteArray(is);
+            String[] result = client.upload_file(group, content, FilenameUtils.getExtension(objectName), null);
             String group = result[0];
             String path = result[1];
-            return new FastDFSUploadResult(group, path, Util.eTag(is));
+            return new FastDFSUploadResult(group, path, Util.eTag(content));
         } catch (IOException | MyException e) {
             throw new ClientException(e.getMessage());
         }
@@ -112,7 +114,7 @@ public class FastDFSClient implements FileClient {
             String[] result = client.upload_file(group, content, FilenameUtils.getExtension(objectName), null);
             String group = result[0];
             String path = result[1];
-            return new FastDFSUploadResult(group, path);
+            return new FastDFSUploadResult(group, path, Util.eTag(content));
         } catch (IOException | MyException e) {
             throw new ClientException(e.getMessage());
         }
@@ -421,6 +423,7 @@ public class FastDFSClient implements FileClient {
         try {
             try {
                 lock.lock(uploadId);
+                deleteUploadId(objectName);
                 FastDFS client = client();
                 String group = getGroup(objectName);
                 String path = getPath(objectName);
@@ -436,8 +439,6 @@ public class FastDFSClient implements FileClient {
                         lock.unlock(lockKey);
                     }
                 }
-                deleteUploadId(objectName);
-                //删除源文件
                 client.delete_file(group, path);
             } finally {
                 lock.unlock(uploadId);

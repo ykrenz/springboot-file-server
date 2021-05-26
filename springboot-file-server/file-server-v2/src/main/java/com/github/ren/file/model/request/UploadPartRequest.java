@@ -12,11 +12,11 @@ import javax.validation.constraints.NotNull;
  * @Since 1.0
  */
 @Data
-public class PartRequest {
+public class UploadPartRequest {
     @NotBlank(message = "uploadId不能为空")
     private String uploadId;
     @NotNull(message = "partNumber不能为空")
     private Integer partNumber;
-    @NotNull(message = "partNumber不能为空")
+    @NotNull(message = "file文件不能为空")
     private MultipartFile file;
 }

@@ -31,23 +31,23 @@ public class TPart implements Serializable {
 
     @ApiModelProperty(value = "分片上传返回的uploadId")
     @TableField("uploadId")
-    private String uploadid;
+    private String uploadId;
 
     @ApiModelProperty(value = "分片文件所属的objectName")
     @TableField("objectName")
-    private String objectname;
+    private String objectName;
 
     @ApiModelProperty(value = "分片索引")
     @TableField("partNumber")
-    private Integer partnumber;
+    private Integer partNumber;
 
     @ApiModelProperty(value = "分片大小")
     @TableField("partSize")
-    private Long partsize;
+    private Long partSize;
 
     @ApiModelProperty(value = "分片上传完成后响应的eTag值")
     @TableField("eTag")
-    private String etag;
+    private String eTag;
 
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;
