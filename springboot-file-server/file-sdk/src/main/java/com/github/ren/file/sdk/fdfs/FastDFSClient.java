@@ -1,6 +1,7 @@
 package com.github.ren.file.sdk.fdfs;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.github.ren.file.sdk.FileClient;
 import com.github.ren.file.sdk.ex.ClientException;
 import com.github.ren.file.sdk.ex.FileIOException;
@@ -15,9 +16,13 @@ import com.github.ren.file.sdk.util.Util;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import org.apache.commons.lang3.time.DateUtils;
 import org.csource.common.MyException;
 import org.csource.common.NameValuePair;
 import org.csource.fastdfs.FileInfo;
@@ -31,9 +36,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Description fastdfs文件客戶端
@@ -45,6 +51,8 @@ public class FastDFSClient implements FileClient {
     private static final Logger logger = LoggerFactory.getLogger(FastDFSClient.class);
 
     private FileLock lock = new LocalLock();
+
+    private final FastDFSCleanTask fastDFSCleanTask = new FastDFSCleanTask();
 
     private String group;
 
@@ -65,6 +73,10 @@ public class FastDFSClient implements FileClient {
 
     public void setLock(FileLock lock) {
         this.lock = lock;
+    }
+
+    public void closeClean() {
+        fastDFSCleanTask.close();
     }
 
     public String getGroup() {
@@ -148,6 +160,7 @@ public class FastDFSClient implements FileClient {
             String path = result[1];
             objectName = group + Util.SLASH + path;
             String uploadId = initUploadId(objectName);
+            fastDFSCleanTask.addUpload(uploadId, objectName);
             return new InitMultipartResult(uploadId, objectName);
         } catch (IOException | MyException e) {
             throw new ClientException(e);
@@ -353,11 +366,6 @@ public class FastDFSClient implements FileClient {
         try {
             //处理可能没有上传的分片
             appendPartBackground(uploadId, objectName);
-        } catch (IOException | MyException e) {
-            throw new ClientException("appendPart error", e);
-        }
-
-        try {
             lock.lock(uploadId);
             FastDFS client = client();
             String group = getGroup(objectName);
@@ -409,9 +417,11 @@ public class FastDFSClient implements FileClient {
                 client.delete_file(group, partPath);
             }
             client.set_metadata(group, path, null, ProtoCommon.STORAGE_SET_METADATA_FLAG_OVERWRITE);
+            fastDFSCleanTask.removeUpload(uploadId);
             String eTag = Util.completeMultipartMd5(parts);
             return new CompleteMultipart(eTag, group + Util.SLASH + path);
         } catch (IOException | MyException e) {
+            abortMultipartUpload(uploadId, objectName);
             throw new ClientException(e);
         } finally {
             lock.unlock(uploadId);
@@ -440,11 +450,159 @@ public class FastDFSClient implements FileClient {
                     }
                 }
                 client.delete_file(group, path);
+                fastDFSCleanTask.removeUpload(uploadId);
             } finally {
                 lock.unlock(uploadId);
             }
         } catch (IOException | MyException e) {
             throw new ClientException(e);
+        }
+    }
+
+    /**
+     * @Description fastdfs清理任务
+     * @Author ren
+     * @Since 1.0
+     */
+    class FastDFSCleanTask {
+
+        private String uploadGroup;
+        private String uploadPath;
+
+        /**
+         * 过期时间 24h
+         */
+        private int expire = 24;
+        /**
+         * 清理时间间隔 1h
+         */
+        private long period = 1;
+
+        private final ScheduledExecutorService executorService =
+                new ScheduledThreadPoolExecutor(1, new BasicThreadFactory.Builder().namingPattern("clean-pool-%d")
+                        .daemon(true).build());
+
+        public FastDFSCleanTask() {
+            init();
+            executorService.scheduleAtFixedRate(this::clean, 0, period, TimeUnit.HOURS);
+        }
+
+        public FastDFSCleanTask(int expire, long period) {
+            this.expire = expire;
+            this.period = period;
+        }
+
+        public void close() {
+            executorService.shutdown();
+        }
+
+        public void addUpload(String uploadId, String objectName) {
+            try {
+                FastDFS client = client();
+                String group = getGroup(objectName);
+                String path = getPath(objectName);
+                FileInfo fileInfo = client.query_file_info(group, path);
+                Map<String, Object> map = new HashMap<>(3);
+                map.put("uploadId", uploadId);
+                map.put("objectName", objectName);
+                map.put("createTime", fileInfo.getCreateTimestamp());
+                NameValuePair[] metaList = new NameValuePair[]{
+                        new NameValuePair(uploadId, JSON.toJSONString(map))
+                };
+                client.set_metadata(uploadGroup, uploadPath, metaList, ProtoCommon.STORAGE_SET_METADATA_FLAG_MERGE);
+            } catch (Exception e) {
+                throw new ClientException(e);
+            }
+        }
+
+        public void removeUpload(String uploadId) {
+            try {
+                FastDFS client = client();
+                NameValuePair[] metaList = new NameValuePair[]{
+                        new NameValuePair(uploadId, "")
+                };
+                client.set_metadata(uploadGroup, uploadPath, metaList, ProtoCommon.STORAGE_SET_METADATA_FLAG_MERGE);
+            } catch (Exception e) {
+                throw new ClientException(e);
+            }
+        }
+
+        private void init() {
+            try {
+                File userDir = SystemUtils.getUserDir();
+                String uploadFile = "upload.json";
+                File file = new File(userDir, uploadFile);
+                if (file.exists()) {
+                    FastDFS client = client();
+                    String json = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+                    JSONObject jsonObject = JSON.parseObject(json);
+                    uploadGroup = jsonObject.getString("uploadGroup");
+                    uploadPath = jsonObject.getString("uploadPath");
+                    FileInfo fileInfo = client.query_file_info(uploadGroup, uploadPath);
+                    if (fileInfo != null) {
+                        return;
+                    }
+                }
+                FastDFS client = client();
+                String[] result = client.upload_file(group, "".getBytes(StandardCharsets.UTF_8), "json", null);
+                uploadGroup = result[0];
+                uploadPath = result[1];
+                Map<String, Object> map = new HashMap<>(2);
+                map.put("uploadGroup", uploadGroup);
+                map.put("uploadPath", uploadPath);
+                FileUtils.writeStringToFile(file, JSON.toJSONString(map));
+            } catch (Exception e) {
+                throw new ClientException(e);
+            }
+        }
+
+        public void clean() {
+            try {
+                FastDFS client = client();
+                NameValuePair[] uploadMetadata = client.get_metadata(uploadGroup, uploadPath);
+                List<NameValuePair> uploadMetadataNew = new ArrayList<>();
+                if (uploadMetadata != null) {
+                    for (NameValuePair uploadPair : uploadMetadata) {
+                        String uploadId = uploadPair.getName();
+                        String value = uploadPair.getValue();
+                        //uploadId is remove
+                        if ("".equals(value)) {
+                            continue;
+                        }
+                        JSONObject jsonObject = JSON.parseObject(value);
+                        Date createTime = jsonObject.getDate("createTime");
+                        String objectName = jsonObject.getString("objectName");
+                        Date expireTime = DateUtils.addHours(createTime, expire);
+                        if (new Date().after(expireTime)) {
+                            deleteUploadId(objectName);
+                            String group = getGroup(objectName);
+                            String path = getPath(objectName);
+                            List<PartInfo> partInfos = new ArrayList<>();
+                            NameValuePair[] metadata = client.get_metadata(group, path);
+                            if (metadata != null) {
+                                for (NameValuePair pair : metadata) {
+                                    String name = pair.getName();
+                                    if (FastDFSConstants.constants.contains(name)) {
+                                        continue;
+                                    }
+                                    partInfos.add(JSON.parseObject(pair.getValue(), FastDfsPartInfo.class));
+                                }
+                                for (PartInfo partInfo : partInfos) {
+                                    String partPath = getPartPath(path, partInfo.getPartNumber());
+                                    client.delete_file(group, partPath);
+                                }
+                                client.delete_file(group, path);
+                            }
+                        } else {
+                            uploadMetadataNew.add(uploadPair);
+                        }
+                    }
+                    NameValuePair[] nameValuePairs = uploadMetadataNew.toArray(new NameValuePair[0]);
+                    client.set_metadata(uploadGroup, uploadPath, nameValuePairs, ProtoCommon.STORAGE_SET_METADATA_FLAG_OVERWRITE);
+                }
+            } catch (Exception e) {
+                logger.error("清理临时分片任务失败", e);
+            }
         }
     }
 
