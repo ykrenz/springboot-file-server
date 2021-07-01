@@ -54,7 +54,7 @@ public class LocalPartStore implements PartStore {
     }
 
     @Override
-    public String uploadPart(UploadPart part) {
+    public String uploadPart(UploadPartArgs part) {
         try (InputStream is = part.getInputStream()) {
             File uploadingFile = getUploadingFile(part.getUploadId(), part.getPartNumber());
             FileUtils.copyInputStreamToFile(is, uploadingFile);
@@ -93,25 +93,25 @@ public class LocalPartStore implements PartStore {
     }
 
     @Override
-    public List<PartInfo> listParts(String uploadId, String yourObjectName) {
+    public List<UploadMultipartResponse> listParts(String uploadId, String yourObjectName) {
         List<File> files = listCompleteFile(uploadId);
-        List<PartInfo> list = new ArrayList<>(files.size());
+        List<UploadMultipartResponse> list = new ArrayList<>(files.size());
         for (File file : files) {
-            PartInfo partInfo = new PartInfo();
-            partInfo.setPartNumber(getPartNumber(file.getName()));
-            partInfo.setPartSize(file.length());
-            partInfo.setETag(Util.eTag(file));
-            partInfo.setUploadId(uploadId);
-            list.add(partInfo);
+            UploadMultipartResponse uploadMultipartResponse = new UploadMultipartResponse();
+            uploadMultipartResponse.setPartNumber(getPartNumber(file.getName()));
+            uploadMultipartResponse.setPartSize(file.length());
+            uploadMultipartResponse.setETag(Util.eTag(file));
+            uploadMultipartResponse.setUploadId(uploadId);
+            list.add(uploadMultipartResponse);
         }
         return list;
     }
 
     @Override
-    public UploadPart getUploadPart(String uploadId, String yourObjectName, Integer partNumber) {
+    public UploadPartArgs getUploadPart(String uploadId, String yourObjectName, Integer partNumber) {
         File completeFile = getCompleteFile(uploadId, partNumber);
         try {
-            return new UploadPart(uploadId, yourObjectName, partNumber, completeFile.length(), new FileInputStream(completeFile));
+            return new UploadPartArgs(uploadId, yourObjectName, partNumber, completeFile.length(), new FileInputStream(completeFile));
         } catch (FileNotFoundException e) {
             throw new FileIOException("get local part file InputStream error", e);
         }

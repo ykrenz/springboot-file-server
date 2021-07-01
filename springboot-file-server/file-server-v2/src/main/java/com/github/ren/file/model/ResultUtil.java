@@ -54,6 +54,16 @@ public class ResultUtil<T> implements Serializable {
     }
 
     /**
+     * 成功时
+     *
+     * @param <T>
+     * @return
+     */
+    public static <T> ResultUtil<T> success() {
+        return new ResultUtil<>(null);
+    }
+
+    /**
      * 失败
      *
      * @param <T>

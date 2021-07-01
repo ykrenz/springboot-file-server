@@ -15,7 +15,7 @@ public enum ErrorCode {
     /**
      * 服务异常
      */
-    SERVER_ERROR(500, "服务器内部异常,请联系管理员"),
+    SERVER_ERROR(500, "服务器异常,请联系管理员"),
     /**
      * 参数异常
      */
@@ -37,7 +37,12 @@ public enum ErrorCode {
     /**
      * uploadId不存在
      */
-    UPLOAD_ID_NOT_FOUND(10001, "uploadId不存在或者已经过期"),
+    UPLOAD_ID_NOT_FOUND(10001, "uploadId不存在"),
+
+    /**
+     * uploadId已经过期
+     */
+    UPLOAD_ID_EXPIRE(10002, "uploadId已经过期,请重新申请"),
 
     /**
      * 文件过大
@@ -47,7 +52,22 @@ public enum ErrorCode {
     /**
      * 分片文件
      */
-    FILE_PART_SIZE_ERROR(20002, "分片文件必须在5~100M之间"),
+    FILE_PART_SIZE_ERROR(20002, "分片文件大小有误"),
+
+    /**
+     * 分片文件数量为空
+     */
+    FILE_PART_ISEMPTY(20003, "分片文件数量为空"),
+
+    /**
+     * 分片数量有误
+     */
+    FILE_PART_COUNT_ERROR(20004, "分片数量有误"),
+
+    /**
+     * 分片文件数量为空
+     */
+    FILE_PART_TOTAL_SIZE_ERROR(20005, "分片总大小有误,不等于文件总大小"),
     ;
 
     /**

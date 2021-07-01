@@ -4,10 +4,7 @@ import com.github.ren.file.sdk.FileClient;
 import com.github.ren.file.sdk.ex.ClientException;
 import com.github.ren.file.sdk.ex.FileIOException;
 import com.github.ren.file.sdk.model.UploadGenericResult;
-import com.github.ren.file.sdk.part.CompleteMultipart;
-import com.github.ren.file.sdk.part.InitMultipartResult;
-import com.github.ren.file.sdk.part.PartInfo;
-import com.github.ren.file.sdk.part.UploadPart;
+import com.github.ren.file.sdk.part.*;
 import io.minio.*;
 import io.minio.messages.Part;
 
@@ -102,19 +99,20 @@ public class MinIoClient extends MinioClient implements FileClient {
     }
 
     @Override
-    public InitMultipartResult initiateMultipartUpload(String objectName) {
+    public InitMultipartResponse initMultipartUpload(InitMultipartUploadArgs args) {
         try {
+            String objectName = args.getObjectName();
             CreateMultipartUploadResponse multipartUpload = super.createMultipartUpload(bucketName, null, objectName, null, null);
             String uploadId = multipartUpload.result().uploadId();
             objectName = multipartUpload.result().objectName();
-            return new InitMultipartResult(uploadId, objectName);
+            return new InitMultipartResponse(uploadId, objectName);
         } catch (Exception e) {
             throw new ClientException(e);
         }
     }
 
     @Override
-    public PartInfo uploadPart(UploadPart part) {
+    public UploadMultipartResponse uploadMultipart(UploadPartArgs part) {
         try {
             String objectName = part.getObjectName();
             InputStream inputStream = part.getInputStream();
@@ -124,54 +122,56 @@ public class MinIoClient extends MinioClient implements FileClient {
             BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
             UploadPartResponse uploadPartResponse = super.uploadPart(bucketName, null, objectName, bufferedInputStream, partSize, uploadId, partNumber, null, null);
             String etag = uploadPartResponse.etag();
-            PartInfo partInfo = new PartInfo();
-            partInfo.setPartNumber(partNumber);
-            partInfo.setPartSize(partSize);
-            partInfo.setUploadId(uploadId);
-            partInfo.setETag(etag);
-            return partInfo;
+            UploadMultipartResponse uploadMultipartResponse = new UploadMultipartResponse();
+            uploadMultipartResponse.setPartNumber(partNumber);
+            uploadMultipartResponse.setPartSize(partSize);
+            uploadMultipartResponse.setUploadId(uploadId);
+            uploadMultipartResponse.setETag(etag);
+            return uploadMultipartResponse;
         } catch (Exception e) {
             throw new ClientException(e);
         }
     }
 
     @Override
-    public List<PartInfo> listParts(String uploadId, String objectName) {
+    public List<UploadMultipartResponse> listMultipartUpload(ListMultipartUploadArgs args) {
         try {
+            String uploadId = args.getUploadId();
+            String objectName = args.getObjectName();
             ListPartsResponse listPartsResponse;
             Integer partNumberMarker = null;
-            List<PartInfo> partInfos = new ArrayList<>();
+            List<UploadMultipartResponse> uploadMultipartResponses = new ArrayList<>();
             do {
                 listPartsResponse = super.listParts(bucketName, null, objectName, partNumberMarker, null, uploadId, null, null);
                 for (Part part : listPartsResponse.result().partList()) {
-                    PartInfo partInfo = new PartInfo();
-                    partInfo.setUploadId(uploadId);
-                    partInfo.setPartNumber(part.partNumber());
-                    partInfo.setPartSize(part.partSize());
-                    partInfo.setETag(part.etag());
-                    partInfos.add(partInfo);
+                    UploadMultipartResponse uploadMultipartResponse = new UploadMultipartResponse();
+                    uploadMultipartResponse.setUploadId(uploadId);
+                    uploadMultipartResponse.setPartNumber(part.partNumber());
+                    uploadMultipartResponse.setPartSize(part.partSize());
+                    uploadMultipartResponse.setETag(part.etag());
+                    uploadMultipartResponses.add(uploadMultipartResponse);
                 }
                 // 指定List的起始位置，只有分片号大于此参数值的分片会被列出。
                 partNumberMarker = listPartsResponse.result().nextPartNumberMarker();
             } while (listPartsResponse.result().isTruncated());
-            return partInfos;
+            return uploadMultipartResponses;
         } catch (Exception e) {
             throw new ClientException(e);
         }
     }
 
     @Override
-    public CompleteMultipart completeMultipartUpload(String uploadId, String objectName, List<PartInfo> parts) {
+    public CompleteMultipartResponse completeMultipartUpload(String uploadId, String objectName, List<UploadMultipartResponse> parts) {
         try {
             List<Part> partList = new ArrayList<>(parts.size());
-            for (PartInfo partInfo : parts) {
-                Part part = new Part(partInfo.getPartNumber(), partInfo.getETag());
+            for (UploadMultipartResponse uploadMultipartResponse : parts) {
+                Part part = new Part(uploadMultipartResponse.getPartNumber(), uploadMultipartResponse.getETag());
                 partList.add(part);
             }
             Part[] partArr = partList.toArray(new Part[]{});
             ObjectWriteResponse objectWriteResponse = super.completeMultipartUpload(bucketName, null, objectName, uploadId, partArr, null, null);
             String etag = objectWriteResponse.etag();
-            return new CompleteMultipart(etag, objectName);
+            return new CompleteMultipartResponse(etag, objectName);
         } catch (Exception e) {
             throw new ClientException(e);
         }
@@ -184,5 +184,11 @@ public class MinIoClient extends MinioClient implements FileClient {
         } catch (Exception e) {
             throw new ClientException(e);
         }
+    }
+
+    @Override
+    public int getPartExpirationDays() {
+        //minio 服务器默认为24-48小时删除
+        return 1;
     }
 }

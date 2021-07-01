@@ -5,10 +5,7 @@ import com.github.ren.file.FileServerApplication;
 import com.github.ren.file.sdk.FileClient;
 import com.github.ren.file.sdk.local.LocalFileOperation;
 import com.github.ren.file.sdk.objectname.TimestampGenerator;
-import com.github.ren.file.sdk.part.CompleteMultipart;
-import com.github.ren.file.sdk.part.InitMultipartResult;
-import com.github.ren.file.sdk.part.PartInfo;
-import com.github.ren.file.sdk.part.UploadPart;
+import com.github.ren.file.sdk.part.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
@@ -42,9 +39,14 @@ public class PartUploadTest {
     public void upload() throws Exception {
         String filename = "F:\\oss\\test\\test2.mp4";
         String yourObjectName = new TimestampGenerator(filename).generator();
-        InitMultipartResult initMultipartResult = fileClient.initiateMultipartUpload(yourObjectName);
-        String objectName = initMultipartResult.getObjectName();
-        String uploadId = initMultipartResult.getUploadId();
+
+        InitMultipartUploadArgs args = InitMultipartUploadArgs.builder()
+                .objectName(yourObjectName)
+                .fileSize(new File(filename).length()).build();
+
+        InitMultipartResponse initMultipartResponse = fileClient.initMultipartUpload(args);
+        String objectName = initMultipartResponse.getObjectName();
+        String uploadId = initMultipartResponse.getUploadId();
         log.info("初始化分片上传完成uploadId={} objectName={}", uploadId, objectName);
 
         File sourceFile = new File(filename);
@@ -53,7 +55,7 @@ public class PartUploadTest {
         chunkDir.mkdirs();
         List<File> files = LocalFileOperation.chunkFile(sourceFile, chunkPath, 1024L * 1024L * 5);
         String md5 = MD5.create().digestHex(sourceFile);
-        log.info(md5);
+        log.info("源文件md5={}", md5);
 
         //abort upload test
 //        new Thread(() -> {
@@ -66,24 +68,24 @@ public class PartUploadTest {
 //        }).start();
 
         //模拟多线程上传
-        List<Callable<PartInfo>> tasks = new ArrayList<>();
+        List<Callable<UploadMultipartResponse>> tasks = new ArrayList<>();
         for (File file : files) {
             PartTask partTask = new PartTask(uploadId, objectName, file);
             tasks.add(partTask);
         }
         ExecutorService executorService = Executors.newFixedThreadPool(3);
-        List<Future<PartInfo>> futures = executorService.invokeAll(tasks);
-        List<PartInfo> partInfos = new ArrayList<>();
-        for (Future<PartInfo> future : futures) {
-            partInfos.add(future.get());
+        List<Future<UploadMultipartResponse>> futures = executorService.invokeAll(tasks);
+        List<UploadMultipartResponse> uploadMultipartResponses = new ArrayList<>();
+        for (Future<UploadMultipartResponse> future : futures) {
+            uploadMultipartResponses.add(future.get());
         }
         executorService.shutdown();
         long l = System.currentTimeMillis();
         log.info("开始合并分片uploadId={}", uploadId);
-        partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
-        CompleteMultipart completeMultipart = fileClient.completeMultipartUpload(uploadId, objectName, partInfos);
+        uploadMultipartResponses.sort(Comparator.comparingInt(UploadMultipartResponse::getPartNumber));
+        CompleteMultipartResponse completeMultipartResponse = fileClient.completeMultipartUpload(uploadId, objectName, uploadMultipartResponses);
         long l1 = System.currentTimeMillis();
-        log.info("合并文件完成{} 耗时={}", completeMultipart, (l1 - l));
+        log.info("合并文件完成{} 耗时={}", completeMultipartResponse, (l1 - l));
         FileUtils.deleteQuietly(chunkDir);
     }
 
@@ -91,9 +93,14 @@ public class PartUploadTest {
     public void initMultipart() throws IOException {
         String filename = "F:\\oss\\test\\test2.mp4";
         String yourObjectName = new TimestampGenerator(filename).generator();
-        InitMultipartResult initMultipartResult = fileClient.initiateMultipartUpload(yourObjectName);
-        String objectName = initMultipartResult.getObjectName();
-        String uploadId = initMultipartResult.getUploadId();
+
+        InitMultipartUploadArgs args = InitMultipartUploadArgs.builder()
+                .objectName(yourObjectName)
+                .fileSize(new File(filename).length()).build();
+
+        InitMultipartResponse initMultipartResponse = fileClient.initMultipartUpload(args);
+        String objectName = initMultipartResponse.getObjectName();
+        String uploadId = initMultipartResponse.getUploadId();
         log.info("初始化分片上传完成uploadId={} objectName={}", uploadId, objectName);
     }
 
@@ -118,10 +125,10 @@ public class PartUploadTest {
         String md5 = MD5.create().digestHex(sourceFile);
         log.info(md5);
         for (File file : files) {
-            UploadPart part = new UploadPart(uploadId, objectName, Integer.parseInt(file.getName()), file.length(), new FileInputStream(file));
+            UploadPartArgs part = new UploadPartArgs(uploadId, objectName, Integer.parseInt(file.getName()), file.length(), new FileInputStream(file));
             String s = MD5.create().digestHex(file);
             log.info("文件md5={}", s);
-            fileClient.uploadPart(part);
+            fileClient.uploadMultipart(part);
             log.info("上传分片成功={}", part.getPartNumber());
         }
 
@@ -135,7 +142,7 @@ public class PartUploadTest {
         FileUtils.deleteQuietly(chunkDir);
     }
 
-    class PartTask implements Callable<PartInfo> {
+    class PartTask implements Callable<UploadMultipartResponse> {
         private String uploadId;
         private String objectName;
         private File file;
@@ -147,12 +154,12 @@ public class PartUploadTest {
         }
 
         @Override
-        public PartInfo call() throws Exception {
-            UploadPart part = new UploadPart(uploadId, objectName, Integer.parseInt(file.getName()), file.length(), new FileInputStream(file));
+        public UploadMultipartResponse call() throws Exception {
+            UploadPartArgs part = new UploadPartArgs(uploadId, objectName, Integer.parseInt(file.getName()), file.length(), new FileInputStream(file));
             log.info("开始上传分片uploadId={} number={} objectName={}", uploadId, part.getPartNumber(), objectName);
-            PartInfo partInfo = fileClient.uploadPart(part);
+            UploadMultipartResponse uploadMultipartResponse = fileClient.uploadMultipart(part);
             log.info("上传分片成功uploadId={} number={}  objectName={}", uploadId, part.getPartNumber(), objectName);
-            return partInfo;
+            return uploadMultipartResponse;
         }
     }
 
@@ -161,9 +168,10 @@ public class PartUploadTest {
         String uploadId = getUploadId();
         String objectName = getObjectName();
         long l = System.currentTimeMillis();
-        List<PartInfo> partInfos = fileClient.listParts(uploadId, objectName);
+        ListMultipartUploadArgs args = ListMultipartUploadArgs.builder().uploadId(uploadId).objectName(objectName).build();
+        List<UploadMultipartResponse> uploadMultipartResponses = fileClient.listMultipartUpload(args);
         long l1 = System.currentTimeMillis();
-        log.info("查询到分片文件 {} 耗时={}", partInfos, (l1 - l));
+        log.info("查询到分片文件 {} 耗时={}", uploadMultipartResponses, (l1 - l));
     }
 
     @Test
@@ -172,11 +180,12 @@ public class PartUploadTest {
         String objectName = getObjectName();
         long l = System.currentTimeMillis();
         log.info("开始合并分片uploadId={}", uploadId);
-        List<PartInfo> partInfos = fileClient.listParts(uploadId, objectName);
-        partInfos.sort(Comparator.comparingInt(PartInfo::getPartNumber));
-        CompleteMultipart completeMultipart = fileClient.completeMultipartUpload(uploadId, objectName, partInfos);
+        ListMultipartUploadArgs args = ListMultipartUploadArgs.builder().uploadId(uploadId).objectName(objectName).build();
+        List<UploadMultipartResponse> uploadMultipartResponses = fileClient.listMultipartUpload(args);
+        uploadMultipartResponses.sort(Comparator.comparingInt(UploadMultipartResponse::getPartNumber));
+        CompleteMultipartResponse completeMultipartResponse = fileClient.completeMultipartUpload(uploadId, objectName, uploadMultipartResponses);
         long l1 = System.currentTimeMillis();
-        log.info("合并文件完成{} 耗时={}", completeMultipart, (l1 - l));
+        log.info("合并文件完成{} 耗时={}", completeMultipartResponse, (l1 - l));
     }
 
     @Test

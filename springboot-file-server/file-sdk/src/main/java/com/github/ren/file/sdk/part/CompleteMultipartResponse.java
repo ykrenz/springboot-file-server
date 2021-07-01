@@ -14,9 +14,15 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CompleteMultipart implements Serializable {
+public class CompleteMultipartResponse implements Serializable {
 
+    /**
+     * 文件服务器返回的eTag
+     */
     private String eTag;
 
+    /**
+     * 文件位置
+     */
     private String objectName;
 }

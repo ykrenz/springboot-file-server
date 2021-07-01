@@ -2,6 +2,7 @@ package com.github.ren.file.sdk.part;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.InputStream;
 
@@ -11,8 +12,9 @@ import java.io.InputStream;
  * @Since 1.0
  */
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
-public class UploadPart {
+public class UploadPartArgs {
     /**
      * 上传唯一标识
      */
@@ -29,6 +31,11 @@ public class UploadPart {
     private int partNumber;
 
     /**
+     * 文件总大小 fastdfs使用
+     */
+    private long fileSize;
+
+    /**
      * 分片大小
      */
     private long partSize;
@@ -38,12 +45,8 @@ public class UploadPart {
      */
     private InputStream inputStream;
 
-    /**
-     * 分片md5值 如果添加了则会校验md5是否正确
-     */
-    private String md5Digest;
-
-    public UploadPart(String uploadId, String objectName, int partNumber, long partSize, InputStream inputStream) {
+    //oss使用
+    public UploadPartArgs(String uploadId, String objectName, int partNumber, long partSize, InputStream inputStream) {
         this.uploadId = uploadId;
         this.objectName = objectName;
         this.partNumber = partNumber;

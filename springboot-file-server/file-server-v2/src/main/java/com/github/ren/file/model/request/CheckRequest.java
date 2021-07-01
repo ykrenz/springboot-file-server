@@ -1,9 +1,8 @@
 package com.github.ren.file.model.request;
 
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-
-import javax.validation.constraints.NotBlank;
 
 /**
  * @Description 检测文件参数
@@ -13,6 +12,8 @@ import javax.validation.constraints.NotBlank;
 @Data
 @ApiModel("检测文件参数")
 public class CheckRequest {
-    @NotBlank(message = "md5不能为空")
+    @ApiModelProperty(name = "md5", value = "文件md5 用于秒传检测")
     private String md5;
+    @ApiModelProperty(name = "uploadId", value = "分片唯一标识 用于断点续传")
+    private String uploadId;
 }

@@ -60,7 +60,7 @@ public class CodeGenerator {
 //        strategy.setSuperEntityClass("com.github.ren.file.entity.BaseEntity");
 //        strategy.setSuperEntityColumns("create_time","update_time","updater","creater","version","status");
 //        strategy.setInclude(scanner("表名，多个英文逗号分割").split(","));
-        strategy.setInclude("t_file");
+        strategy.setInclude("t_upload");
 //        strategy.setInclude("tb_file_info");
         strategy.setControllerMappingHyphenStyle(true);
         strategy.setTablePrefix(pc.getModuleName() + "_");

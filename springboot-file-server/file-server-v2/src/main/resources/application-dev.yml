@@ -13,6 +13,17 @@ spring:
     multipart:
       max-file-size: 1024MB
       max-request-size: 2048MB
+  redis:
+    database: 0
+    host: localhost
+    port: 6379
+    timeout: 5000
+    jedis:
+      pool:
+        max-active: 3000
+        max-idle: 100
+        max-wait: 2500
+        min-idle: 0
   datasource:
     url: jdbc:mysql://localhost:3306/filedb?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&autoReconnect=true&failOverReadOnly=false
     username: root
@@ -22,8 +33,16 @@ spring:
 
 file:
   server:
-    storage: local
+    #存储类型
+    storage: fast_dfs
+    #普通上传文件最大值
     max-upload-size: 10MB
+    #分上传文件最小值 小于5M minio会上传错误
     multipart-min-size: 5MB
+    #分上传文件最大值
     multipart-max-size: 100MB
 
+#swagger配置
+knife4j:
+  #开启增强
+  enable: true

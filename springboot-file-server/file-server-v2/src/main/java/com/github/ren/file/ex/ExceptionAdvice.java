@@ -3,7 +3,6 @@ package com.github.ren.file.ex;
 import com.github.ren.file.model.ErrorCode;
 import com.github.ren.file.model.ResultUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
@@ -131,7 +130,6 @@ public class ExceptionAdvice {
      */
     private ResultUtil<String> errorServerHandler(Exception e) {
         log.error("服务异常::", e);
-        String stackTrace = ExceptionUtils.getStackTrace(e);
-        return ResultUtil.error(ErrorCode.SERVER_ERROR, "异常信息:" + String.format("[%s]", stackTrace));
+        return ResultUtil.error(ErrorCode.SERVER_ERROR);
     }
 }

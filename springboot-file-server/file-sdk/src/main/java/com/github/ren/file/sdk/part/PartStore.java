@@ -17,7 +17,7 @@ public interface PartStore extends Serializable {
      *
      * @param part 分片
      */
-    String uploadPart(UploadPart part);
+    String uploadPart(UploadPartArgs part);
 
     /**
      * 获取分片列表
@@ -26,7 +26,7 @@ public interface PartStore extends Serializable {
      * @param yourObjectName 上传yourObjectName
      * @return 分片信息
      */
-    List<PartInfo> listParts(String uploadId, String yourObjectName);
+    List<UploadMultipartResponse> listParts(String uploadId, String yourObjectName);
 
     /**
      * 获取上传分片
@@ -36,7 +36,7 @@ public interface PartStore extends Serializable {
      * @param partNumber     分片索引
      * @return
      */
-    UploadPart getUploadPart(String uploadId, String yourObjectName, Integer partNumber);
+    UploadPartArgs getUploadPart(String uploadId, String yourObjectName, Integer partNumber);
 
     /**
      * 删除分片数据

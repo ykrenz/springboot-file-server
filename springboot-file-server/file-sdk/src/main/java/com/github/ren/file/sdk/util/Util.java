@@ -1,7 +1,7 @@
 package com.github.ren.file.sdk.util;
 
 import com.github.ren.file.sdk.ex.FileIOException;
-import com.github.ren.file.sdk.part.PartInfo;
+import com.github.ren.file.sdk.part.UploadMultipartResponse;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.File;
@@ -51,12 +51,12 @@ public class Util implements StrPool {
         return DigestUtils.md5Hex(data);
     }
 
-    public static String completeMultipartMd5(List<PartInfo> partInfos) {
+    public static String completeMultipartMd5(List<UploadMultipartResponse> uploadMultipartResponses) {
         StringBuilder md5Builder = new StringBuilder();
-        for (PartInfo partInfo : partInfos) {
-            String eTag = partInfo.getETag();
+        for (UploadMultipartResponse uploadMultipartResponse : uploadMultipartResponses) {
+            String eTag = uploadMultipartResponse.getETag();
             md5Builder.append(eTag);
         }
-        return eTag(md5Builder.toString()) + DASHED + partInfos.size();
+        return eTag(md5Builder.toString()) + DASHED + uploadMultipartResponses.size();
     }
 }

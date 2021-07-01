@@ -35,6 +35,8 @@ public class FileClientAutoConfiguration {
                                 "");
                 aliClient.setOss(oss);
                 aliClient.setBucketName("");
+                //设置分片自动过期删除天数
+                aliClient.setPartExpirationDays(7);
                 return aliClient;
             case FAST_DFS:
                 return FastDFSClient.getInstance();

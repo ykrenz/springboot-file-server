@@ -119,39 +119,41 @@ public class LocalClient implements FileClient {
     }
 
     @Override
-    public InitMultipartResult initiateMultipartUpload(String objectName) {
+    public InitMultipartResponse initMultipartUpload(InitMultipartUploadArgs args) {
         String uploadId = UUID.randomUUID().toString().replace("-", "");
-        return new InitMultipartResult(uploadId, objectName);
+        return new InitMultipartResponse(uploadId, args.getObjectName());
     }
 
     @Override
-    public PartInfo uploadPart(UploadPart part) {
-        PartInfo partInfo = new PartInfo();
-        partInfo.setPartSize(part.getPartSize());
-        partInfo.setUploadId(part.getUploadId());
-        partInfo.setPartNumber(part.getPartNumber());
-        partInfo.setETag(partStore.uploadPart(part));
-        return partInfo;
+    public UploadMultipartResponse uploadMultipart(UploadPartArgs part) {
+        UploadMultipartResponse uploadMultipartResponse = new UploadMultipartResponse();
+        uploadMultipartResponse.setPartSize(part.getPartSize());
+        uploadMultipartResponse.setUploadId(part.getUploadId());
+        uploadMultipartResponse.setPartNumber(part.getPartNumber());
+        uploadMultipartResponse.setETag(partStore.uploadPart(part));
+        return uploadMultipartResponse;
     }
 
     @Override
-    public List<PartInfo> listParts(String uploadId, String objectName) {
+    public List<UploadMultipartResponse> listMultipartUpload(ListMultipartUploadArgs args) {
+        String uploadId = args.getUploadId();
+        String objectName = args.getObjectName();
         return partStore.listParts(uploadId, objectName);
     }
 
     @Override
-    public CompleteMultipart completeMultipartUpload(String uploadId, String objectName, List<PartInfo> parts) {
+    public CompleteMultipartResponse completeMultipartUpload(String uploadId, String objectName, List<UploadMultipartResponse> parts) {
         File outFile = this.getOutFile(objectName);
         try (FileChannel outChannel = new FileOutputStream(outFile).getChannel()) {
             //同步nio 方式对分片进行合并, 有效的避免文件过大导致内存溢出
-            for (PartInfo partInfo : parts) {
-                UploadPart uploadPart = partStore.getUploadPart(partInfo.getUploadId(), objectName, partInfo.getPartNumber());
+            for (UploadMultipartResponse uploadMultipartResponse : parts) {
+                UploadPartArgs uploadPartArgs = partStore.getUploadPart(uploadMultipartResponse.getUploadId(), objectName, uploadMultipartResponse.getPartNumber());
                 try {
                     long chunkSize = 1L << 32;
-                    if (uploadPart.getPartSize() >= chunkSize) {
+                    if (uploadPartArgs.getPartSize() >= chunkSize) {
                         throw new IllegalArgumentException("文件分片必须<4G");
                     }
-                    try (FileChannel inChannel = ((FileInputStream) uploadPart.getInputStream()).getChannel()) {
+                    try (FileChannel inChannel = ((FileInputStream) uploadPartArgs.getInputStream()).getChannel()) {
                         int position = 0;
                         long size = inChannel.size();
                         while (0 < size) {
@@ -163,22 +165,28 @@ public class LocalClient implements FileClient {
                         }
                     }
                 } finally {
-                    Util.close(uploadPart.getInputStream());
+                    Util.close(uploadPartArgs.getInputStream());
                 }
 
             }
         } catch (IOException e) {
             throw new FileIOException("local complete file error", e);
         }
-        CompleteMultipart completeMultipart = new CompleteMultipart();
-        completeMultipart.setObjectName(objectName);
-        completeMultipart.setETag(Util.eTag(outFile));
-        return completeMultipart;
+        CompleteMultipartResponse completeMultipartResponse = new CompleteMultipartResponse();
+        completeMultipartResponse.setObjectName(objectName);
+        completeMultipartResponse.setETag(Util.eTag(outFile));
+        return completeMultipartResponse;
     }
 
     @Override
     public void abortMultipartUpload(String uploadId, String objectName) {
         //TODO abortMultipartUpload
+    }
+
+    @Override
+    public int getPartExpirationDays() {
+        //不删除策略
+        return -1;
     }
 
 }

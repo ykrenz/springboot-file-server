@@ -13,6 +13,6 @@ import javax.validation.constraints.NotBlank;
 @Data
 @ApiModel("取消分片上传参数")
 public class AbortPartRequest {
-    @NotBlank(message = "uploadId不能为空")
+    @NotBlank(message = "不能为空")
     private String uploadId;
 }

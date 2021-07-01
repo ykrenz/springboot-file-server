@@ -14,8 +14,7 @@ import javax.validation.constraints.NotBlank;
 @ApiModel("合并分片参数")
 public class CompletePartRequest {
 
-    @NotBlank(message = "uploadId不能为空")
+    @NotBlank(message = "不能为空")
     private String uploadId;
-
     private String md5;
 }

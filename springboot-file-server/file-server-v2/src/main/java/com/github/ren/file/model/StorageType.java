@@ -13,12 +13,12 @@ public enum StorageType {
      */
     FAST_DFS,
     /**
-     * 阿里OSS
-     */
-    ALI,
-    /**
      * MINIO
      */
     MINIO,
+    /**
+     * 阿里OSS
+     */
+    ALI,
     ;
 }

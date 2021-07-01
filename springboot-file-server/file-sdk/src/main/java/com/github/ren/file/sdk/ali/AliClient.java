@@ -5,10 +5,7 @@ import com.aliyun.oss.model.*;
 import com.github.ren.file.sdk.FileClient;
 import com.github.ren.file.sdk.ex.FileIOException;
 import com.github.ren.file.sdk.model.UploadGenericResult;
-import com.github.ren.file.sdk.part.CompleteMultipart;
-import com.github.ren.file.sdk.part.InitMultipartResult;
-import com.github.ren.file.sdk.part.PartInfo;
-import com.github.ren.file.sdk.part.UploadPart;
+import com.github.ren.file.sdk.part.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +29,8 @@ public class AliClient implements FileClient {
     private OSS oss;
 
     private String bucketName;
+
+    private int partExpirationDays = -1;
 
     private static class SingletonHolder {
         private static final AliClient INSTANCE = new AliClient();
@@ -58,6 +57,22 @@ public class AliClient implements FileClient {
 
     public void setBucketName(String bucketName) {
         this.bucketName = bucketName;
+    }
+
+    /**
+     * 设置分片自动过期策略
+     *
+     * @param expirationDays
+     */
+    public void setPartExpirationDays(int expirationDays) {
+        SetBucketLifecycleRequest request = new SetBucketLifecycleRequest(bucketName);
+        LifecycleRule rule = new LifecycleRule(null, null, LifecycleRule.RuleStatus.Enabled);
+        LifecycleRule.AbortMultipartUpload abortMultipartUpload = new LifecycleRule.AbortMultipartUpload();
+        abortMultipartUpload.setExpirationDays(expirationDays);
+        rule.setAbortMultipartUpload(abortMultipartUpload);
+        request.AddLifecycleRule(rule);
+        this.oss.setBucketLifecycle(request);
+        partExpirationDays = expirationDays;
     }
 
     @Override
@@ -95,16 +110,17 @@ public class AliClient implements FileClient {
     }
 
     @Override
-    public InitMultipartResult initiateMultipartUpload(String objectName) {
+    public InitMultipartResponse initMultipartUpload(InitMultipartUploadArgs args) {
         // 创建InitiateMultipartUploadRequest对象。
+        String objectName = args.getObjectName();
         InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest(bucketName, objectName);
         InitiateMultipartUploadResult upresult = oss.initiateMultipartUpload(request);
         // 返回uploadId，它是分片上传事件的唯一标识，您可以根据这个uploadId发起相关的操作，如取消分片上传、查询分片上传等。
-        return new InitMultipartResult(upresult.getUploadId(), upresult.getKey());
+        return new InitMultipartResponse(upresult.getUploadId(), upresult.getKey());
     }
 
     @Override
-    public PartInfo uploadPart(UploadPart part) {
+    public UploadMultipartResponse uploadMultipart(UploadPartArgs part) {
         InputStream inputStream = null;
         try {
             inputStream = part.getInputStream();
@@ -119,12 +135,12 @@ public class AliClient implements FileClient {
             uploadPartRequest.setPartNumber(part.getPartNumber());
             // 每个分片不需要按顺序上传，甚至可以在不同客户端上传，OSS会按照分片号排序组成完整的文件。
             UploadPartResult uploadPartResult = oss.uploadPart(uploadPartRequest);
-            PartInfo partInfo = new PartInfo();
-            partInfo.setPartSize(uploadPartResult.getPartSize());
-            partInfo.setUploadId(part.getUploadId());
-            partInfo.setPartNumber(uploadPartResult.getPartNumber());
-            partInfo.setETag(uploadPartResult.getETag());
-            return partInfo;
+            UploadMultipartResponse uploadMultipartResponse = new UploadMultipartResponse();
+            uploadMultipartResponse.setPartSize(uploadPartResult.getPartSize());
+            uploadMultipartResponse.setUploadId(part.getUploadId());
+            uploadMultipartResponse.setPartNumber(uploadPartResult.getPartNumber());
+            uploadMultipartResponse.setETag(uploadPartResult.getETag());
+            return uploadMultipartResponse;
         } finally {
             if (inputStream != null) {
                 try {
@@ -137,37 +153,39 @@ public class AliClient implements FileClient {
     }
 
     @Override
-    public List<PartInfo> listParts(String uploadId, String objectName) {
+    public List<UploadMultipartResponse> listMultipartUpload(ListMultipartUploadArgs args) {
         PartListing partListing;
+        String uploadId = args.getUploadId();
+        String objectName = args.getObjectName();
         ListPartsRequest listPartsRequest = new ListPartsRequest(bucketName, objectName, uploadId);
-        List<PartInfo> partInfos = new ArrayList<>();
+        List<UploadMultipartResponse> uploadMultipartResponses = new ArrayList<>();
         do {
             partListing = oss.listParts(listPartsRequest);
             for (PartSummary part : partListing.getParts()) {
-                PartInfo partInfo = new PartInfo();
-                partInfo.setUploadId(uploadId);
-                partInfo.setPartNumber(part.getPartNumber());
-                partInfo.setPartSize(part.getSize());
-                partInfo.setETag(part.getETag());
-                partInfos.add(partInfo);
+                UploadMultipartResponse uploadMultipartResponse = new UploadMultipartResponse();
+                uploadMultipartResponse.setUploadId(uploadId);
+                uploadMultipartResponse.setPartNumber(part.getPartNumber());
+                uploadMultipartResponse.setPartSize(part.getSize());
+                uploadMultipartResponse.setETag(part.getETag());
+                uploadMultipartResponses.add(uploadMultipartResponse);
             }
             // 指定List的起始位置，只有分片号大于此参数值的分片会被列出。
             listPartsRequest.setPartNumberMarker(partListing.getNextPartNumberMarker());
         } while (partListing.isTruncated());
-        return partInfos;
+        return uploadMultipartResponses;
     }
 
     @Override
-    public CompleteMultipart completeMultipartUpload(String uploadId, String objectName, List<PartInfo> parts) {
+    public CompleteMultipartResponse completeMultipartUpload(String uploadId, String objectName, List<UploadMultipartResponse> parts) {
         List<PartETag> eTags = new ArrayList<>(parts.size());
-        for (PartInfo partInfo : parts) {
-            PartETag eTag = new PartETag(partInfo.getPartNumber(), partInfo.getETag());
+        for (UploadMultipartResponse uploadMultipartResponse : parts) {
+            PartETag eTag = new PartETag(uploadMultipartResponse.getPartNumber(), uploadMultipartResponse.getETag());
             eTags.add(eTag);
         }
         CompleteMultipartUploadRequest completeMultipartUploadRequest =
                 new CompleteMultipartUploadRequest(bucketName, objectName, uploadId, eTags);
         CompleteMultipartUploadResult uploadResult = oss.completeMultipartUpload(completeMultipartUploadRequest);
-        return new CompleteMultipart(uploadResult.getETag(), objectName);
+        return new CompleteMultipartResponse(uploadResult.getETag(), objectName);
     }
 
     @Override
@@ -176,5 +194,10 @@ public class AliClient implements FileClient {
         AbortMultipartUploadRequest abortMultipartUploadRequest =
                 new AbortMultipartUploadRequest(bucketName, objectName, uploadId);
         oss.abortMultipartUpload(abortMultipartUploadRequest);
+    }
+
+    @Override
+    public int getPartExpirationDays() {
+        return partExpirationDays;
     }
 }

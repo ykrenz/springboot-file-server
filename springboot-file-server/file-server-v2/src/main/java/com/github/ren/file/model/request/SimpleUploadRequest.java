@@ -12,6 +12,6 @@ import javax.validation.constraints.NotNull;
  */
 @Data
 public class SimpleUploadRequest {
-    @NotNull(message = "file文件不能为空")
+    @NotNull(message = "文件不能为空")
     private MultipartFile file;
 }

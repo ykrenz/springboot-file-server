@@ -22,7 +22,7 @@ public class FileServerProperties {
     /**
      * 上传分片支持最小Size
      */
-    private DataSize multipartMinSize = DataSize.ofMegabytes(1L);
+    private DataSize multipartMinSize = DataSize.ofBytes(1L);
     /**
      * 上传分片支持最大Size
      */
@@ -31,5 +31,45 @@ public class FileServerProperties {
      * 存储方式
      */
     private StorageType storage = StorageType.LOCAL;
+
+    /**
+     * 获取存储类型对应的int值
+     *
+     * @return
+     */
+    public int getStorageTypeInt() {
+        StorageType[] types = StorageType.values();
+        for (int i = 0; i < types.length; i++) {
+            StorageType type = types[i];
+            if (type.equals(storage)) {
+                return i + 1;
+            }
+        }
+        return 0;
+    }
+
+    public String getStorageTypeName() {
+        StorageType[] types = StorageType.values();
+        for (StorageType type : types) {
+            if (type.equals(storage)) {
+                return storage.name();
+            }
+        }
+        return null;
+    }
+
+    public long getMinPartSize() {
+        StorageType[] types = StorageType.values();
+        for (StorageType type : types) {
+            if (type.equals(storage)) {
+                //5MB
+                if (storage == StorageType.MINIO) {
+                    return 1024 * 1024 * 5;
+                }
+            }
+        }
+        //100KB
+        return 1024 * 100;
+    }
 
 }

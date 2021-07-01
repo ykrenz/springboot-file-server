@@ -5,12 +5,12 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * @Description 分片信息
+ * @Description 分片上传响应信息
  * @Author ren
  * @Since 1.0
  */
 @Data
-public class PartInfo implements Serializable {
+public class UploadMultipartResponse implements Serializable {
     /**
      * 上传唯一标识
      */

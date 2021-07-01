@@ -2,7 +2,6 @@ package com.github.ren.file.sdk.objectname;
 
 import com.github.ren.file.sdk.util.Util;
 import lombok.Data;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -13,15 +12,15 @@ import org.apache.commons.lang3.StringUtils;
 @Data
 public class TimestampGenerator implements ObjectNameGenerator {
 
-    private String filename;
+    private String ext;
 
-    public TimestampGenerator(String filename) {
-        this.filename = filename;
+    public TimestampGenerator(String ext) {
+        this.ext = ext;
     }
 
     @Override
     public String generator() {
         long millis = System.currentTimeMillis();
-        return StringUtils.reverse(String.valueOf(millis)) + Util.DOT + FilenameUtils.getExtension(filename);
+        return StringUtils.reverse(String.valueOf(millis)) + Util.DOT + ext;
     }
 }
