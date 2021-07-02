@@ -58,6 +58,7 @@ public class TUploadServiceImpl extends ServiceImpl<TUploadMapper, TUpload> impl
         tUpload = this.getBaseMapper().selectOne(Wrappers.<TUpload>lambdaQuery()
                 .eq(TUpload::getUploadId, uploadId)
                 .eq(TUpload::getStorage, storage)
+                .eq(TUpload::getStatus, 0)
         );
         redisService.set(uploadId + "-upload", tUpload, expire);
         return tUpload;

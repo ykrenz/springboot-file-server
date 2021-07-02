@@ -26,8 +26,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
-import static com.aliyun.oss.common.utils.CodingUtils.assertParameterNotNull;
-
 /**
  * @Description fastdfs文件客戶端
  * @Author ren
@@ -122,15 +120,19 @@ public class FastDFSClient implements FileClient {
 
     @Override
     public InitMultipartResponse initMultipartUpload(InitMultipartUploadArgs args) {
-        assertParameterNotNull(args, "InitMultipartUploadArgs");
+        if (args == null) {
+            throw new IllegalArgumentException("InitMultipartUploadArgs参数不能为空");
+        }
         long fileSize = args.getFileSize();
         if (fileSize <= 0) {
             throw new IllegalArgumentException("文件总大小参数必须大于0");
         }
-
+        String objectName = args.getObjectName();
+        if (StringUtils.isBlank(objectName)) {
+            throw new IllegalArgumentException("objectName参数不能为空");
+        }
         try {
             FastDFS client = client();
-            String objectName = args.getObjectName();
             //初始化 upload append文件
             objectName = client.upload_appender_file1(group, new byte[]{}, getExt(objectName), null);
             client.truncate_file1(objectName, fileSize);
@@ -144,10 +146,20 @@ public class FastDFSClient implements FileClient {
     @Override
     public UploadMultipartResponse uploadMultipart(UploadPartArgs part) {
         try {
+            if (part == null) {
+                throw new IllegalArgumentException("UploadPartArgs参数不能为空");
+            }
             String uploadId = part.getUploadId();
             String objectName = part.getObjectName();
             long partSize = part.getPartSize();
             int partNumber = part.getPartNumber();
+
+            if (partSize <= 0) {
+                throw new IllegalArgumentException("partSize参数必须大于0");
+            }
+            if (StringUtils.isBlank(objectName)) {
+                throw new IllegalArgumentException("objectName参数不能为空");
+            }
             FastDFS client = client();
             long offset = 0;
             if (partNumber != 1) {
@@ -176,7 +188,13 @@ public class FastDFSClient implements FileClient {
 
     @Override
     public List<UploadMultipartResponse> listMultipartUpload(ListMultipartUploadArgs args) {
+        if (args == null) {
+            throw new IllegalArgumentException("ListMultipartUploadArgss参数不能为空");
+        }
         String objectName = args.getObjectName();
+        if (StringUtils.isBlank(objectName)) {
+            throw new IllegalArgumentException("objectName参数不能为空");
+        }
         try {
             FastDFS client = client();
             List<UploadMultipartResponse> uploadMultipartResponses = new ArrayList<>();
@@ -199,6 +217,12 @@ public class FastDFSClient implements FileClient {
 
     @Override
     public CompleteMultipartResponse completeMultipartUpload(String uploadId, String objectName, List<UploadMultipartResponse> parts) {
+        if (StringUtils.isBlank(objectName)) {
+            throw new IllegalArgumentException("objectName参数不能为空");
+        }
+        if (parts == null || parts.isEmpty()) {
+            throw new IllegalArgumentException("parts不能为空");
+        }
         try {
             FastDFS client = client();
             client.set_metadata1(objectName, null, ProtoCommon.STORAGE_SET_METADATA_FLAG_OVERWRITE);

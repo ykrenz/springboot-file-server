@@ -3,8 +3,8 @@ package com.github.ren.file.service;
 import com.github.ren.file.model.request.*;
 import com.github.ren.file.model.result.CheckResult;
 import com.github.ren.file.model.result.InitPartResult;
+import com.github.ren.file.model.result.PartResult;
 import com.github.ren.file.sdk.part.CompleteMultipartResponse;
-import com.github.ren.file.sdk.part.UploadMultipartResponse;
 
 /**
  * @Description 文件接口
@@ -35,7 +35,7 @@ public interface FileService {
      * @param request
      * @return
      */
-    InitPartResult initiateMultipartUpload(InitPartRequest request);
+    InitPartResult initMultipart(InitPartRequest request);
 
     /**
      * 上传文件分片
@@ -43,7 +43,7 @@ public interface FileService {
      * @param uploadPartRequest
      * @return
      */
-    UploadMultipartResponse uploadPart(UploadPartRequest uploadPartRequest);
+    PartResult uploadMultipart(UploadPartRequest uploadPartRequest);
 
     /**
      * 合并文件分片
@@ -51,7 +51,7 @@ public interface FileService {
      * @param request
      * @return
      */
-    CompleteMultipartResponse completeMultipartUpload(CompletePartRequest request);
+    CompleteMultipartResponse completeMultipart(CompletePartRequest request);
 
     /**
      * 取消分片上传
@@ -59,6 +59,6 @@ public interface FileService {
      * @param request
      * @return
      */
-    void abortMultipartUpload(AbortPartRequest request);
+    void abortMultipart(AbortPartRequest request);
 
 }

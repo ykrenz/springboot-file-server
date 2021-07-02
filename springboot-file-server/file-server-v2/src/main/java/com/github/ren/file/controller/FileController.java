@@ -4,9 +4,10 @@ import com.github.ren.file.model.ResultUtil;
 import com.github.ren.file.model.request.*;
 import com.github.ren.file.model.result.CheckResult;
 import com.github.ren.file.model.result.InitPartResult;
+import com.github.ren.file.model.result.PartResult;
 import com.github.ren.file.sdk.part.CompleteMultipartResponse;
-import com.github.ren.file.sdk.part.UploadMultipartResponse;
 import com.github.ren.file.service.FileService;
+import com.github.ren.file.service.impl.TUploadServiceImpl;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -43,30 +44,50 @@ public class FileController {
 
     @ApiOperation("初始化分片上传")
     @ApiOperationSupport(order = 3)
-    @PostMapping("/initMultipartUpload")
-    public ResultUtil<InitPartResult> initiateMultipartUpload(@Validated InitPartRequest request) {
-        return ResultUtil.success(fileService.initiateMultipartUpload(request));
+    @PostMapping("/initMultipart")
+    public ResultUtil<InitPartResult> initMultipart(@Validated InitPartRequest request) {
+        return ResultUtil.success(fileService.initMultipart(request));
     }
 
     @ApiOperation("上传文件分片")
     @ApiOperationSupport(order = 4)
     @PostMapping("/uploadMultipart")
-    public ResultUtil<UploadMultipartResponse> uploadPart(@Validated UploadPartRequest uploadPartRequest) {
-        return ResultUtil.success(fileService.uploadPart(uploadPartRequest));
+    public ResultUtil<PartResult> uploadMultipart(@Validated UploadPartRequest uploadPartRequest) {
+        return ResultUtil.success(fileService.uploadMultipart(uploadPartRequest));
     }
 
     @ApiOperation("合并文件分片")
     @ApiOperationSupport(order = 5)
-    @PostMapping("/completeMultipartUpload")
-    public ResultUtil<CompleteMultipartResponse> completeMultipartUpload(@Validated CompletePartRequest request) {
-        return ResultUtil.success(fileService.completeMultipartUpload(request));
+    @PostMapping("/completeMultipart")
+    public ResultUtil<CompleteMultipartResponse> completeMultipart(@Validated CompletePartRequest request) {
+        return ResultUtil.success(fileService.completeMultipart(request));
     }
 
     @ApiOperation("取消分片上传")
     @ApiOperationSupport(order = 6)
-    @PostMapping("/abortMultipartUpload")
-    public ResultUtil<String> abortMultipartUpload(@Validated AbortPartRequest request) {
-        fileService.abortMultipartUpload(request);
+    @PostMapping("/abortMultipart")
+    public ResultUtil<String> abortMultipart(@Validated AbortPartRequest request) {
+        fileService.abortMultipart(request);
         return ResultUtil.success();
     }
+
+    @Autowired
+    private TUploadServiceImpl tUploadService;
+
+//    @ApiOperation("取消分片上传")
+//    @ApiOperationSupport(order = 6)
+//    @PostMapping("/delete")
+//    public ResultUtil<String> delete() {
+//        List<TUpload> tUploads = tUploadService.getBaseMapper().selectList(null);
+//        for (TUpload tUpload : tUploads) {
+//            String objectName = tUpload.getObjectName();
+//            try {
+//                int i = FastDFSBuilder.build().delete_file1(objectName);
+//                System.out.println(i);
+//            } catch (IOException | MyException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//        return ResultUtil.success("");
+//    }
 }
