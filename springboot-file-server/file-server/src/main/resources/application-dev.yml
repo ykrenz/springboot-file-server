@@ -11,59 +11,48 @@ server:
 spring:
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 1024MB
+      max-file-size: 1024MB
+      max-request-size: 2048MB
+  redis:
+    database: 0
+    host: localhost
+    port: 6379
+    timeout: 5000
+    jedis:
+      pool:
+        max-active: 3000
+        max-idle: 100
+        max-wait: 2500
+        min-idle: 0
   datasource:
     url: jdbc:mysql://localhost:3306/filedb?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&autoReconnect=true&failOverReadOnly=false
     username: root
-    password: 123456
+    password: root
     type: com.zaxxer.hikari.HikariDataSource
     driver-class-name: com.mysql.jdbc.Driver
 
-#文件存储服务配置
 file:
-  server:
-    chunk-temp-path: D:\data
-    storage: local
-  # 请填写自己的阿里云存储配置
+  storage:
+    #存储类型
+    type: fastdfs
+  #fastdfs 配置
+  fastdfs:
+    tracker-servers: 192.168.248.101:22122
+  #文件上传配置
+  upload:
+    #普通上传文件最大值
+    max-upload-size: 10MB
+    #分上传文件最小值 小于5M minio会上传错误
+    multipart-min-size: 5MB
+    #分上传文件最大值
+    multipart-max-size: 100MB
   ali:
-    access-key-id:
-    access-key-secret:
-    bucket-name:
     endpoint:
-    # 文件访问前缀地址
-    # 如果Object是公共读/公共读写权限，那么文件URL的格式为：BucketName.Endpoint/ObjectName
-    # 如果Object是私有权限，则必须进行签名操作。文件URL的格式为：BucketName.Endpoint/Object?签名参数
-    # 如果Object所在的Bucket绑定了自定义域名，那么文件URL的格式为：YourDomainName/ObjectName
-    # 具体详情可访问https://help.aliyun.com/knowledge_detail/39607.html
-    # 也可以配置nginx的地址进行反向代理等。在此不做解释
-    web-server-url:
-  local:
-    file-storage-path: D:\download
-    web-server-url: http://localhost/download
-    #nginx配置
-#      location /download {
-#      alias D:\\download;
-#      autoindex on;
-#      autoindex_exact_size off;
-#      autoindex_localtime on;
-#      charset 'utf-8';
-#    }
+    access-key:
+    secret-key:
+    bucket-name:
 
-#fastdfs配置
-fdfs:
-  so-timeout: 5000
-  connect-timeout: 5000
-  #缩略图生成参数
-  thumb-image:
-    width: 150
-    height: 150
-  #TrackerList参数,支持多个
-  tracker-list:
-    -
-  #返回访问文件的地址前缀,一般是nginx域名
-  web-server-url:
-
-logging:
-  level:
-    root: info
+#swagger配置
+knife4j:
+  #开启增强
+  enable: true

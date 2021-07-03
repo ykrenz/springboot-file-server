@@ -1,0 +1,69 @@
+server:
+  port: 3000
+  tomcat:
+    uri-encoding: UTF-8
+    accept-count: 1000
+    max-connections: 10000
+    threads:
+      max: 2500
+      min-spare: 100
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 1024MB
+  datasource:
+    url: jdbc:mysql://localhost:3306/filedb?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&autoReconnect=true&failOverReadOnly=false
+    username: root
+    password: 123456
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.jdbc.Driver
+
+#文件存储服务配置
+file:
+  server:
+    chunk-temp-path: D:\data
+    storage: local
+  # 请填写自己的阿里云存储配置
+  ali:
+    access-key-id:
+    access-key-secret:
+    bucket-name:
+    endpoint:
+    # 文件访问前缀地址
+    # 如果Object是公共读/公共读写权限，那么文件URL的格式为：BucketName.Endpoint/ObjectName
+    # 如果Object是私有权限，则必须进行签名操作。文件URL的格式为：BucketName.Endpoint/Object?签名参数
+    # 如果Object所在的Bucket绑定了自定义域名，那么文件URL的格式为：YourDomainName/ObjectName
+    # 具体详情可访问https://help.aliyun.com/knowledge_detail/39607.html
+    # 也可以配置nginx的地址进行反向代理等。在此不做解释
+    web-server-url:
+  local:
+    file-storage-path: D:\download
+    web-server-url: http://localhost/download
+    #nginx配置
+#      location /download {
+#      alias D:\\download;
+#      autoindex on;
+#      autoindex_exact_size off;
+#      autoindex_localtime on;
+#      charset 'utf-8';
+#    }
+
+#fastdfs配置
+fdfs:
+  so-timeout: 5000
+  connect-timeout: 5000
+  #缩略图生成参数
+  thumb-image:
+    width: 150
+    height: 150
+  #TrackerList参数,支持多个
+  tracker-list:
+    -
+  #返回访问文件的地址前缀,一般是nginx域名
+  web-server-url:
+
+logging:
+  level:
+    root: info
