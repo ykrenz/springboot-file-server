@@ -2,6 +2,7 @@ package com.github.ren.file.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.github.ren.file.config.FileServerProperties;
+import com.github.ren.file.entity.TFile;
 import com.github.ren.file.entity.TUpload;
 import com.github.ren.file.ex.ApiException;
 import com.github.ren.file.model.ErrorCode;
@@ -285,6 +286,14 @@ public class FileServiceImpl implements FileService {
         CompleteMultipartResponse completeMultipartResponse = fileClient.completeMultipartUpload(uploadId, objectName, multiParts);
         tUploadService.completeUpload(uploadId);
         log.info("完成上传 uploadId={} objectName={} result={}", uploadId, objectName, completeMultipartResponse);
+        TFile tFile = new TFile();
+        tFile.setFilesize(fileSize);
+        tFile.setCreateTime(LocalDateTime.now());
+        tFile.setEtag(completeMultipartResponse.getETag());
+        tFile.setObjectName(completeMultipartResponse.getObjectName());
+        tFile.setMd5(request.getMd5());
+        tFile.setStatus(1);
+        tFileService.save(tFile);
         return completeMultipartResponse;
     }
 

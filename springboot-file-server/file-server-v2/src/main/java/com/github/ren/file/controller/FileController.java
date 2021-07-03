@@ -7,7 +7,6 @@ import com.github.ren.file.model.result.InitPartResult;
 import com.github.ren.file.model.result.PartResult;
 import com.github.ren.file.sdk.part.CompleteMultipartResponse;
 import com.github.ren.file.service.FileService;
-import com.github.ren.file.service.impl.TUploadServiceImpl;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -71,16 +70,15 @@ public class FileController {
         return ResultUtil.success();
     }
 
-    @Autowired
-    private TUploadServiceImpl tUploadService;
-
+//    @Autowired
+//    private TFileServiceImpl tFileService;
 //    @ApiOperation("取消分片上传")
 //    @ApiOperationSupport(order = 6)
 //    @PostMapping("/delete")
 //    public ResultUtil<String> delete() {
-//        List<TUpload> tUploads = tUploadService.getBaseMapper().selectList(null);
-//        for (TUpload tUpload : tUploads) {
-//            String objectName = tUpload.getObjectName();
+//        List<TFile> tFiles = tFileService.getBaseMapper().selectList(null);
+//        for (TFile tFile : tFiles) {
+//            String objectName = tFile.getObjectName();
 //            try {
 //                int i = FastDFSBuilder.build().delete_file1(objectName);
 //                System.out.println(i);
