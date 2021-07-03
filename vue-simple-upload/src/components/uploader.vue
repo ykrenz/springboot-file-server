@@ -22,35 +22,46 @@
 
 <script>
 import SparkMD5 from 'spark-md5'
-import { merge } from '../api/upload'
+import { completeMultipart } from '../api/upload'
+import $ from 'jquery'
 export default {
   data () {
     return {
       options: {
-        target: '///localhost:3000/upload/chunk',
-        chunkSize: 1024 * 1024,
+        target: function (file, chunk, isTest) {
+          if (isTest) {
+            return '///localhost:3000/check'
+          }
+          return '///localhost:3000/uploadMultipart'
+        },
+        chunkSize: 1024 * 1024 * 10,
+        speedSmoothingFactor: 0.02,
         testChunks: true,
+        testMethod: function (file) {
+          return 'POST'
+        },
         checkChunkUploadedByResponse: function (chunk, message) {
           const objMessage = JSON.parse(message)
-          if (objMessage.data.exist) {
-            // 秒传
-            // console.log('秒传' + objMessage.data.file)
-            return true
-          }
-          const chunkNumbers = objMessage.data.chunkNumbers
+          console.log(objMessage, 'objMessage')
+          // if (objMessage.data.exist) {
+          // 秒传
+          // console.log('秒传' + objMessage.data.file)
+          // return true
+          // }
+          const chunkNumbers = objMessage.data.parts.map(obj => {
+            return obj.partNumber
+          })
           return (chunkNumbers || []).indexOf(chunk.offset + 1) >= 0
         },
-        // generateUniqueIdentifier: function (file) {
-        //   console.log('sdfasdf')
-        //   const chunkSize = 10 * 1024 * 1000
-        //   const data = await md5(file, chunkSize).then(value => {
-        //     console.log(value)
-        //   })
-        //   console.log(data)
-        //   return data
-        // },
-        query (file) {
-          return { md5: file.uniqueIdentifier }
+        processParams: function (params, file, chunk, isTest) {
+          console.log(params, 'params')
+          return {
+            uploadId: file.uploadId,
+            filename: params.filename,
+            filesize: params.totalSize,
+            partNumber: params.chunkNumber,
+            partsize: params.chunkSize
+          }
         }
       },
       fileStatusText (status, response) {
@@ -60,13 +71,6 @@ export default {
           uploading: '上传中',
           paused: '暂停中',
           waiting: '等待中'
-        }
-        console.log('status=' + status)
-        console.log('fileStatusText=' + JSON.stringify(response))
-        // 分片合并完成
-        if (status === 'merge') {
-          console.log('merge')
-          return '校验文件中'
         }
         return statusTextMap[status]
         // if (status === 'success' || status === 'error') {
@@ -85,31 +89,29 @@ export default {
   },
   methods: {
     onFileAdded (file) {
-      // this.options.query.fileType = file.fileType
-      // this.options.query.extension = file.getExtension()
       // 计算MD5，下文会提到
-      console.log(file)
-      this.computeMD5(file)
+      const initData = { filename: file.name, partsize: this.options.chunkSize, filesize: file.size }
+      const request = $.ajax({
+        type: 'POST',
+        url: '///localhost:3000/initMultipart',
+        async: false,
+        dataType: 'json',
+        data: initData
+      })
+      // 发起请求
+      request.done(function (res) {
+        console.log(res, 'res')
+        file.uploadId = res.data.uploadId
+      })
+      // this.computeMD5(file)
     },
     onFileSuccess (rootFile, file, response, chunk) {
-      // console.log('rootFile', rootFile)
-      // console.log('file', file)
-      // console.log('chunk', chunk)
       console.log('onFileSuccess')
       const res = JSON.parse(response)
-      console.log(res)
-      console.log(res.data.exist)
-      if (res.code === 200 && !res.data.exist) {
-        this.fileStatusText('merge')
-        // 合并
+      if (res.code === 200) {
         const form = new FormData()
-        form.append('md5', file.uniqueIdentifier)
-        form.append('filename', file.name)
-        form.append('size', file.size)
-        // form.append('fileType', file.getType())
-        // form.append('extension', file.getExtension())
-        merge(form).then(response => {
-          console.log('合并结果')
+        form.append('uploadId', file.uploadId)
+        completeMultipart(form).then(response => {
           console.log(response.data)
           console.log(response.data.code)
         })

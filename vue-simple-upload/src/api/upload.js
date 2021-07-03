@@ -1,8 +1,8 @@
 import { request } from '../network/request'
 
-export function merge (form) {
+export function completeMultipart (form) {
   return request({
-    url: '/upload/merge',
+    url: '/completeMultipart',
     method: 'post',
     data: form
   })
