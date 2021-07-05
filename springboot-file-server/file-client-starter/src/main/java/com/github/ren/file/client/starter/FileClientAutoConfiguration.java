@@ -3,18 +3,18 @@ package com.github.ren.file.client.starter;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
 import com.github.ren.file.client.ali.AliOssClient;
-import com.github.ren.file.client.fdfs.FastDfsBuilder;
 import com.github.ren.file.client.fdfs.FastDfsClient;
+import com.github.ren.file.client.fdfs.FastDfsClientBuilder;
+import com.github.ren.file.client.fdfs.FastDfsClientConfiguration;
 import com.github.ren.file.client.minio.MinIoClient;
 import com.github.ren.file.client.minio.MinIoClientBuilder;
 import io.minio.MinioClient;
+import org.springframework.beans.BeanUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.Properties;
 
 import static com.github.ren.file.client.starter.Constants.StorageTypePrefix;
 
@@ -36,12 +36,9 @@ public class FileClientAutoConfiguration {
     public FastDfsClient fastDfsClient(FastDfsProperties fastDfsProperties) {
         String group = fastDfsProperties.getGroup();
         String trackerServers = fastDfsProperties.getTrackerServers();
-        if (trackerServers == null) {
-            throw new IllegalStateException("fastdfs config load error file.server.fastdfs.trackerServers is null");
-        }
-        Properties properties = fastDfsProperties.getProperties();
-        FastDfsBuilder.initProperties(properties);
-        return new FastDfsBuilder().build(group, trackerServers);
+        FastDfsClientConfiguration clientConfiguration = new FastDfsClientConfiguration();
+        BeanUtils.copyProperties(fastDfsProperties, clientConfiguration);
+        return new FastDfsClientBuilder().build(group, trackerServers, clientConfiguration);
     }
 
     @Bean
