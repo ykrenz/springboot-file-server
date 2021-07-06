@@ -7,8 +7,16 @@ package com.github.ren.file.client.fdfs;
  */
 public interface FastDfsBuilder {
 
+    //    https://github.com/happyfish100/fastdfs-client-java
+
+    /**
+     * 默认加载config文件名
+     */
     String CONFIG_FILE = "fdfs_client.conf";
 
+    /**
+     * 默认加载properties文件名
+     */
     String PROPERTIES_FILE = "fastdfs-client.properties";
 
     /**
@@ -42,24 +50,6 @@ public interface FastDfsBuilder {
     FastDfsClient propertiesFile(String propertiesFilePath);
 
     /**
-     * 根据group config文件构建
-     *
-     * @param group          fastdfs group
-     * @param configFilePath config文件
-     * @return
-     */
-    FastDfsClient configFile(String group, String configFilePath);
-
-    /**
-     * 根据group properties文件构建
-     *
-     * @param group              fastdfs group
-     * @param propertiesFilePath properties文件
-     * @return
-     */
-    FastDfsClient propertiesFile(String group, String propertiesFilePath);
-
-    /**
      * 根据trackerServers构建
      *
      * @param trackerServers trackerServers 多个server用逗号隔开
@@ -68,31 +58,11 @@ public interface FastDfsBuilder {
     FastDfsClient build(String trackerServers);
 
     /**
-     * 根据group trackerServers构建
-     *
-     * @param group          fastdfs group
-     * @param trackerServers trackerServers 多个server用逗号隔开
-     * @return
-     */
-    FastDfsClient build(String group, String trackerServers);
-
-    /**
      * 根据trackerServers clientConfiguration构建
      *
-     * @param trackerServers      trackerServers 多个server用逗号隔开
      * @param clientConfiguration fastdfs配置类
      * @return
      */
-    FastDfsClient build(String trackerServers, FastDfsClientConfiguration clientConfiguration);
-
-    /**
-     * 根据group trackerServers clientConfiguration构建
-     *
-     * @param group               fastdfs group
-     * @param trackerServers      trackerServers 多个server用逗号隔开
-     * @param clientConfiguration fastdfs配置类
-     * @return
-     */
-    FastDfsClient build(String group, String trackerServers, FastDfsClientConfiguration clientConfiguration);
+    FastDfsClient build(FastDfsClientConfiguration clientConfiguration);
 
 }

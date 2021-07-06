@@ -32,23 +32,13 @@ public class FastDfsClientBuilder implements FastDfsBuilder {
 
     @Override
     public FastDfsClient configFile(String configFilePath) {
-        return configFile(null, configFilePath);
-    }
-
-    @Override
-    public FastDfsClient propertiesFile(String propertiesFilePath) {
-        return propertiesFile(null, propertiesFilePath);
-    }
-
-    @Override
-    public FastDfsClient configFile(String group, String configFilePath) {
         try {
             ClientGlobal.init(configFilePath);
             TrackerClient trackerClient = new TrackerClient();
             TrackerServer trackerServer = trackerClient.getTrackerServer();
             StorageServer storageServer = trackerClient.getStoreStorage(trackerServer);
-            FastDfsClient fastDfsClient = new FastDfsClient(group, trackerServer, storageServer);
-            logger.info("init fastdfs client success group: {} conifg: {} ", group, ClientGlobal.configInfo());
+            FastDfsClient fastDfsClient = new FastDfsClient(trackerServer, storageServer);
+            logger.info("init fastdfs client success config: {} ", ClientGlobal.configInfo());
             return fastDfsClient;
         } catch (IOException | MyException e) {
             logger.error("fastdfs client build error", e);
@@ -57,14 +47,14 @@ public class FastDfsClientBuilder implements FastDfsBuilder {
     }
 
     @Override
-    public FastDfsClient propertiesFile(String group, String propertiesFilePath) {
+    public FastDfsClient propertiesFile(String propertiesFilePath) {
         try {
             ClientGlobal.initByProperties(propertiesFilePath);
             TrackerClient trackerClient = new TrackerClient();
             TrackerServer trackerServer = trackerClient.getTrackerServer();
             StorageServer storageServer = trackerClient.getStoreStorage(trackerServer);
-            FastDfsClient fastDfsClient = new FastDfsClient(group, trackerServer, storageServer);
-            logger.info("init fastdfs client success group: {} conifg: {} ", group, ClientGlobal.configInfo());
+            FastDfsClient fastDfsClient = new FastDfsClient(trackerServer, storageServer);
+            logger.info("init fastdfs client success config: {} ", ClientGlobal.configInfo());
             return fastDfsClient;
         } catch (IOException | MyException e) {
             logger.error("fastdfs client build error", e);
@@ -74,21 +64,17 @@ public class FastDfsClientBuilder implements FastDfsBuilder {
 
     @Override
     public FastDfsClient build(String trackerServers) {
-        return build(null, trackerServers, getClientConfiguration());
+        FastDfsClientConfiguration clientConfiguration = getClientConfiguration();
+        clientConfiguration.setTrackerServers(trackerServers);
+        return build(clientConfiguration);
     }
 
     @Override
-    public FastDfsClient build(String group, String trackerServers) {
-        return build(group, trackerServers, getClientConfiguration());
-    }
-
-    @Override
-    public FastDfsClient build(String trackerServers, FastDfsClientConfiguration clientConfiguration) {
-        return build(null, trackerServers, clientConfiguration);
-    }
-
-    @Override
-    public FastDfsClient build(String group, String trackerServers, FastDfsClientConfiguration clientConfiguration) {
+    public FastDfsClient build(FastDfsClientConfiguration clientConfiguration) {
+        if (clientConfiguration == null) {
+            throw new IllegalStateException("fastdfs client build error clientConfiguration is null");
+        }
+        String trackerServers = clientConfiguration.getTrackerServers();
         if (trackerServers == null) {
             throw new IllegalStateException("fastdfs client build error item \"tracker_server\" not found");
         }
@@ -109,8 +95,8 @@ public class FastDfsClientBuilder implements FastDfsBuilder {
             TrackerServer trackerServer = trackerGroup.getTrackerServer();
             StorageServer storageServer = trackerClient.getStoreStorage(trackerServer);
             ClientGlobal.initByProperties(getProperties(trackerServers, clientConfiguration));
-            FastDfsClient fastDfsClient = new FastDfsClient(group, trackerServer, storageServer);
-            logger.info("init fastdfs client success group: {} conifg: {} ", group, ClientGlobal.configInfo());
+            FastDfsClient fastDfsClient = new FastDfsClient(trackerServer, storageServer);
+            logger.info("init fastdfs client success config: {} ", ClientGlobal.configInfo());
             return fastDfsClient;
         } catch (IOException | MyException e) {
             logger.error("fastdfs client build error", e);
@@ -122,49 +108,48 @@ public class FastDfsClientBuilder implements FastDfsBuilder {
         return new FastDfsClientConfiguration();
     }
 
-
     private Properties getProperties(String trackerServers, FastDfsClientConfiguration clientConfiguration) {
         Properties props = new Properties();
         if (trackerServers != null) {
-            props.put("fastdfs.tracker_servers", trackerServers);
+            props.put(ClientGlobal.PROP_KEY_TRACKER_SERVERS, trackerServers);
         }
         int connectTimeoutSeconds = clientConfiguration.getConnectTimeoutSeconds();
         if (connectTimeoutSeconds > 0) {
-            props.put("fastdfs.connect_timeout_in_seconds", connectTimeoutSeconds);
+            props.put(ClientGlobal.PROP_KEY_CONNECT_TIMEOUT_IN_SECONDS, String.valueOf(connectTimeoutSeconds));
         }
         long networkTimeoutSeconds = clientConfiguration.getNetworkTimeoutSeconds();
         if (networkTimeoutSeconds > 0) {
-            props.put("fastdfs.network_timeout_in_seconds", networkTimeoutSeconds);
+            props.put(ClientGlobal.PROP_KEY_NETWORK_TIMEOUT_IN_SECONDS, String.valueOf(networkTimeoutSeconds));
         }
         String charset = clientConfiguration.getCharset();
         if (charset != null) {
-            props.put("fastdfs.charset", charset);
+            props.put(ClientGlobal.PROP_KEY_CHARSET, charset);
         }
         boolean httpAntiStealToken = clientConfiguration.isHttpAntiStealToken();
-        props.put("fastdfs.http_anti_steal_token", httpAntiStealToken);
+        props.put(ClientGlobal.PROP_KEY_HTTP_ANTI_STEAL_TOKEN, String.valueOf(httpAntiStealToken));
         String httpSecretKey = clientConfiguration.getHttpSecretKey();
         if (httpSecretKey != null) {
-            props.put("fastdfs.http_secret_key", httpSecretKey);
+            props.put(ClientGlobal.PROP_KEY_HTTP_SECRET_KEY, httpSecretKey);
         }
         int httpTrackerHttpPort = clientConfiguration.getHttpTrackerHttpPort();
         if (httpTrackerHttpPort > 0) {
-            props.put("fastdfs.http_tracker_http_port", httpTrackerHttpPort);
+            props.put(ClientGlobal.PROP_KEY_HTTP_TRACKER_HTTP_PORT, String.valueOf(httpTrackerHttpPort));
         }
         FastDfsClientConfiguration.Pool pool = clientConfiguration.getPool();
         if (pool != null) {
-            props.put("fastdfs.connection_pool.enabled", pool.isEnabled());
+            props.put(ClientGlobal.PROP_KEY_CONNECTION_POOL_ENABLED, String.valueOf(pool.isEnabled()));
             int maxCount = pool.getMaxCount();
             if (maxCount > 0) {
-                props.put("fastdfs.connection_pool.max_count_per_entry", maxCount);
+                props.put(ClientGlobal.PROP_KEY_CONNECTION_POOL_MAX_COUNT_PER_ENTRY, String.valueOf(maxCount));
             }
             int maxIdleTime = pool.getMaxIdleTime();
 
             if (maxIdleTime > 0) {
-                props.put("fastdfs.connection_pool.max_idle_time", maxIdleTime);
+                props.put(ClientGlobal.PROP_KEY_CONNECTION_POOL_MAX_IDLE_TIME, String.valueOf(maxIdleTime));
             }
             long maxWaitTime = pool.getMaxWaitTime();
             if (maxWaitTime > 0) {
-                props.put("fastdfs.connection_pool.max_wait_time_in_ms", maxWaitTime);
+                props.put(ClientGlobal.PROP_KEY_CONNECTION_POOL_MAX_WAIT_TIME_IN_MS, String.valueOf(maxWaitTime));
             }
         }
         return props;

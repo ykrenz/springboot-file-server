@@ -34,11 +34,10 @@ public class FileClientAutoConfiguration {
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = StorageTypePrefix, havingValue = "FastDfs")
     public FastDfsClient fastDfsClient(FastDfsProperties fastDfsProperties) {
-        String group = fastDfsProperties.getGroup();
-        String trackerServers = fastDfsProperties.getTrackerServers();
         FastDfsClientConfiguration clientConfiguration = new FastDfsClientConfiguration();
         BeanUtils.copyProperties(fastDfsProperties, clientConfiguration);
-        return new FastDfsClientBuilder().build(group, trackerServers, clientConfiguration);
+        BeanUtils.copyProperties(fastDfsProperties.getPool(), clientConfiguration.getPool());
+        return new FastDfsClientBuilder().build(clientConfiguration);
     }
 
     @Bean

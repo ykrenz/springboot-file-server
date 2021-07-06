@@ -48,7 +48,12 @@ public interface S3BucketSpi {
      */
     ListObjectsV2Result listObjectsV2(ListObjectsV2Request listObjectsV2Request);
 
-
+    /**
+     * 获取bucket生命周期配置
+     *
+     * @param getBucketLifecycleConfigurationRequest
+     * @return
+     */
     BucketLifecycleConfiguration getBucketLifecycleConfiguration(
             GetBucketLifecycleConfigurationRequest getBucketLifecycleConfigurationRequest);
 }
