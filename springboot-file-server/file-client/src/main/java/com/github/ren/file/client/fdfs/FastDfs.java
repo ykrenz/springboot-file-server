@@ -387,4 +387,243 @@ public class FastDfs implements FastDfsStorageClient {
         }
     }
 
+    @Override
+    public String uploadAppenderFile(String localFile) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.upload_appender_file1(localFile,
+                    FilenameUtils.getExtension(new File(localFile).getName()), null);
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public String uploadAppenderFile(String localFile, NameValuePair[] metaData) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.upload_appender_file1(localFile,
+                    FilenameUtils.getExtension(new File(localFile).getName()), metaData);
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public String uploadAppenderFile(InputStream inputStream, String fileExtName) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.upload_appender_file1(IOUtils.toByteArray(inputStream), fileExtName, null);
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public String uploadAppenderFile(InputStream inputStream, String fileExtName, NameValuePair[] metaData) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.upload_appender_file1(IOUtils.toByteArray(inputStream), fileExtName, metaData);
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public String uploadAppenderFile(String groupName, InputStream inputStream, String fileExtName, NameValuePair[] metaData) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.upload_appender_file1(groupName, IOUtils.toByteArray(inputStream), fileExtName, metaData);
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean appendFile(String filePath, String localFile) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.append_file1(filePath, localFile) == 0;
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean appendFile(String groupName, String path, String localFile) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.append_file(groupName, path, localFile) == 0;
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean appendFile(String filePath, InputStream inputStream) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.append_file1(filePath, IOUtils.toByteArray(inputStream)) == 0;
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+
+    @Override
+    public boolean appendFile(String groupName, String path, InputStream inputStream) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.append_file(groupName, path, IOUtils.toByteArray(inputStream)) == 0;
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+
+    @Override
+    public boolean appendFile(String groupName, String path, InputStream inputStream, int offset, int length) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.append_file(groupName, path,
+                    IOUtils.toByteArray(inputStream), offset, length) == 0;
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean modifyFile(String filePath, String localFile, long offset) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+//            if (new File(localFile).length() == 0) {
+//                return true;
+//            }
+            return storageClient.modify_file1(filePath, offset, localFile) == 0;
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean modifyFile(String filePath, InputStream inputStream, long offset) {
+        try {
+            byte[] bytes = IOUtils.toByteArray(inputStream);
+//            if (bytes.length == 0) {
+//                return true;
+//            }
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.modify_file1(filePath, offset, bytes) == 0;
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean modifyFile(String groupName, String path, String localFile, long offset) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.modify_file(groupName, path, offset, localFile) == 0;
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean modifyFile(String groupName, String path, InputStream inputStream, long offset) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.modify_file(groupName, path, offset, IOUtils.toByteArray(inputStream)) == 0;
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean truncateFile(String filePath) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.truncate_file1(filePath) == 0;
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean truncateFile(String filePath, long truncatedFileSize) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.truncate_file1(filePath, truncatedFileSize) == 0;
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean truncateFile(String groupName, String path) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.truncate_file(groupName, path) == 0;
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean truncateFile(String groupName, String path, long truncatedFileSize) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            return storageClient.truncate_file(groupName, path, truncatedFileSize) == 0;
+        } catch (IOException | MyException e) {
+            throw new FastDfsException(e.getMessage());
+        }
+    }
+
+    @Override
+    public String initiateMultipartUpload(long fileSize, String fileExtName) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            //初始化 upload append文件
+            String filePath = storageClient.upload_appender_file1(new byte[]{}, fileExtName, null);
+            storageClient.truncate_file1(filePath, fileSize);
+            return filePath;
+        } catch (IOException | MyException e) {
+            throw new FastDfsException("init part upload error", e);
+        }
+    }
+    public String uploadPart(String filePath, long fileSize, int partNumber, long partSize, String localFile) {
+//        try {
+//            if (partNumber <= 0) {
+//                throw new IllegalArgumentException("partNumber 必须大于0");
+//            }
+//
+//            if (fileSize <= 0) {
+//                throw new IllegalArgumentException("fileSize 必须大于0");
+//            }
+//
+//            if (partSize <= 0) {
+//                throw new IllegalArgumentException("partSize 必须大于0");
+//            }
+//            StorageClient1 storageClient = getStorageClient();
+//            long offset = 0;
+//            if (partNumber != 1) {
+//                offset = (partNumber - 1) * partSize;
+//            }
+//            //处理最后一个分片
+//            if (offset + partSize > fileSize) {
+//                offset = fileSize - partSize;
+//            }
+//            storageClient.modify_file1(filePath, offset, localFile);
+//            UploadMultipartResponse uploadMultipartResponse = new UploadMultipartResponse();
+//            NameValuePair[] metaList = new NameValuePair[]{
+//                    new NameValuePair("part" + partNumber, JSON.toJSONString(uploadMultipartResponse))
+//            };
+//            storageClient.set_metadata1(filePath, metaList, ProtoCommon.STORAGE_SET_METADATA_FLAG_MERGE);
+//            return filePath;
+//        } catch (IOException | MyException e) {
+//            throw new FastDfsException("upload part error", e);
+//        }
+        return null;
+    }
+
 }

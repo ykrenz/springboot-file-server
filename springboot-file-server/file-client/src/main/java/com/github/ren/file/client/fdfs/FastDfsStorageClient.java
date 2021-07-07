@@ -1,7 +1,10 @@
 package com.github.ren.file.client.fdfs;
 
 import org.csource.common.NameValuePair;
-import org.csource.fastdfs.*;
+import org.csource.fastdfs.DownloadCallback;
+import org.csource.fastdfs.FileInfo;
+import org.csource.fastdfs.TrackerClient;
+import org.csource.fastdfs.TrackerGroup;
 
 import java.io.File;
 import java.io.InputStream;
@@ -349,6 +352,47 @@ public interface FastDfsStorageClient {
      * @return
      */
     boolean downloadFile(String groupName, String path, long offset, long size, DownloadCallback callback);
+
+
+    String uploadAppenderFile(String localFile);
+
+    String uploadAppenderFile(String localFile, NameValuePair[] metaData);
+
+    String uploadAppenderFile(InputStream inputStream, String fileExtName);
+
+    String uploadAppenderFile(InputStream inputStream, String fileExtName, NameValuePair[] metaData);
+
+    String uploadAppenderFile(String groupName, InputStream inputStream, String fileExtName, NameValuePair[] metaData);
+
+    boolean appendFile(String filePath, String localFile);
+
+    boolean appendFile(String groupName, String path, String localFile);
+
+    boolean appendFile(String filePath, InputStream inputStream);
+
+    boolean appendFile(String groupName, String path, InputStream inputStream);
+
+    boolean appendFile(String groupName, String path, InputStream inputStream, int offset, int length);
+
+    boolean modifyFile(String filePath, String localFile, long offset);
+
+    boolean modifyFile(String filePath, InputStream inputStream, long offset);
+
+    boolean modifyFile(String groupName, String path, String localFile, long offset);
+
+    boolean modifyFile(String groupName, String path, InputStream inputStream, long offset);
+
+    boolean truncateFile(String filePath);
+
+    boolean truncateFile(String filePath, long truncatedFileSize);
+
+    boolean truncateFile(String groupName, String path);
+
+    boolean truncateFile(String groupName, String path, long truncatedFileSize);
+
+    String initiateMultipartUpload(long fileSize, String fileExtName);
+
+    String uploadPart(String filePath, long fileSize, int partNumber, long partSize, String localFile);
 
     //todo 封装和完善所有api ==>>FastDfsBuilder构建返回该接口
 
