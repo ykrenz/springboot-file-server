@@ -58,11 +58,21 @@ public interface FastDfsBuilder2 {
     FastDfsStorageClient build(String trackerServers);
 
     /**
+     * 根据trackerServers构建
+     *
+     * @param trackerServers trackerServers 多个server用逗号隔开
+     * @param groupName      组名
+     * @return
+     */
+    FastDfsStorageClient build(String trackerServers, String groupName);
+
+    /**
      * 根据trackerServers clientConfiguration构建
      *
+     * @param trackerServers      trackerServers 多个server用逗号隔开
      * @param clientConfiguration fastdfs配置类
      * @return
      */
-    FastDfsStorageClient build(FastDfsClientConfiguration clientConfiguration);
+    FastDfsStorageClient build(String trackerServers, FastDfsClientConfiguration clientConfiguration);
 
 }

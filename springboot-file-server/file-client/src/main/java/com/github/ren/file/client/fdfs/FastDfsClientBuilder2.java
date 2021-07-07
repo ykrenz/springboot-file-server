@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.Properties;
 
 /**
@@ -27,55 +28,67 @@ public class FastDfsClientBuilder2 implements FastDfsBuilder2 {
         return propertiesFile(PROPERTIES_FILE);
     }
 
-    public static void main(String[] args) {
-        new FastDfs();
-    }
     @Override
     public FastDfsStorageClient configFile(String configFilePath) {
-//        ClientGlobal.init(configFilePath);
-        return new FastDfs();
+        try {
+            ClientGlobal.init(configFilePath);
+            return new FastDfs(getGlobalTrackerServers());
+        } catch (IOException | MyException e) {
+            throw new FastDfsException("FastDfs client build error " + e.getMessage());
+        }
     }
 
     @Override
     public FastDfsStorageClient propertiesFile(String propertiesFilePath) {
-//        ClientGlobal.initByProperties(propertiesFilePath);
-        return new FastDfs();
+        try {
+            ClientGlobal.initByProperties(propertiesFilePath);
+            return new FastDfs(getGlobalTrackerServers());
+        } catch (IOException | MyException e) {
+            throw new FastDfsException("FastDfs client build error " + e.getMessage());
+        }
+    }
+
+    private String getGlobalTrackerServers() {
+        StringBuilder trackerServers = new StringBuilder();
+        if (ClientGlobal.g_tracker_group != null) {
+            InetSocketAddress[] trackerAddresses = ClientGlobal.g_tracker_group.tracker_servers;
+            for (InetSocketAddress inetSocketAddress : trackerAddresses) {
+                if (trackerServers.length() > 0) {
+                    trackerServers.append(",");
+                }
+                trackerServers.append(inetSocketAddress.toString().substring(1));
+            }
+        }
+        return trackerServers.toString();
     }
 
     @Override
     public FastDfsStorageClient build(String trackerServers) {
-//        ClientGlobal.initByProperties(getProperties(trackerServers, getClientConfiguration()));
         return new FastDfs(trackerServers);
     }
 
     @Override
-    public FastDfsStorageClient build(FastDfsClientConfiguration clientConfiguration) {
-        if (clientConfiguration == null) {
-            throw new IllegalStateException("fastdfs client build error clientConfiguration is null");
-        }
-        String trackerServers = clientConfiguration.getTrackerServers();
-        if (trackerServers == null) {
-            throw new IllegalStateException("fastdfs client build error item \"tracker_server\" not found");
-        }
-        try {
-            ClientGlobal.initByProperties(getProperties(trackerServers, clientConfiguration));
-            logger.info("init fastdfs client success config: {} ", ClientGlobal.configInfo());
-            return new FastDfs();
-        } catch (IOException | MyException e) {
-            logger.error("fastdfs client build error", e);
-            throw new IllegalStateException("fastdfs client build error " + e.getMessage());
-        }
+    public FastDfsStorageClient build(String trackerServers, String groupName) {
+        return new FastDfs(trackerServers, groupName);
     }
 
-
-    private FastDfsClientConfiguration getClientConfiguration() {
-        return new FastDfsClientConfiguration();
+    @Override
+    public FastDfsStorageClient build(String trackerServers, FastDfsClientConfiguration clientConfiguration) {
+        try {
+            ClientGlobal.initByProperties(getProperties(trackerServers, clientConfiguration));
+            return new FastDfs(trackerServers);
+        } catch (IOException | MyException e) {
+            throw new FastDfsException("FastDfs client build error " + e.getMessage());
+        }
     }
 
     private Properties getProperties(String trackerServers, FastDfsClientConfiguration clientConfiguration) {
         Properties props = new Properties();
         if (trackerServers != null) {
             props.put(ClientGlobal.PROP_KEY_TRACKER_SERVERS, trackerServers);
+        }
+        if (clientConfiguration == null) {
+            return props;
         }
         int connectTimeoutSeconds = clientConfiguration.getConnectTimeoutSeconds();
         if (connectTimeoutSeconds > 0) {
@@ -118,4 +131,5 @@ public class FastDfsClientBuilder2 implements FastDfsBuilder2 {
         }
         return props;
     }
+
 }

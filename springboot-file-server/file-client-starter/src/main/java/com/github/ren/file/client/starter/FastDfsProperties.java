@@ -17,6 +17,11 @@ public class FastDfsProperties {
     private String trackerServers;
 
     /**
+     * groupName
+     */
+    private String groupName;
+
+    /**
      * 连接超时时间 单位/s
      */
     private int connectTimeoutSeconds = 5;

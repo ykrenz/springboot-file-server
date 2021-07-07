@@ -13,33 +13,20 @@ import java.io.InputStream;
  */
 public interface FastDfsStorageClient {
 
+
     /**
      * 获取TrackerClient
      *
      * @return
      */
-    TrackerClient getTrackerClient();
+    TrackerGroup trackerGroup();
 
     /**
-     * 获取TrackerServer
+     * 获取TrackerClient
      *
-     * @return StorageServer信息
+     * @return
      */
-    TrackerServer getTrackerServer();
-
-    /**
-     * 获取StorageServer
-     *
-     * @return StorageServer信息
-     */
-    StorageServer getStorageServer();
-
-    /**
-     * 获取当前client
-     *
-     * @return StorageClient1 fastdfs官方提供的client
-     */
-    StorageClient1 getStorageClient();
+    TrackerClient trackerClient();
 
     /**
      * 上传文件(文件不可修改)
@@ -65,7 +52,6 @@ public interface FastDfsStorageClient {
      * @return 上传后的文件路径
      */
     String uploadFile(File file, NameValuePair[] metaData);
-
 
     /**
      * 上传文件(文件不可修改)
@@ -141,7 +127,6 @@ public interface FastDfsStorageClient {
      */
     String uploadFile(String groupName, InputStream inputStream, String fileExtName, NameValuePair[] metaData);
 
-
     /**
      * 上传从文件
      *
@@ -182,7 +167,6 @@ public interface FastDfsStorageClient {
      */
     boolean deleteFile(String groupName, String path);
 
-
     /**
      * 获取文件元信息
      *
@@ -205,6 +189,7 @@ public interface FastDfsStorageClient {
      *
      * @param filePath 文件路径(groupName/path)
      * @param metaData
+     * @return
      */
     boolean overwriteMetadata(String filePath, NameValuePair[] metaData);
 
@@ -214,15 +199,16 @@ public interface FastDfsStorageClient {
      * @param groupName
      * @param path
      * @param metaData
+     * @return
      */
     boolean overwriteMetadata(String groupName, String path, NameValuePair[] metaData);
-
 
     /**
      * 修改文件元信息（合并）
      *
      * @param filePath 文件路径(groupName/path)
      * @param metaData
+     * @return
      */
     boolean mergeMetadata(String filePath, NameValuePair[] metaData);
 
@@ -232,6 +218,7 @@ public interface FastDfsStorageClient {
      * @param groupName
      * @param path
      * @param metaData
+     * @return
      */
     boolean mergeMetadata(String groupName, String path, NameValuePair[] metaData);
 
@@ -276,6 +263,8 @@ public interface FastDfsStorageClient {
      *
      * @param groupName
      * @param path
+     * @param offset
+     * @param size
      * @param localFile 本地文件
      * @return
      */

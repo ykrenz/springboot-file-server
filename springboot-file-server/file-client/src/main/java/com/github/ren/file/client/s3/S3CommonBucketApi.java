@@ -7,7 +7,7 @@ import com.amazonaws.services.s3.model.*;
  * @Author ren
  * @Since 1.0
  */
-public interface S3BucketSpi {
+public interface S3CommonBucketApi {
 
     /**
      * 创建 bucket

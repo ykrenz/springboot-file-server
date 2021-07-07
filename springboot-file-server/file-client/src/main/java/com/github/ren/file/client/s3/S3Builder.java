@@ -6,5 +6,5 @@ package com.github.ren.file.client.s3;
  * @Since 1.0
  */
 public interface S3Builder {
-    S3 build(String endpoint, String accessKeyId, String secretAccessKey);
+//    S3Common build(String endpoint, String accessKeyId, String secretAccessKey);
 }
