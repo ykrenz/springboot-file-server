@@ -32,24 +32,19 @@ spring:
     driver-class-name: com.mysql.jdbc.Driver
 
 file:
-  storage:
-    #存储类型
-    type: fastdfs
-  #fastdfs 配置
-  fastdfs:
-    tracker-servers: 192.168.248.101:22122
-  s3:
-    access-key: admin
-    secret-key: 12345678
-    endpoint: http://192.168.231.140:9000
-  #文件上传配置
-#  upload:
-#    #普通上传文件最大值
-#    max-upload-size: 10MB
-#    #分上传文件最小值 小于5M minio会上传错误
-#    multipart-min-size: 5MB
-#    #分上传文件最大值
-#    multipart-max-size: 100MB
+  #存储类型 对应的存储服务器配置要开启才可以正常使用
+  storage: fastdfs
+  #普通上传文件最大值
+  max-upload-size: 10MB
+  #分上传文件最小值 小于5M minio会上传错误
+  multipart-min-size: 5MB
+  #分上传文件最大值
+  multipart-max-size: 100MB
+#fastdfs 配置
+fastdfs:
+  tracker-servers: 192.168.248.101:22122
+s3:
+  enabled: false
 
 #swagger配置
 knife4j:

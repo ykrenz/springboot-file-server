@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.github.ren.s3.starter.AmazonS3AutoConfiguration

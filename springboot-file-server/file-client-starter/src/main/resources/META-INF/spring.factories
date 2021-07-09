@@ -1,3 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  com.github.ren.file.client.starter.AmazonS3AutoConfiguration,\
-  com.github.ren.file.client.starter.FastDfsAutoConfiguration
