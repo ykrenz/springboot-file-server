@@ -25,11 +25,6 @@ public class FastDfsClientConfiguration {
 //    fastdfs.connection_pool.max_wait_time_in_ms = 1000
 
     /**
-     * trackerServers 多个server用逗号隔开
-     */
-    private String trackerServers;
-
-    /**
      * 连接超时时间 单位/s
      */
     private int connectTimeoutSeconds = 5;

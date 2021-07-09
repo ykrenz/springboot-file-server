@@ -1,4 +1,4 @@
-package com.github.ren.file.client.part;
+package com.github.ren.file.server.client;
 
 import lombok.Data;
 

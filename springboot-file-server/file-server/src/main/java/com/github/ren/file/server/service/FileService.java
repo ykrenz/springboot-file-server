@@ -1,6 +1,6 @@
 package com.github.ren.file.server.service;
 
-import com.github.ren.file.client.part.CompleteMultipartResponse;
+import com.github.ren.file.server.client.CompleteMultipartResponse;
 import com.github.ren.file.server.model.request.*;
 import com.github.ren.file.server.model.result.CheckResult;
 import com.github.ren.file.server.model.result.InitPartResult;

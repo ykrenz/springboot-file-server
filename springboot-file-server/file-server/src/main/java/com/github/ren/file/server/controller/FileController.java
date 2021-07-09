@@ -1,6 +1,6 @@
 package com.github.ren.file.server.controller;
 
-import com.github.ren.file.client.part.CompleteMultipartResponse;
+import com.github.ren.file.server.client.CompleteMultipartResponse;
 import com.github.ren.file.server.model.ResultUtil;
 import com.github.ren.file.server.model.request.*;
 import com.github.ren.file.server.model.result.CheckResult;
@@ -72,6 +72,9 @@ public class FileController {
 
 //    @Autowired
 //    private TFileServiceImpl tFileService;
+//
+//    @Autowired
+//    private FastDfsClient fastDfsClient;
 //    @ApiOperation("取消分片上传")
 //    @ApiOperationSupport(order = 6)
 //    @PostMapping("/delete")
@@ -80,7 +83,8 @@ public class FileController {
 //        for (TFile tFile : tFiles) {
 //            String objectName = tFile.getObjectName();
 //            try {
-//                int i = FastDFSBuilder.build().delete_file1(objectName);
+//                StorageClient1 client = fastDfsClient.client();
+//                int i = client.delete_file1(objectName);
 //                System.out.println(i);
 //            } catch (IOException | MyException e) {
 //                e.printStackTrace();

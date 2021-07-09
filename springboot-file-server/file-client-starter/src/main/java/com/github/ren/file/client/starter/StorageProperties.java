@@ -16,4 +16,9 @@ public class StorageProperties {
      */
     private StorageType type = StorageType.Local;
 
+    /**
+     * 存储桶
+     */
+    private String bucketName;
+
 }

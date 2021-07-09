@@ -8,6 +8,7 @@ import org.csource.fastdfs.TrackerGroup;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * @Description fastdfs文件客戶端
@@ -15,7 +16,6 @@ import java.io.InputStream;
  * @Since 1.0
  */
 public interface FastDfsStorageClient {
-
 
     /**
      * 获取TrackerClient
@@ -353,7 +353,6 @@ public interface FastDfsStorageClient {
      */
     boolean downloadFile(String groupName, String path, long offset, long size, DownloadCallback callback);
 
-
     String uploadAppenderFile(String localFile);
 
     String uploadAppenderFile(String localFile, NameValuePair[] metaData);
@@ -390,9 +389,17 @@ public interface FastDfsStorageClient {
 
     boolean truncateFile(String groupName, String path, long truncatedFileSize);
 
-    String initiateMultipartUpload(long fileSize, String fileExtName);
+    String initiateMultipartUpload(long fileSize, long partSize, String fileExtName);
 
-    String uploadPart(String filePath, long fileSize, int partNumber, long partSize, String localFile);
+    FastPart uploadPart(String filePath, int partNumber, String localFile);
+
+    FastPart uploadPart(String filePath, int partNumber, InputStream inputStream);
+
+    String completeMultipartUpload(String filePath);
+
+    List<FastPart> listParts(String filePath);
+
+    boolean abortMultipartUpload(String filePath);
 
     //todo 封装和完善所有api ==>>FastDfsBuilder构建返回该接口
 

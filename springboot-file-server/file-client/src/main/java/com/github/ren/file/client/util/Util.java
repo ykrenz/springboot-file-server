@@ -1,14 +1,12 @@
 package com.github.ren.file.client.util;
 
 import com.github.ren.file.client.ex.FileIOException;
-import com.github.ren.file.client.part.UploadMultipartResponse;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 
 /**
  * @Description 上传工具类
@@ -51,12 +49,4 @@ public class Util implements StrPool {
         return DigestUtils.md5Hex(data);
     }
 
-    public static String completeMultipartMd5(List<UploadMultipartResponse> uploadMultipartResponses) {
-        StringBuilder md5Builder = new StringBuilder();
-        for (UploadMultipartResponse uploadMultipartResponse : uploadMultipartResponses) {
-            String eTag = uploadMultipartResponse.getETag();
-            md5Builder.append(eTag);
-        }
-        return eTag(md5Builder.toString()) + DASHED + uploadMultipartResponses.size();
-    }
 }

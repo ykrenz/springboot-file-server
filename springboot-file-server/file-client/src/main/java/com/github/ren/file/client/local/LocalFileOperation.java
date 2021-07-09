@@ -56,6 +56,9 @@ public final class LocalFileOperation {
     }
 
     public static List<File> chunkFile(File file, String chunkPath, long chunkSize) throws IOException {
+        if (!new File(chunkPath).exists() && !new File(chunkPath).mkdirs()) {
+            throw new RuntimeException("临时目录创建失败");
+        }
         // 分割文件的数量
         int chunkNum = Math.max(1, (int) Math.ceil(file.length() / (float) chunkSize));
         List<File> chunks = new ArrayList<>(chunkNum);

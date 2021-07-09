@@ -8,9 +8,7 @@ import org.csource.fastdfs.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -469,7 +467,6 @@ public class FastDfs implements FastDfsStorageClient {
         }
     }
 
-
     @Override
     public boolean appendFile(String groupName, String path, InputStream inputStream) {
         try {
@@ -479,7 +476,6 @@ public class FastDfs implements FastDfsStorageClient {
             throw new FastDfsException(e.getMessage());
         }
     }
-
 
     @Override
     public boolean appendFile(String groupName, String path, InputStream inputStream, int offset, int length) {
@@ -580,50 +576,159 @@ public class FastDfs implements FastDfsStorageClient {
     }
 
     @Override
-    public String initiateMultipartUpload(long fileSize, String fileExtName) {
+    public String initiateMultipartUpload(long fileSize, long partSize, String fileExtName) {
         try {
+            if (fileSize <= 0) {
+                throw new IllegalArgumentException("fileSize 必须大于0");
+            }
+            if (partSize <= 0) {
+                throw new IllegalArgumentException("fileSize 必须大于0");
+            }
             StorageClient1 storageClient = getStorageClient();
             //初始化 upload append文件
-            String filePath = storageClient.upload_appender_file1(new byte[]{}, fileExtName, null);
+            NameValuePair[] metadata = new NameValuePair[]{
+                    new NameValuePair("fileSize", String.valueOf(fileSize)),
+                    new NameValuePair("partSize", String.valueOf(partSize))};
+            String filePath = storageClient.upload_appender_file1(new byte[]{}, fileExtName, metadata);
             storageClient.truncate_file1(filePath, fileSize);
             return filePath;
         } catch (IOException | MyException e) {
             throw new FastDfsException("init part upload error", e);
         }
     }
-    public String uploadPart(String filePath, long fileSize, int partNumber, long partSize, String localFile) {
-//        try {
-//            if (partNumber <= 0) {
-//                throw new IllegalArgumentException("partNumber 必须大于0");
-//            }
-//
-//            if (fileSize <= 0) {
-//                throw new IllegalArgumentException("fileSize 必须大于0");
-//            }
-//
-//            if (partSize <= 0) {
-//                throw new IllegalArgumentException("partSize 必须大于0");
-//            }
-//            StorageClient1 storageClient = getStorageClient();
-//            long offset = 0;
-//            if (partNumber != 1) {
-//                offset = (partNumber - 1) * partSize;
-//            }
-//            //处理最后一个分片
-//            if (offset + partSize > fileSize) {
-//                offset = fileSize - partSize;
-//            }
-//            storageClient.modify_file1(filePath, offset, localFile);
-//            UploadMultipartResponse uploadMultipartResponse = new UploadMultipartResponse();
-//            NameValuePair[] metaList = new NameValuePair[]{
-//                    new NameValuePair("part" + partNumber, JSON.toJSONString(uploadMultipartResponse))
-//            };
-//            storageClient.set_metadata1(filePath, metaList, ProtoCommon.STORAGE_SET_METADATA_FLAG_MERGE);
-//            return filePath;
-//        } catch (IOException | MyException e) {
-//            throw new FastDfsException("upload part error", e);
-//        }
-        return null;
+
+    /**
+     * 获取最大分片数量
+     *
+     * @param filesize
+     * @param partSize
+     * @return
+     */
+    private int getMaxPartCount(long filesize, long partSize) {
+        return Math.max(1, (int) Math.ceil(filesize / (float) partSize));
+    }
+
+    private static final String Multipart = "Multipart-";
+
+    @Override
+    public FastPart uploadPart(String filePath, int partNumber, String localFile) {
+        try {
+            return uploadPart(filePath, partNumber, new FileInputStream(localFile));
+        } catch (FileNotFoundException e) {
+            throw new FastDfsException("FileNotFoundException", e);
+        }
+    }
+
+    @Override
+    public FastPart uploadPart(String filePath, int partNumber, InputStream inputStream) {
+        try {
+            if (partNumber <= 0) {
+                throw new IllegalArgumentException("partNumber 必须大于0");
+            }
+            StorageClient1 storageClient = getStorageClient();
+            NameValuePair[] metadata = storageClient.get_metadata1(filePath);
+            long fileSize = 0;
+            long partSize = 0;
+            for (NameValuePair meta : metadata) {
+                if ("fileSize".equals(meta.getName())) {
+                    fileSize = Long.parseLong(meta.getValue());
+                    break;
+                }
+            }
+            for (NameValuePair meta : metadata) {
+                if ("partSize".equals(meta.getName())) {
+                    partSize = Long.parseLong(meta.getValue());
+                    break;
+                }
+            }
+            if (partSize <= 0) {
+                throw new IllegalArgumentException("partSize 必须大于0");
+            }
+            byte[] bytes = IOUtils.toByteArray(inputStream);
+            long currentSize = bytes.length;
+            int maxPartCount = getMaxPartCount(fileSize, partSize);
+            if (partNumber > maxPartCount) {
+                throw new FastDfsException("partNumber is to large please check your part");
+            }
+            //最后一个分片
+            if (currentSize != partSize) {
+                if (partNumber != maxPartCount && partNumber != maxPartCount - 1) {
+                    throw new FastDfsException("part size error please check your part");
+                }
+            }
+            long offset = 0;
+            if (partNumber != 1) {
+                offset = (partNumber - 1) * partSize;
+            }
+            if (offset + currentSize > fileSize) {
+                throw new FastDfsException("part size error please check your part");
+            }
+            storageClient.modify_file1(filePath, offset, bytes);
+            NameValuePair[] metaList = new NameValuePair[]{
+                    new NameValuePair(Multipart + partNumber, String.valueOf(partNumber))
+            };
+            storageClient.set_metadata1(filePath, metaList, ProtoCommon.STORAGE_SET_METADATA_FLAG_MERGE);
+
+            FastPart fastPart = new FastPart();
+            fastPart.setPartNumber(partNumber);
+            fastPart.setPartSize(currentSize);
+            return fastPart;
+        } catch (IOException | MyException e) {
+            throw new FastDfsException("upload part error", e);
+        }
+    }
+
+    @Override
+    public String completeMultipartUpload(String filePath) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            String newPath = storageClient.regenerate_appender_filename1(filePath);
+            storageClient.set_metadata1(newPath, null, ProtoCommon.STORAGE_SET_METADATA_FLAG_OVERWRITE);
+            return newPath;
+        } catch (MyException | IOException e) {
+            throw new FastDfsException("complete part error", e);
+        }
+    }
+
+    @Override
+    public List<FastPart> listParts(String filePath) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            NameValuePair[] metadata = storageClient.get_metadata1(filePath);
+            long partSize = 0;
+            for (NameValuePair meta : metadata) {
+                if ("partSize".equals(meta.getName())) {
+                    partSize = Long.parseLong(meta.getValue());
+                    break;
+                }
+            }
+            List<FastPart> fastParts = new ArrayList<>(metadata.length - 2);
+            for (NameValuePair meta : metadata) {
+                if (meta.getName().startsWith(Multipart)) {
+                    FastPart fastPart = new FastPart();
+                    fastPart.setPartNumber(Integer.parseInt(meta.getValue()));
+                    fastPart.setPartSize(partSize);
+                    fastParts.add(fastPart);
+                }
+            }
+            return fastParts;
+        } catch (MyException | IOException e) {
+            throw new FastDfsException("listParts error", e);
+        }
+    }
+
+    @Override
+    public boolean abortMultipartUpload(String filePath) {
+        try {
+            StorageClient1 storageClient = getStorageClient();
+            NameValuePair[] metadata = storageClient.get_metadata1(filePath);
+            if (metadata == null) {
+                throw new FastDfsException("abort upload error maybe is complete");
+            }
+            return storageClient.delete_file1(filePath) == 0;
+        } catch (MyException | IOException e) {
+            throw new FastDfsException("abort part error", e);
+        }
     }
 
 }

@@ -1,10 +1,8 @@
 package com.github.ren.file.server.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.github.ren.file.client.FileClient;
-import com.github.ren.file.client.model.UploadGenericResult;
 import com.github.ren.file.client.objectname.UuidGenerator;
-import com.github.ren.file.client.part.*;
+import com.github.ren.file.client.starter.StorageType;
+import com.github.ren.file.server.client.*;
 import com.github.ren.file.server.config.FileUploadProperties;
 import com.github.ren.file.server.entity.TFile;
 import com.github.ren.file.server.entity.TUpload;
@@ -13,7 +11,6 @@ import com.github.ren.file.server.model.ErrorCode;
 import com.github.ren.file.server.model.request.*;
 import com.github.ren.file.server.model.result.CheckResult;
 import com.github.ren.file.server.model.result.InitPartResult;
-import com.github.ren.file.server.model.result.PartResult;
 import com.github.ren.file.server.service.FileService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
@@ -37,7 +34,7 @@ import java.util.List;
 public class FileServiceImpl implements FileService {
 
     @Autowired
-    private FileClient fileClient;
+    private MultipartUploadAdapter multipartUploadAdapter;
 
     @Autowired
     private TFileServiceImpl tFileService;
@@ -51,7 +48,7 @@ public class FileServiceImpl implements FileService {
 
     private long multipartMaxSize = 1024 * 1024 * 100;
 
-    private final String storage;
+    private final StorageType storage;
 
     private final int storageTypeInt;
 
@@ -71,8 +68,7 @@ public class FileServiceImpl implements FileService {
             this.multipartMinSize = multipartMinSize;
         }
 
-        this.multipartMinSize = fileUploadProperties.getMinPartSize();
-        this.storage = fileUploadProperties.getStorageTypeName();
+        this.storage = fileUploadProperties.getStorage();
         this.storageTypeInt = fileUploadProperties.getStorageTypeInt();
     }
 
@@ -83,19 +79,20 @@ public class FileServiceImpl implements FileService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String upload(SimpleUploadRequest request) {
-        MultipartFile file = request.getFile();
-        if (file.getSize() > maxUploadSize) {
-            throw new ApiException(ErrorCode.FILE_TO_LARGE);
-        }
-        try {
-            String objectName = objectName(file.getOriginalFilename());
-            UploadGenericResult result = fileClient.upload(file.getInputStream(), objectName);
-            objectName = result.getObjectName();
-            return objectName;
-        } catch (IOException e) {
-            log.error("上传失败", e);
-            throw new ApiException(ErrorCode.UPLOAD_ERROR);
-        }
+//        MultipartFile file = request.getFile();
+//        if (file.getSize() > maxUploadSize) {
+//            throw new ApiException(ErrorCode.FILE_TO_LARGE);
+//        }
+//        try {
+//            String objectName = objectName(file.getOriginalFilename());
+//            UploadGenericResult result = fileClient.upload(file.getInputStream(), objectName);
+//            objectName = result.getObjectName();
+//            return objectName;
+//        } catch (IOException e) {
+//            log.error("上传失败", e);
+//            throw new ApiException(ErrorCode.UPLOAD_ERROR);
+//        }
+        return null;
     }
 
     private TUpload checkUploadId(String uploadId) {
@@ -108,11 +105,6 @@ public class FileServiceImpl implements FileService {
             throw new ApiException(ErrorCode.UPLOAD_ID_EXPIRE);
         }
         return tUpload;
-    }
-
-    private String getObjectName(String uploadId) {
-        TUpload tUpload = checkUploadId(uploadId);
-        return tUpload.getObjectName();
     }
 
     private int getMaxPartCount(long filesize, long partSize) {
@@ -170,15 +162,17 @@ public class FileServiceImpl implements FileService {
         return tUpload;
     }
 
-    private List<UploadMultipartResponse> getMultiParts(String uploadId, String objectName) {
-        List<UploadMultipartResponse> listMultipart = tUploadService.listMultipart(uploadId, objectName);
-
-        if (listMultipart.isEmpty()) {
-            ListMultipartUploadArgs args = ListMultipartUploadArgs.builder().uploadId(uploadId).objectName(objectName).build();
-            listMultipart = fileClient.listMultipartUpload(args);
+    private List<PartResult> getMultiParts(TUpload tUpload) {
+        String objectName = tUpload.getObjectName();
+        List<PartResult> partResults = tUploadService.listMultipart(tUpload);
+        if (partResults.isEmpty()) {
+            ListPartsArgs listPartsArgs = ListPartsArgs.builder()
+                    .uploadId(tUpload.getUploadId())
+                    .objectName(objectName)
+                    .build();
+            partResults = multipartUploadAdapter.listParts(storage, listPartsArgs);
         }
-
-        return listMultipart;
+        return partResults;
     }
 
     @Override
@@ -189,11 +183,14 @@ public class FileServiceImpl implements FileService {
 //        checkResult.setExist(false);
 //        }
         String uploadId = request.getUploadId();
-        String objectName = getObjectName(uploadId);
-        List<UploadMultipartResponse> multiParts = getMultiParts(uploadId, objectName);
-        List<PartResult> partResults = new ArrayList<>(multiParts.size());
-        for (UploadMultipartResponse multiPart : multiParts) {
-            PartResult partResult = BeanUtil.toBean(multiPart, PartResult.class);
+        TUpload tUpload = checkUploadId(uploadId);
+        List<PartResult> multiParts = getMultiParts(tUpload);
+        List<com.github.ren.file.server.model.result.PartResult> partResults = new ArrayList<>(multiParts.size());
+        for (PartResult multiPart : multiParts) {
+            com.github.ren.file.server.model.result.PartResult partResult = new com.github.ren.file.server.model.result.PartResult();
+            partResult.setPartNumber(multiPart.getPartNumber());
+            partResult.setPartSize(multiPart.getPartSize());
+            partResult.setETag(multiPart.getETag());
             partResults.add(partResult);
         }
         checkResult.setParts(partResults);
@@ -211,18 +208,16 @@ public class FileServiceImpl implements FileService {
         }
 
         String objectName = this.objectName(FilenameUtils.getExtension(filename));
-        InitMultipartUploadArgs args = InitMultipartUploadArgs.builder()
+        InitMultipartUploadArgs initMultipartUploadArgs = InitMultipartUploadArgs.builder()
                 .objectName(objectName)
-                .fileSize(filesize).build();
-        InitMultipartResponse initMultipartResponse = fileClient.initMultipartUpload(args);
-        String uploadId = initMultipartResponse.getUploadId();
-        objectName = initMultipartResponse.getObjectName();
-
-        int partExpirationDays = fileClient.getPartExpirationDays();
+                .fileSize(filesize)
+                .partSize(partsize)
+                .build();
+        InitMultipartResponse initMultipartResponse = multipartUploadAdapter.initMultipartUpload(storage, initMultipartUploadArgs);
 
         TUpload tUpload = new TUpload();
-        tUpload.setUploadId(uploadId);
-        tUpload.setObjectName(objectName);
+        tUpload.setUploadId(initMultipartResponse.getUploadId());
+        tUpload.setObjectName(initMultipartResponse.getObjectName());
         tUpload.setCreateTime(LocalDateTime.now());
 
 //        tUpload.setExpireAt(expire);
@@ -230,29 +225,37 @@ public class FileServiceImpl implements FileService {
         tUpload.setFileSize(filesize);
         tUpload.setPartSize(partsize);
         tUpload.setStatus(0);
-
         tUploadService.save(tUpload);
-
         InitPartResult initPartResult = new InitPartResult();
-        initPartResult.setUploadId(uploadId);
+        initPartResult.setUploadId(String.valueOf(tUpload.getId()));
         return initPartResult;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public PartResult uploadMultipart(UploadPartRequest uploadPartRequest) {
+    public com.github.ren.file.server.model.result.PartResult uploadMultipart(UploadPartRequest uploadPartRequest) {
         TUpload tUpload = checkMultipart(uploadPartRequest);
         String uploadId = tUpload.getUploadId();
         String objectName = tUpload.getObjectName();
         Integer partNumber = uploadPartRequest.getPartNumber();
-        Long fileSize = tUpload.getFileSize();
         MultipartFile file = uploadPartRequest.getFile();
         long currentSize = file.getSize();
         try {
-            UploadPartArgs part = new UploadPartArgs(uploadId, objectName, partNumber, fileSize, currentSize, file.getInputStream());
-            UploadMultipartResponse uploadMultipartResponse = fileClient.uploadMultipart(part);
-            tUploadService.saveMultipart(uploadMultipartResponse);
-            return BeanUtil.toBean(uploadMultipartResponse, PartResult.class);
+            UploadMultiPartArgs uploadMultiPartArgs = UploadMultiPartArgs.builder()
+                    .uploadId(uploadId)
+                    .objectName(objectName)
+                    .partNumber(partNumber)
+                    .inputStream(file.getInputStream())
+                    .partSize(currentSize)
+                    .build();
+            PartResult partResultDTO = multipartUploadAdapter.uploadMultipart(storage, uploadMultiPartArgs);
+            tUploadService.saveMultipart(tUpload, partResultDTO);
+
+            com.github.ren.file.server.model.result.PartResult partResult = new com.github.ren.file.server.model.result.PartResult();
+            partResult.setPartNumber(partResultDTO.getPartNumber());
+            partResult.setPartSize(partResultDTO.getPartSize());
+            partResult.setETag(partResultDTO.getETag());
+            return partResult;
         } catch (IOException e) {
             log.error("分片上传失败", e);
             throw new ApiException(ErrorCode.UPLOAD_ERROR);
@@ -262,11 +265,9 @@ public class FileServiceImpl implements FileService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public CompleteMultipartResponse completeMultipart(CompletePartRequest request) {
-        String uploadId = request.getUploadId();
-        TUpload tUpload = checkUploadId(uploadId);
-        String objectName = getObjectName(uploadId);
-        List<UploadMultipartResponse> multiParts = getMultiParts(uploadId, objectName);
-
+        TUpload tUpload = checkUploadId(request.getUploadId());
+        String objectName = tUpload.getObjectName();
+        List<PartResult> multiParts = getMultiParts(tUpload);
         Long fileSize = tUpload.getFileSize();
         Long partSize = tUpload.getPartSize();
         int maxPartCount = getMaxPartCount(fileSize, partSize);
@@ -278,15 +279,21 @@ public class FileServiceImpl implements FileService {
 
         //判断分片总大小是否有误
         long totalSize = multiParts.stream()
-                .mapToLong(UploadMultipartResponse::getPartSize)
+                .mapToLong(PartResult::getPartSize)
                 .sum();
         if (fileSize != totalSize) {
             throw new ApiException(ErrorCode.FILE_PART_TOTAL_SIZE_ERROR);
         }
 
-        CompleteMultipartResponse completeMultipartResponse = fileClient.completeMultipartUpload(uploadId, objectName, multiParts);
-        tUploadService.completeUpload(uploadId);
-        log.info("完成上传 uploadId={} objectName={} result={}", uploadId, objectName, completeMultipartResponse);
+        CompleteMultiPartArgs completeMultiPartArgs = CompleteMultiPartArgs.builder()
+                .uploadId(tUpload.getUploadId())
+                .objectName(objectName)
+                .parts(multiParts)
+                .build();
+
+        CompleteMultipartResponse completeMultipartResponse = multipartUploadAdapter.completeMultipartUpload(storage, completeMultiPartArgs);
+        tUploadService.completeUpload(request.getUploadId());
+        log.info("完成上传 uploadId={} objectName={} result={}", request.getUploadId(), objectName, completeMultipartResponse);
         TFile tFile = new TFile();
         tFile.setFilesize(fileSize);
         tFile.setCreateTime(LocalDateTime.now());
@@ -301,9 +308,14 @@ public class FileServiceImpl implements FileService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void abortMultipart(AbortPartRequest request) {
-        String uploadId = request.getUploadId();
-        String objectName = getObjectName(uploadId);
-        fileClient.abortMultipartUpload(uploadId, objectName);
+        TUpload tUpload = checkUploadId(request.getUploadId());
+        String uploadId = tUpload.getUploadId();
+        String objectName = tUpload.getObjectName();
+        AbortMultiPartArgs abortMultiPartArgs = AbortMultiPartArgs.builder()
+                .uploadId(uploadId)
+                .objectName(objectName)
+                .build();
+        multipartUploadAdapter.abortMultipartUpload(storage, abortMultiPartArgs);
         tUploadService.abortUpload(uploadId);
     }
 }

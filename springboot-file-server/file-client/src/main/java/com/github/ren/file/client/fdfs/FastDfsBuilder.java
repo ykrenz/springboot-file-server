@@ -24,14 +24,14 @@ public interface FastDfsBuilder {
      *
      * @return
      */
-    FastDfsClient configFile();
+    FastDfsStorageClient configFile();
 
     /**
      * 根据fastdfs-client.properties文件构建
      *
      * @return
      */
-    FastDfsClient propertiesFile();
+    FastDfsStorageClient propertiesFile();
 
     /**
      * 根据config文件构建
@@ -39,7 +39,7 @@ public interface FastDfsBuilder {
      * @param configFilePath config文件
      * @return
      */
-    FastDfsClient configFile(String configFilePath);
+    FastDfsStorageClient configFile(String configFilePath);
 
     /**
      * 根据properties文件构建
@@ -47,7 +47,7 @@ public interface FastDfsBuilder {
      * @param propertiesFilePath properties文件
      * @return
      */
-    FastDfsClient propertiesFile(String propertiesFilePath);
+    FastDfsStorageClient propertiesFile(String propertiesFilePath);
 
     /**
      * 根据trackerServers构建
@@ -55,14 +55,34 @@ public interface FastDfsBuilder {
      * @param trackerServers trackerServers 多个server用逗号隔开
      * @return
      */
-    FastDfsClient build(String trackerServers);
+    FastDfsStorageClient build(String trackerServers);
+
+    /**
+     * 根据trackerServers构建
+     *
+     * @param trackerServers trackerServers 多个server用逗号隔开
+     * @param groupName      组名
+     * @return
+     */
+    FastDfsStorageClient build(String trackerServers, String groupName);
 
     /**
      * 根据trackerServers clientConfiguration构建
      *
+     * @param trackerServers      trackerServers 多个server用逗号隔开
      * @param clientConfiguration fastdfs配置类
      * @return
      */
-    FastDfsClient build(FastDfsClientConfiguration clientConfiguration);
+    FastDfsStorageClient build(String trackerServers, FastDfsClientConfiguration clientConfiguration);
+
+    /**
+     * 根据trackerServers构建
+     *
+     * @param trackerServers      trackerServers 多个server用逗号隔开
+     * @param groupName           组名
+     * @param clientConfiguration fastdfs配置类
+     * @return
+     */
+    FastDfsStorageClient build(String trackerServers, String groupName, FastDfsClientConfiguration clientConfiguration);
 
 }

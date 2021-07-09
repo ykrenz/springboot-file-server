@@ -66,19 +66,4 @@ public class FileUploadProperties {
         }
         return null;
     }
-
-    public long getMinPartSize() {
-        StorageType[] types = StorageType.values();
-        for (StorageType type : types) {
-            if (type.equals(storage)) {
-                //5MB
-                if (storage == StorageType.Minio) {
-                    return 1024 * 1024 * 5;
-                }
-            }
-        }
-        //100KB
-        return 1024 * 100;
-    }
-
 }

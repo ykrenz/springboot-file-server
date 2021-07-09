@@ -1,1 +1,1 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.github.ren.file.client.starter.FileClientAutoConfiguration
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.github.ren.file.client.starter.StorageAutoConfiguration

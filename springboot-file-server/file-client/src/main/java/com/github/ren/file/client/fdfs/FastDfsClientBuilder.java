@@ -1,18 +1,16 @@
 package com.github.ren.file.client.fdfs;
 
 import org.csource.common.MyException;
-import org.csource.fastdfs.*;
+import org.csource.fastdfs.ClientGlobal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 /**
- * @Description FastDfsClientBuilder 用于构建FastDfsClient
+ * @Description
  * @Author ren
  * @Since 1.0
  */
@@ -21,97 +19,91 @@ public class FastDfsClientBuilder implements FastDfsBuilder {
     private static final Logger logger = LoggerFactory.getLogger(FastDfsClientBuilder.class);
 
     @Override
-    public FastDfsClient configFile() {
+    public FastDfsStorageClient configFile() {
         return configFile(CONFIG_FILE);
     }
 
     @Override
-    public FastDfsClient propertiesFile() {
+    public FastDfsStorageClient propertiesFile() {
         return propertiesFile(PROPERTIES_FILE);
     }
 
     @Override
-    public FastDfsClient configFile(String configFilePath) {
+    public FastDfsStorageClient configFile(String configFilePath) {
         try {
             ClientGlobal.init(configFilePath);
-            TrackerClient trackerClient = new TrackerClient();
-            TrackerServer trackerServer = trackerClient.getTrackerServer();
-            StorageServer storageServer = trackerClient.getStoreStorage(trackerServer);
-            FastDfsClient fastDfsClient = new FastDfsClient(trackerServer, storageServer);
-            logger.info("init fastdfs client success config: {} ", ClientGlobal.configInfo());
-            return fastDfsClient;
+            return new FastDfs(getGlobalTrackerServers());
         } catch (IOException | MyException e) {
-            logger.error("fastdfs client build error", e);
-            throw new IllegalStateException("fastdfs client build error " + e.getMessage());
+            throw new FastDfsException("FastDfs client build error " + e.getMessage());
         }
     }
 
     @Override
-    public FastDfsClient propertiesFile(String propertiesFilePath) {
+    public FastDfsStorageClient propertiesFile(String propertiesFilePath) {
         try {
             ClientGlobal.initByProperties(propertiesFilePath);
-            TrackerClient trackerClient = new TrackerClient();
-            TrackerServer trackerServer = trackerClient.getTrackerServer();
-            StorageServer storageServer = trackerClient.getStoreStorage(trackerServer);
-            FastDfsClient fastDfsClient = new FastDfsClient(trackerServer, storageServer);
-            logger.info("init fastdfs client success config: {} ", ClientGlobal.configInfo());
-            return fastDfsClient;
+            return new FastDfs(getGlobalTrackerServers());
         } catch (IOException | MyException e) {
-            logger.error("fastdfs client build error", e);
-            throw new IllegalStateException("fastdfs client build error " + e.getMessage());
+            throw new FastDfsException("FastDfs client build error " + e.getMessage());
         }
     }
 
-    @Override
-    public FastDfsClient build(String trackerServers) {
-        FastDfsClientConfiguration clientConfiguration = getClientConfiguration();
-        clientConfiguration.setTrackerServers(trackerServers);
-        return build(clientConfiguration);
-    }
-
-    @Override
-    public FastDfsClient build(FastDfsClientConfiguration clientConfiguration) {
-        if (clientConfiguration == null) {
-            throw new IllegalStateException("fastdfs client build error clientConfiguration is null");
-        }
-        String trackerServers = clientConfiguration.getTrackerServers();
-        if (trackerServers == null) {
-            throw new IllegalStateException("fastdfs client build error item \"tracker_server\" not found");
-        }
-        try {
-            List<InetSocketAddress> list = new ArrayList<>();
-            String spr1 = ",";
-            String spr2 = ":";
-            String[] arr1 = trackerServers.trim().split(spr1);
-            for (String addrStr : arr1) {
-                String[] arr2 = addrStr.trim().split(spr2);
-                String host = arr2[0].trim();
-                int port = Integer.parseInt(arr2[1].trim());
-                list.add(new InetSocketAddress(host, port));
+    private String getGlobalTrackerServers() {
+        StringBuilder trackerServers = new StringBuilder();
+        if (ClientGlobal.g_tracker_group != null) {
+            InetSocketAddress[] trackerAddresses = ClientGlobal.g_tracker_group.tracker_servers;
+            for (InetSocketAddress inetSocketAddress : trackerAddresses) {
+                if (trackerServers.length() > 0) {
+                    trackerServers.append(",");
+                }
+                trackerServers.append(inetSocketAddress.toString().substring(1));
             }
-            InetSocketAddress[] trackerAddresses = list.toArray(new InetSocketAddress[0]);
-            TrackerGroup trackerGroup = new TrackerGroup(trackerAddresses);
-            TrackerClient trackerClient = new TrackerClient(trackerGroup);
-            TrackerServer trackerServer = trackerGroup.getTrackerServer();
-            StorageServer storageServer = trackerClient.getStoreStorage(trackerServer);
-            ClientGlobal.initByProperties(getProperties(trackerServers, clientConfiguration));
-            FastDfsClient fastDfsClient = new FastDfsClient(trackerServer, storageServer);
-            logger.info("init fastdfs client success config: {} ", ClientGlobal.configInfo());
-            return fastDfsClient;
+        }
+        return trackerServers.toString();
+    }
+
+    @Override
+    public FastDfsStorageClient build(String trackerServers) {
+        return new FastDfs(trackerServers);
+    }
+
+    @Override
+    public FastDfsStorageClient build(String trackerServers, String groupName) {
+        return new FastDfs(trackerServers, groupName);
+    }
+
+    @Override
+    public FastDfsStorageClient build(String trackerServers, FastDfsClientConfiguration clientConfiguration) {
+        try {
+            Properties props = getProperties(clientConfiguration);
+            if (trackerServers != null) {
+                props.put(ClientGlobal.PROP_KEY_TRACKER_SERVERS, trackerServers);
+            }
+            ClientGlobal.initByProperties(props);
+            return new FastDfs(trackerServers);
         } catch (IOException | MyException e) {
-            logger.error("fastdfs client build error", e);
-            throw new IllegalStateException("fastdfs client build error " + e.getMessage());
+            throw new FastDfsException("FastDfs client build error " + e.getMessage());
         }
     }
 
-    private FastDfsClientConfiguration getClientConfiguration() {
-        return new FastDfsClientConfiguration();
+    @Override
+    public FastDfsStorageClient build(String trackerServers, String groupName, FastDfsClientConfiguration clientConfiguration) {
+        try {
+            Properties props = getProperties(clientConfiguration);
+            if (trackerServers != null) {
+                props.put(ClientGlobal.PROP_KEY_TRACKER_SERVERS, trackerServers);
+            }
+            ClientGlobal.initByProperties(props);
+            return new FastDfs(trackerServers, groupName);
+        } catch (IOException | MyException e) {
+            throw new FastDfsException("FastDfs client build error " + e.getMessage());
+        }
     }
 
-    private Properties getProperties(String trackerServers, FastDfsClientConfiguration clientConfiguration) {
+    private Properties getProperties(FastDfsClientConfiguration clientConfiguration) {
         Properties props = new Properties();
-        if (trackerServers != null) {
-            props.put(ClientGlobal.PROP_KEY_TRACKER_SERVERS, trackerServers);
+        if (clientConfiguration == null) {
+            return props;
         }
         int connectTimeoutSeconds = clientConfiguration.getConnectTimeoutSeconds();
         if (connectTimeoutSeconds > 0) {
@@ -154,4 +146,5 @@ public class FastDfsClientBuilder implements FastDfsBuilder {
         }
         return props;
     }
+
 }
