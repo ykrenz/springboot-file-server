@@ -1,7 +1,5 @@
 package com.github.ren.file.server.client;
 
-import com.github.ren.file.client.starter.StorageType;
-
 import java.io.Serializable;
 import java.util.List;
 
@@ -20,40 +18,37 @@ public interface FileClientService extends Serializable {
      * @param args
      * @return InitMultipartResult
      */
-    InitMultipartResponse initMultipartUpload(StorageType storage, InitMultipartUploadArgs args);
+    InitMultipartResponse initMultipartUpload(InitMultipartUploadArgs args);
 
     /**
      * 上传分片
      *
-     * @param part 分片
-     * @return 分片信息
+     * @param args
+     * @return
      */
-    PartResult uploadMultipart(StorageType storage, UploadMultiPartArgs part);
+    UploadPartResponse uploadMultipart(UploadMultiPartArgs args);
 
     /**
      * 获取所有的分片列表
      *
      * @param args
-     * @return 分片信息
+     * @return
      */
-    List<PartResult> listParts(StorageType storage, ListPartsArgs args);
+    List<UploadPartResponse> listParts(ListPartsArgs args);
 
     /**
      * 完成上传
      *
-     * @param uploadId   上传唯一标识
-     * @param objectName 上传yourObjectName
-     * @param parts      合并的分片信息
+     * @param args
      * @return
      */
-    CompleteMultipartResponse completeMultipartUpload(StorageType storage, CompleteMultiPartArgs args);
+    CompleteMultipartResponse completeMultipartUpload(CompleteMultiPartArgs args);
 
     /**
      * 终止上传
      *
-     * @param uploadId   上传唯一标识
-     * @param objectName 上传yourObjectName
+     * @param args
      */
-    void abortMultipartUpload(StorageType storage, AbortMultiPartArgs args);
+    void abortMultipartUpload(AbortMultiPartArgs args);
 
 }

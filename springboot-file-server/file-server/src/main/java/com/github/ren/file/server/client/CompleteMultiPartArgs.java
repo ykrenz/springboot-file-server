@@ -6,9 +6,9 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * @author RenYinKui
- * @Description:
- * @date 2021/7/8 11:42
+ * @Description
+ * @Author ren
+ * @Since 1.0
  */
 @Data
 @Builder
@@ -18,5 +18,5 @@ public class CompleteMultiPartArgs {
 
     private String objectName;
 
-    List<PartResult> parts;
+    List<UploadPartResponse> parts;
 }

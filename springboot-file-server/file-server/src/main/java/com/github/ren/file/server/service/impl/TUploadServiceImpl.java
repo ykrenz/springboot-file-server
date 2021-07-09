@@ -2,7 +2,7 @@ package com.github.ren.file.server.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.github.ren.file.server.client.PartResult;
+import com.github.ren.file.server.client.UploadPartResponse;
 import com.github.ren.file.server.config.FileUploadProperties;
 import com.github.ren.file.server.entity.TUpload;
 import com.github.ren.file.server.mapper.TUploadMapper;
@@ -33,8 +33,6 @@ public class TUploadServiceImpl extends ServiceImpl<TUploadMapper, TUpload> impl
     @Autowired
     private RedisService redisService;
 
-    private final int storage;
-
     /**
      * 缓存60s
      */
@@ -42,7 +40,6 @@ public class TUploadServiceImpl extends ServiceImpl<TUploadMapper, TUpload> impl
 
     public TUploadServiceImpl(FileUploadProperties fileUploadProperties) {
         this.fileUploadProperties = fileUploadProperties;
-        this.storage = fileUploadProperties.getStorageTypeInt();
     }
 
     @Override
@@ -53,7 +50,6 @@ public class TUploadServiceImpl extends ServiceImpl<TUploadMapper, TUpload> impl
         }
         tUpload = this.getBaseMapper().selectOne(Wrappers.<TUpload>lambdaQuery()
                 .eq(TUpload::getId, uploadId)
-                .eq(TUpload::getStorage, storage)
                 .eq(TUpload::getStatus, 0)
         );
         redisService.set(uploadId + "-upload", tUpload, expire);
@@ -93,20 +89,20 @@ public class TUploadServiceImpl extends ServiceImpl<TUploadMapper, TUpload> impl
     }
 
     @Override
-    public void saveMultipart(TUpload tUpload, PartResult partResult) {
+    public void saveMultipart(TUpload tUpload, UploadPartResponse uploadPartResponse) {
         Long id = tUpload.getId();
-        redisService.sSet(id + "-Multipart", partResult);
+        redisService.sSet(id + "-Multipart", uploadPartResponse);
         redisService.expire(id + "-Multipart", expire);
     }
 
     @Override
-    public List<PartResult> listMultipart(TUpload tUpload) {
-        List<PartResult> list = new ArrayList<>();
+    public List<UploadPartResponse> listMultipart(TUpload tUpload) {
+        List<UploadPartResponse> list = new ArrayList<>();
         Set<Object> objects = redisService.sGet(tUpload.getId() + "-Multipart");
         for (Object object : objects) {
-            list.add((PartResult) object);
+            list.add((UploadPartResponse) object);
         }
-        list.sort(Comparator.comparing(PartResult::getPartNumber));
+        list.sort(Comparator.comparing(UploadPartResponse::getPartNumber));
         return list;
     }
 }

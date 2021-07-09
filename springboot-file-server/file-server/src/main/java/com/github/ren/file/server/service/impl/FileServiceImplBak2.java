@@ -3,7 +3,7 @@
 //import cn.hutool.core.bean.BeanUtil;
 //import com.github.ren.file.client.FileClient;
 //import com.github.ren.file.client.model.UploadGenericResult;
-//import com.github.ren.file.client.objectname.UuidGenerator;
+//import com.github.ren.file.server.client.objectname.UuidGenerator;
 //import com.github.ren.file.client.part.*;
 //import com.github.ren.file.server.config.FileUploadProperties;
 //import com.github.ren.file.server.entity.TFile;

@@ -3,7 +3,7 @@
 //import cn.hutool.crypto.digest.MD5;
 //import com.github.ren.file.client.FileClient;
 //import com.github.ren.file.client.local.LocalFileOperation;
-//import com.github.ren.file.client.objectname.TimestampGenerator;
+//import com.github.ren.file.server.client.objectname.TimestampGenerator;
 //import com.github.ren.file.client.part.*;
 //import com.github.ren.file.server.FileServerApplication;
 //import lombok.extern.slf4j.Slf4j;

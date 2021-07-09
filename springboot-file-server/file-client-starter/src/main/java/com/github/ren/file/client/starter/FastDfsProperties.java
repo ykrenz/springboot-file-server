@@ -1,6 +1,8 @@
 package com.github.ren.file.client.starter;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -9,8 +11,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @Since 1.0
  */
 @ConfigurationProperties(Constants.FastDfsPrefix)
-@Data
+@Setter
+@Getter
 public class FastDfsProperties {
+    /**
+     * 是否开启fastdfs配置
+     */
+    private boolean enabled;
+
     /**
      * trackerServers 多个server用逗号隔开
      */

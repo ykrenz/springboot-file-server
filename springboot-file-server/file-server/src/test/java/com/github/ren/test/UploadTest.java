@@ -6,7 +6,7 @@
 //import com.github.ren.file.client.fdfs.FastDFSBuilder;
 //import com.github.ren.file.client.fdfs.FastDFSConstants;
 //import com.github.ren.file.client.local.LocalFileOperation;
-//import com.github.ren.file.client.objectname.TimestampGenerator;
+//import com.github.ren.file.server.client.objectname.TimestampGenerator;
 //import lombok.extern.slf4j.Slf4j;
 //import org.apache.commons.io.FileUtils;
 //import org.csource.common.MyException;

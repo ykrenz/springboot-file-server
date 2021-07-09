@@ -6,6 +6,7 @@ import com.github.ren.file.client.fdfs.FastDfsStorageClient;
 import com.github.ren.file.client.fdfs.FastPart;
 import com.github.ren.file.client.starter.StorageProperties;
 import com.github.ren.file.client.starter.StorageType;
+import com.github.ren.file.server.config.BucketProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author RenYinKui
- * @Description:
- * @date 2021/7/9 10:46
+ * @Description 分片处理客户端
+ * @Author ren
+ * @Since 1.0
  */
 @Service
 @Slf4j
@@ -30,10 +31,14 @@ public class MultipartUploadAdapter implements FileClientService {
     @Autowired(required = false)
     private AmazonS3 amazonS3;
 
-    private String bucketName;
+    private final StorageType storage;
 
-    public MultipartUploadAdapter(StorageProperties storageProperties) {
-        this.bucketName = storageProperties.getBucketName();
+    private final String bucketName;
+
+    public MultipartUploadAdapter(StorageProperties storageProperties,
+                                  BucketProperties bucketProperties) {
+        this.storage = storageProperties.getType();
+        this.bucketName = bucketProperties.getBucketName();
     }
 
     private void assertParameterNotNull(Object parameterValue, String errorMessage) {
@@ -43,7 +48,7 @@ public class MultipartUploadAdapter implements FileClientService {
     }
 
     @Override
-    public InitMultipartResponse initMultipartUpload(StorageType storage, InitMultipartUploadArgs args) {
+    public InitMultipartResponse initMultipartUpload(InitMultipartUploadArgs args) {
         assertParameterNotNull(storage, "文件服务类型不能为空");
         assertParameterNotNull(args, "args不能为空");
         String objectName = args.getObjectName();
@@ -69,7 +74,7 @@ public class MultipartUploadAdapter implements FileClientService {
     }
 
     @Override
-    public PartResult uploadMultipart(StorageType storage, UploadMultiPartArgs args) {
+    public UploadPartResponse uploadMultipart(UploadMultiPartArgs args) {
         assertParameterNotNull(storage, "文件服务类型不能为空");
         assertParameterNotNull(args, "args不能为空");
         String objectName = args.getObjectName();
@@ -81,10 +86,10 @@ public class MultipartUploadAdapter implements FileClientService {
 
         if (StorageType.FastDfs.equals(storage)) {
             FastPart fastPart = fastDfsStorageClient.uploadPart(objectName, partNumber, inputStream);
-            PartResult partResult = new PartResult();
-            partResult.setPartNumber(fastPart.getPartNumber());
-            partResult.setPartSize(fastPart.getPartSize());
-            return partResult;
+            UploadPartResponse uploadPartResponse = new UploadPartResponse();
+            uploadPartResponse.setPartNumber(fastPart.getPartNumber());
+            uploadPartResponse.setPartSize(fastPart.getPartSize());
+            return uploadPartResponse;
         }
 
         if (StorageType.S3.equals(storage)) {
@@ -101,17 +106,17 @@ public class MultipartUploadAdapter implements FileClientService {
                             .withInputStream(inputStream)
                             .withPartSize(partSize);
             UploadPartResult uploadPartResult = amazonS3.uploadPart(uploadRequest);
-            PartResult partResult = new PartResult();
-            partResult.setPartNumber(uploadPartResult.getPartNumber());
-            partResult.setPartSize(partSize);
-            partResult.setETag(uploadPartResult.getETag());
-            return partResult;
+            UploadPartResponse uploadPartResponse = new UploadPartResponse();
+            uploadPartResponse.setPartNumber(uploadPartResult.getPartNumber());
+            uploadPartResponse.setPartSize(partSize);
+            uploadPartResponse.setETag(uploadPartResult.getETag());
+            return uploadPartResponse;
         }
         throw new IllegalStateException("文件服务未找到");
     }
 
     @Override
-    public List<PartResult> listParts(StorageType storage, ListPartsArgs args) {
+    public List<UploadPartResponse> listParts(ListPartsArgs args) {
         assertParameterNotNull(storage, "文件服务类型不能为空");
         assertParameterNotNull(args, "args不能为空");
         String objectName = args.getObjectName();
@@ -119,29 +124,29 @@ public class MultipartUploadAdapter implements FileClientService {
 
         if (StorageType.FastDfs.equals(storage)) {
             List<FastPart> fastParts = fastDfsStorageClient.listParts(objectName);
-            List<PartResult> list = new ArrayList<>(fastParts.size());
+            List<UploadPartResponse> list = new ArrayList<>(fastParts.size());
             for (FastPart fastPart : fastParts) {
-                PartResult partResult = new PartResult();
-                partResult.setPartNumber(fastPart.getPartNumber());
-                partResult.setPartSize(fastPart.getPartSize());
-                list.add(partResult);
+                UploadPartResponse uploadPartResponse = new UploadPartResponse();
+                uploadPartResponse.setPartNumber(fastPart.getPartNumber());
+                uploadPartResponse.setPartSize(fastPart.getPartSize());
+                list.add(uploadPartResponse);
             }
             return list;
         }
         if (StorageType.S3.equals(storage)) {
             String uploadId = args.getUploadId();
             assertParameterNotNull(objectName, "uploadId不能为空");
-            List<PartResult> list = new ArrayList<>();
+            List<UploadPartResponse> list = new ArrayList<>();
             ListPartsRequest listPartsRequest = new ListPartsRequest(bucketName, objectName, uploadId);
             PartListing partListing;
             do {
                 partListing = amazonS3.listParts(listPartsRequest);
                 for (PartSummary part : partListing.getParts()) {
-                    PartResult partResult = new PartResult();
-                    partResult.setPartNumber(part.getPartNumber());
-                    partResult.setPartSize(part.getSize());
-                    partResult.setETag(part.getETag());
-                    list.add(partResult);
+                    UploadPartResponse uploadPartResponse = new UploadPartResponse();
+                    uploadPartResponse.setPartNumber(part.getPartNumber());
+                    uploadPartResponse.setPartSize(part.getSize());
+                    uploadPartResponse.setETag(part.getETag());
+                    list.add(uploadPartResponse);
                 }
                 listPartsRequest.setPartNumberMarker(partListing.getNextPartNumberMarker());
             } while (partListing.isTruncated());
@@ -151,7 +156,7 @@ public class MultipartUploadAdapter implements FileClientService {
     }
 
     @Override
-    public CompleteMultipartResponse completeMultipartUpload(StorageType storage, CompleteMultiPartArgs args) {
+    public CompleteMultipartResponse completeMultipartUpload(CompleteMultiPartArgs args) {
         assertParameterNotNull(storage, "文件服务类型不能为空");
         assertParameterNotNull(args, "args不能为空");
         String objectName = args.getObjectName();
@@ -161,12 +166,12 @@ public class MultipartUploadAdapter implements FileClientService {
             return new CompleteMultipartResponse(null, filePath);
         }
         if (StorageType.S3.equals(storage)) {
-            List<PartResult> parts = args.getParts();
+            List<UploadPartResponse> parts = args.getParts();
             String uploadId = args.getUploadId();
             assertParameterNotNull(parts, "parts不能为空");
             assertParameterNotNull(uploadId, "uploadId不能为空");
             List<PartETag> partETags = new ArrayList<>(parts.size());
-            for (PartResult part : parts) {
+            for (UploadPartResponse part : parts) {
                 PartETag partETag = new PartETag(part.getPartNumber(), part.getETag());
                 partETags.add(partETag);
             }
@@ -180,12 +185,11 @@ public class MultipartUploadAdapter implements FileClientService {
             String eTag = completeMultipartUploadResult.getETag();
             return new CompleteMultipartResponse(eTag, key);
         }
-
         throw new IllegalStateException("文件服务未找到");
     }
 
     @Override
-    public void abortMultipartUpload(StorageType storage, AbortMultiPartArgs args) {
+    public void abortMultipartUpload(AbortMultiPartArgs args) {
         assertParameterNotNull(storage, "文件服务类型不能为空");
         assertParameterNotNull(args, "args不能为空");
         String objectName = args.getObjectName();

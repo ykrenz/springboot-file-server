@@ -9,8 +9,6 @@ public final class Constants {
 
     public static final String StoragePrefix = "file.storage";
 
-    public static final String StorageTypePrefix = "file.storage.type";
-
     public static final String LocalPrefix = "file.local";
 
     public static final String FastDfsPrefix = "file.fastdfs";

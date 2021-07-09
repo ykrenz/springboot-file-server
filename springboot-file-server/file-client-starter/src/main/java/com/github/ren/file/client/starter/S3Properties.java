@@ -1,15 +1,17 @@
 package com.github.ren.file.client.starter;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * @Description minio配置
+ * @Description s3协议通用配置
  * @Author ren
  * @Since 1.0
  */
 @ConfigurationProperties(Constants.S3Prefix)
-@Data
+@Setter
+@Getter
 public class S3Properties {
 
     /**

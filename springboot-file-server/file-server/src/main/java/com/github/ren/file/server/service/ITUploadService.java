@@ -1,7 +1,7 @@
 package com.github.ren.file.server.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.github.ren.file.server.client.PartResult;
+import com.github.ren.file.server.client.UploadPartResponse;
 import com.github.ren.file.server.entity.TUpload;
 
 import java.util.List;
@@ -44,9 +44,9 @@ public interface ITUploadService extends IService<TUpload> {
      * 保存Multipart数据
      *
      * @param tUpload
-     * @param partResult
+     * @param uploadPartResponse
      */
-    void saveMultipart(TUpload tUpload, PartResult partResult);
+    void saveMultipart(TUpload tUpload, UploadPartResponse uploadPartResponse);
 
     /**
      * 查询Multipart
@@ -54,5 +54,5 @@ public interface ITUploadService extends IService<TUpload> {
      * @param tUpload
      * @return
      */
-    List<PartResult> listMultipart(TUpload tUpload);
+    List<UploadPartResponse> listMultipart(TUpload tUpload);
 }

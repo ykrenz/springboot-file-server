@@ -1,4 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  com.github.ren.file.autoconfigure.AliOssAutoConfiguration,\
-  com.github.ren.file.autoconfigure.LocalFileAutoConfiguration,\
-  com.github.ren.file.autoconfigure.FastDfsAutoConfiguration

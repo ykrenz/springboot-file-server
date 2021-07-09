@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 /**
- * @Description 初始化分片上传结果
+ * @Description
  * @Author ren
  * @Since 1.0
  */

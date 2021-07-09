@@ -4,9 +4,9 @@ import lombok.Builder;
 import lombok.Data;
 
 /**
- * @author RenYinKui
- * @Description:
- * @date 2021/7/9 13:16
+ * @Description
+ * @Author ren
+ * @Since 1.0
  */
 @Data
 @Builder
