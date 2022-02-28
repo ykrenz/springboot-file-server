@@ -6,6 +6,10 @@ import com.github.ren.fastdfs.fdfs.FastDfsStorageClient;
 import com.github.ren.fastdfs.fdfs.FastPart;
 import com.github.ren.file.config.StorageProperties;
 import com.github.ren.file.config.StorageType;
+import com.ykrenz.fastdfs.FastDFS;
+import com.ykrenz.fastdfs.model.InitMultipartUploadRequest;
+import com.ykrenz.fastdfs.model.UploadMultipartPartRequest;
+import com.ykrenz.fastdfs.model.fdfs.StorePath;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +29,7 @@ import java.util.List;
 public class MultipartUploadAdapter implements FileClientService {
 
     @Autowired(required = false)
-    private FastDfsStorageClient fastDfsStorageClient;
+    private FastDFS fastDFS;
 
     @Autowired(required = false)
     private AmazonS3 amazonS3;
@@ -53,12 +57,15 @@ public class MultipartUploadAdapter implements FileClientService {
         assertParameterNotNull(objectName, "参数objectName不能为空");
         if (StorageType.FastDfs.equals(storage)) {
             Long fileSize = args.getFileSize();
-            Long partSize = args.getPartSize();
             assertParameterNotNull(fileSize, "fastdfs服务文件大小fileSize不能为空");
             assertParameterNotNull(fileSize, "fastdfs服务文件分片大小partSize不能为空");
             assertParameterNotNull(fileSize, "fastdfs服务文件分片大小partSize不能为空");
-            String filePath = fastDfsStorageClient.initiateMultipartUpload(fileSize, partSize, FilenameUtils.getExtension(objectName));
-            return new InitMultipartResponse(null, filePath);
+            InitMultipartUploadRequest initMultipartUploadRequest = InitMultipartUploadRequest.builder()
+                    .fileSize(fileSize)
+                    .fileExtName(FilenameUtils.getExtension(objectName))
+                    .build();
+            StorePath storePath = fastDFS.initMultipartUpload(initMultipartUploadRequest);
+            return new InitMultipartResponse(null, storePath.getFullPath());
         }
 
         if (StorageType.S3.equals(storage)) {
@@ -83,6 +90,10 @@ public class MultipartUploadAdapter implements FileClientService {
         assertParameterNotNull(inputStream, "inputStream不能为空");
 
         if (StorageType.FastDfs.equals(storage)) {
+            UploadMultipartPartRequest.builder()
+                    .stream()
+                    .groupName()
+            fastDFS.uploadMultipart();
             FastPart fastPart = fastDfsStorageClient.uploadPart(objectName, partNumber, inputStream);
             UploadPartResponse uploadPartResponse = new UploadPartResponse();
             uploadPartResponse.setPartNumber(fastPart.getPartNumber());
