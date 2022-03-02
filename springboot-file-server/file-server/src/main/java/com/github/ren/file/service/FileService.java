@@ -1,10 +1,13 @@
 package com.github.ren.file.service;
 
-import com.github.ren.file.client.CompleteMultipartResponse;
-import com.github.ren.file.model.request.*;
+import com.github.ren.file.model.request.AbortPartRequest;
+import com.github.ren.file.model.request.CheckRequest;
+import com.github.ren.file.model.request.CompletePartRequest;
+import com.github.ren.file.model.request.InitPartRequest;
+import com.github.ren.file.model.request.SimpleUploadRequest;
+import com.github.ren.file.model.request.UploadPartRequest;
 import com.github.ren.file.model.result.CheckResult;
 import com.github.ren.file.model.result.InitPartResult;
-import com.github.ren.file.model.result.PartResult;
 
 /**
  * @Description 文件接口
@@ -43,7 +46,7 @@ public interface FileService {
      * @param uploadPartRequest
      * @return
      */
-    PartResult uploadMultipart(UploadPartRequest uploadPartRequest);
+    void uploadMultipart(UploadPartRequest uploadPartRequest);
 
     /**
      * 合并文件分片
@@ -51,7 +54,7 @@ public interface FileService {
      * @param request
      * @return
      */
-    CompleteMultipartResponse completeMultipart(CompletePartRequest request);
+    void completeMultipart(CompletePartRequest request);
 
     /**
      * 取消分片上传
@@ -60,5 +63,10 @@ public interface FileService {
      * @return
      */
     void abortMultipart(AbortPartRequest request);
+
+    /**
+     * 清空临时文件 测试使用
+     */
+    void deleteAllFiles();
 
 }

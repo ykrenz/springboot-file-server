@@ -11,14 +11,13 @@ import org.springframework.util.unit.DataSize;
  */
 @Data
 @Component
-@ConfigurationProperties(StorageProperties.Prefix)
+@ConfigurationProperties("file")
 public class StorageProperties {
 
-    public static final String Prefix = "file";
     /**
      * 存储方式
      */
-    private StorageType storage = StorageType.Local;
+    private StorageType storage = StorageType.fastdfs;
 
     private String bucketName;
     /**

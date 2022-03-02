@@ -37,7 +37,7 @@ public enum ErrorCode {
     /**
      * uploadId不存在
      */
-    UPLOAD_ID_NOT_FOUND(10001, "uploadId不存在"),
+    UPLOAD_ID_NOT_FOUND(10001, "uploadId不存在或已经过期"),
 
     /**
      * uploadId已经过期

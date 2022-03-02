@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FileServer</title>
+    <!--引入JS-->
+    <script type="text/javascript" src="../static/jquery/jquery.min.js"></script>
+    <script src="../static/dropzone/min/dropzone.min.js"></script>
+    <link rel="stylesheet" href="../static/dropzone/min/basic.min.css" type="text/css"/>
+    <link rel="stylesheet" href="../static/dropzone/min/dropzone.min.css" type="text/css"/>
+</head>
+
+<body>
+<div class="dropzone" id="myDropzone">
+    <div class="am-text-success dz-message">
+        将文件拖拽到此处<br>或点此打开文件管理器选择文件
+    </div>
+
+    <!--    <div class="dz-preview dz-file-preview">-->
+    <!--        <div class="dz-details">-->
+    <!--            <div class="dz-filename"><span data-dz-name></span></div>-->
+    <!--            <div class="dz-size" data-dz-size></div>-->
+    <!--            <img data-dz-thumbnail/>-->
+    <!--        </div>-->
+    <!--        <div class="dz-progress"><span class="dz-upload" data-dz-uploadprogress></span></div>-->
+    <!--        <div class="dz-success-mark"><span>✔</span></div>-->
+    <!--        <div class="dz-error-mark"><span>✘</span></div>-->
+    <!--        <div class="dz-error-message"><span data-dz-errormessage></span></div>-->
+    <!--    </div>-->
+</div>
+
+<script type="text/javascript">
+    var partSize = 5 * 1024 * 1024;
+    Dropzone.autoDiscover = false;
+    var myDropzone = new Dropzone("#myDropzone", {
+        url: "/uploadMultipart",
+        addRemoveLinks: true,
+        method: 'post',
+        chunking: true,
+        forceChunking: true,
+        chunkSize: partSize,
+        parallelChunkUploads: true,
+        parallelUploads: 2,
+    });
+
+    myDropzone.on("addedfile", file => {
+      console.log("A file has been added");
+       file.uploadId = Dropzone.uuidv4(),
+        <!--      TODO md5-->
+       file.md5 = file.uploadId;
+       $.ajax({
+                type: "POST",
+                url: "/check",
+                data: {
+                    uploadId: file.uploadId,
+                    fileMd5: file.md5
+                },
+                cache: false,
+                async: false, // 与js同步
+                timeout: 1000, // 超时的话，只能认为该分片未上传过
+                dataType: "json",
+                success: function (response) {
+<!--                 计算md5 秒传 过滤分片-->
+                }
+            });
+
+            // initPart请求
+            $.ajax({
+                type: "POST",
+                url: "/initMultipart",
+                data: {
+                    uploadId: file.uploadId,
+                    partSize: partSize,
+                    fileSize: file.size,
+                    fileName: file.name,
+                },
+                cache: false,
+                async: false, // 与js同步
+                timeout: 1000, // 超时的话，只能认为该分片未上传过
+                dataType: "json",
+                success: function (response) {
+                    var res = JSON.parse(response);
+                    console.log(res);
+                }
+            });
+    });
+
+    myDropzone.on("sending", (file,xhr,formData) => {
+        console.log("sending file ..");
+            formData.append("uploadId", file.uploadId);
+            formData.append("partNumber", parseInt(formData.get("dzchunkindex"))+1);
+    });
+
+    myDropzone.on("success", (file,xhr,formData) => {
+             $.ajax({
+                type: "POST",
+                url: "/completeMultipart",
+                data: {
+                    uploadId: file.uploadId,
+                    fileMd5: file.md5
+                },
+                cache: false,
+                async: false, // 与js同步
+                dataType: "json",
+                success: function (response) {
+                    var res = JSON.parse(response);
+                    console.log(res);
+                }
+            });
+    });
+</script>
+</body>
+</html>

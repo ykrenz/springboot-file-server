@@ -26,11 +26,6 @@ public class ResultUtil<T> implements Serializable {
         this.message = "success";
     }
 
-    private ResultUtil(ErrorCode errorCode) {
-        this.code = errorCode.getCode();
-        this.message = errorCode.getMessage();
-    }
-
     private ResultUtil(ErrorCode errorCode, T data) {
         this.code = errorCode.getCode();
         this.data = data;
@@ -56,7 +51,7 @@ public class ResultUtil<T> implements Serializable {
     /**
      * 成功时
      *
-     * @param <T>
+     * @param
      * @return
      */
     public static <T> ResultUtil<T> success() {
@@ -70,7 +65,7 @@ public class ResultUtil<T> implements Serializable {
      * @return
      */
     public static <T> ResultUtil<T> error(ErrorCode errorCode) {
-        return new ResultUtil<>(errorCode);
+        return new ResultUtil<>(errorCode, null);
     }
 
     public static <T> ResultUtil<T> error(ErrorCode errorCode, T data) {

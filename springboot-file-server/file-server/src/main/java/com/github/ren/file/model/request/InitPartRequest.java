@@ -16,18 +16,19 @@ import javax.validation.constraints.NotNull;
 @ApiModel("初始化分片上传参数")
 public class InitPartRequest {
 
-    @ApiModelProperty(name = "filename", value = "文件名")
+    @ApiModelProperty(name = "标识id", value = "文件唯一标识", notes = "每个上传文件不能重复 例如uuid md5等")
     @NotBlank(message = "不能为空")
-    private String filename;
+    private String uploadId;
 
-    @ApiModelProperty(name = "filesize", value = "文件大小")
+    @ApiModelProperty(name = "fileName", value = "文件名")
+    @NotBlank(message = "不能为空")
+    private String fileName;
+
+    @ApiModelProperty(name = "fileSize", value = "文件大小")
     @NotNull(message = "不能为空")
-    private Long filesize;
+    private Long fileSize;
 
-    @ApiModelProperty(name = "partsize", value = "分片大小")
+    @ApiModelProperty(name = "partSize", value = "分片大小")
     @NotNull(message = "不能为空")
-    private Long partsize;
-
-//    @ApiModelProperty(name = "md5", value = "文件md5值")
-//    private String md5;
+    private Long partSize;
 }

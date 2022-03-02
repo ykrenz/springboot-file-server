@@ -25,9 +25,9 @@ spring:
         max-wait: 2500
         min-idle: 0
   datasource:
-    url: jdbc:mysql://localhost:3306/filedb?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&autoReconnect=true&failOverReadOnly=false
+    url: jdbc:mysql://192.168.24.130:12345/filedb?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&autoReconnect=true&failOverReadOnly=false
     username: root
-    password: root
+    password: 123456
     type: com.zaxxer.hikari.HikariDataSource
     driver-class-name: com.mysql.jdbc.Driver
 
@@ -42,7 +42,7 @@ file:
   multipart-max-size: 100MB
 #fastdfs 配置
 fastdfs:
-  tracker-servers: 192.168.248.101:22122
+  tracker-servers: "192.168.24.130:22122"
 s3:
   enabled: false
 

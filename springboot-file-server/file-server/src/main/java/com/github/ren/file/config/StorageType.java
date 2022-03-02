@@ -5,13 +5,9 @@ package com.github.ren.file.config;
  */
 public enum StorageType {
     /**
-     * 本地
-     */
-    Local,
-    /**
      * FastDfs
      */
-    FastDfs,
+    fastdfs,
 //    /**
 //     * Minio
 //     */

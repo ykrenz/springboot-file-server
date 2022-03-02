@@ -1,11 +1,9 @@
 package com.github.ren.file.controller;
 
-import com.github.ren.file.client.CompleteMultipartResponse;
 import com.github.ren.file.model.ResultUtil;
 import com.github.ren.file.model.request.*;
 import com.github.ren.file.model.result.CheckResult;
 import com.github.ren.file.model.result.InitPartResult;
-import com.github.ren.file.model.result.PartResult;
 import com.github.ren.file.service.FileService;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import io.swagger.annotations.Api;
@@ -51,45 +49,32 @@ public class FileController {
     @ApiOperation("上传文件分片")
     @ApiOperationSupport(order = 4)
     @PostMapping("/uploadMultipart")
-    public ResultUtil<PartResult> uploadMultipart(@Validated UploadPartRequest uploadPartRequest) {
-        return ResultUtil.success(fileService.uploadMultipart(uploadPartRequest));
+    public ResultUtil<Object> uploadMultipart(@Validated UploadPartRequest uploadPartRequest) {
+        fileService.uploadMultipart(uploadPartRequest);
+        return ResultUtil.success();
     }
 
     @ApiOperation("合并文件分片")
     @ApiOperationSupport(order = 5)
     @PostMapping("/completeMultipart")
-    public ResultUtil<CompleteMultipartResponse> completeMultipart(@Validated CompletePartRequest request) {
-        return ResultUtil.success(fileService.completeMultipart(request));
+    public ResultUtil<Object> completeMultipart(@Validated CompletePartRequest request) {
+        fileService.completeMultipart(request);
+        return ResultUtil.success();
     }
 
     @ApiOperation("取消分片上传")
     @ApiOperationSupport(order = 6)
     @PostMapping("/abortMultipart")
-    public ResultUtil<String> abortMultipart(@Validated AbortPartRequest request) {
+    public ResultUtil<Object> abortMultipart(@Validated AbortPartRequest request) {
         fileService.abortMultipart(request);
         return ResultUtil.success();
     }
 
-//    @Autowired
-//    private TFileServiceImpl tFileService;
-//
-//    @Autowired
-//    private FastDfsClient fastDfsClient;
-//    @ApiOperation("取消分片上传")
-//    @ApiOperationSupport(order = 6)
-//    @PostMapping("/delete")
-//    public ResultUtil<String> delete() {
-//        List<TFile> tFiles = tFileService.getBaseMapper().selectList(null);
-//        for (TFile tFile : tFiles) {
-//            String objectName = tFile.getObjectName();
-//            try {
-//                StorageClient1 client = fastDfsClient.client();
-//                int i = client.delete_file1(objectName);
-//                System.out.println(i);
-//            } catch (IOException | MyException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        return ResultUtil.success("");
-//    }
+    @ApiOperation("清空临时文件 测试使用")
+    @ApiOperationSupport(order = 6)
+    @PostMapping("/deleteAllFiles")
+    public ResultUtil<Object> deleteAllFiles() {
+        fileService.deleteAllFiles();
+        return ResultUtil.success();
+    }
 }

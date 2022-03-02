@@ -1,6 +1,5 @@
 package com.github.ren.file.client.objectname;
 
-import com.github.ren.fastdfs.util.Util;
 import lombok.Data;
 
 /**
@@ -23,6 +22,6 @@ public class Md5Generator implements ObjectNameGenerator {
     @Override
     public String generator() {
         //https://help.aliyun.com/document_detail/64945.html?spm=a2c4g.11186623.6.1779.75e151b6GRk0Ab
-        return md5.substring(0, 4) + Util.SLASH + md5 + Util.DOT + ext;
+        return md5.substring(0, 4) + "/" + md5 + "." + ext;
     }
 }

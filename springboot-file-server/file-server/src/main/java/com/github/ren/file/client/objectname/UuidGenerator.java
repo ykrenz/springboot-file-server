@@ -1,8 +1,8 @@
 package com.github.ren.file.client.objectname;
 
-import com.github.ren.fastdfs.util.Util;
 import lombok.Data;
 
+import java.io.File;
 import java.util.UUID;
 
 /**
@@ -21,7 +21,7 @@ public class UuidGenerator implements ObjectNameGenerator {
 
     @Override
     public String generator() {
-        String uuid = UUID.randomUUID().toString().replace(Util.DASHED, "");
-        return uuid.substring(0, 4) + Util.SLASH + uuid + Util.DOT + ext;
+        String uuid = UUID.randomUUID().toString().replace("-", "");
+        return uuid.substring(0, 4) + "/" + uuid + "." + ext;
     }
 }
