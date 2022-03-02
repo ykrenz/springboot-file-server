@@ -51,11 +51,8 @@ public abstract class AbstractFileService<F extends BaseEntity, P extends BaseEn
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public InitPartResult initMultipart(InitPartRequest request) {
+    public void initMultipart(InitPartRequest request) {
         P part = initUploadPart(request);
-        InitPartResult initPartResult = new InitPartResult();
-        initPartResult.setUploadId(part.getId());
-        return initPartResult;
     }
 
     @Override

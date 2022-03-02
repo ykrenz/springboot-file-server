@@ -38,7 +38,7 @@ public interface FileService {
      * @param request
      * @return
      */
-    InitPartResult initMultipart(InitPartRequest request);
+    void initMultipart(InitPartRequest request);
 
     /**
      * 上传文件分片

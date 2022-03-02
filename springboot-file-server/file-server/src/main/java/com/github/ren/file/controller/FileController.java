@@ -42,8 +42,9 @@ public class FileController {
     @ApiOperation("初始化分片上传")
     @ApiOperationSupport(order = 3)
     @PostMapping("/initMultipart")
-    public ResultUtil<InitPartResult> initMultipart(@Validated InitPartRequest request) {
-        return ResultUtil.success(fileService.initMultipart(request));
+    public ResultUtil<InitPartRequest> initMultipart(@Validated InitPartRequest request) {
+        fileService.initMultipart(request);
+        return ResultUtil.success(request);
     }
 
     @ApiOperation("上传文件分片")
