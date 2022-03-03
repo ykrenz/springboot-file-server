@@ -17,25 +17,27 @@ public class ResultUtil<T> implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private int code;
+    private boolean success;
     private T data;
-    private String message;
+    private String error;
+
 
     private ResultUtil(T data) {
-        this.code = 200;
         this.data = data;
-        this.message = "success";
+        this.success = true;
+        this.code = 200;
     }
 
     private ResultUtil(ErrorCode errorCode, T data) {
-        this.code = errorCode.getCode();
         this.data = data;
-        this.message = errorCode.getMessage();
+        this.error = errorCode.getMessage();
+        this.code = errorCode.getCode();
     }
 
     private ResultUtil(int code, T data, String msg) {
         this.code = code;
         this.data = data;
-        this.message = msg;
+        this.error = msg;
     }
 
     /**

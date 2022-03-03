@@ -59,6 +59,7 @@ public abstract class AbstractFileService<F extends BaseEntity, P extends BaseEn
     @Transactional(rollbackFor = Exception.class)
     public void uploadMultipart(UploadPartRequest request) {
         try {
+            request.setPartNumber(request.getPartNumber() + 1);
             P part = uploadPart(request);
             System.out.println(part);
         } catch (IOException e) {
