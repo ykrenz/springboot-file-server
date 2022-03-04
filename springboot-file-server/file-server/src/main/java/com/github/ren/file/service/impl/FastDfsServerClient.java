@@ -23,6 +23,7 @@ import com.ykrenz.fastdfs.model.InitMultipartUploadRequest;
 import com.ykrenz.fastdfs.model.UploadFileRequest;
 import com.ykrenz.fastdfs.model.UploadMultipartPartRequest;
 import com.ykrenz.fastdfs.model.fdfs.StorePath;
+import io.swagger.annotations.Api;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,9 +58,9 @@ public class FastDfsServerClient implements FileServerClient {
         UploadFileRequest uploadFileRequest = UploadFileRequest.builder()
                 .stream(file.getInputStream(), file.getSize(),
                         FilenameUtils.getExtension(originalFilename))
-                .crc32(request.getCrc32() == null ? 0 : request.getCrc32())
                 .build();
         StorePath storePath = fastDfs.uploadFile(uploadFileRequest);
+        checkCrc32(request.getCrc32(), storePath);
         FileInfo fileInfo = new FileInfo();
         fileInfo.setBucketName(storePath.getGroup());
         fileInfo.setObjectName(storePath.getPath());
@@ -68,6 +69,19 @@ public class FastDfsServerClient implements FileServerClient {
 
         fastFileMapper.insert(fileInfo);
         return fileInfo;
+    }
+
+    private void checkCrc32(Long crc32, StorePath storePath) {
+        FileInfoRequest infoRequest = FileInfoRequest.builder()
+                .groupName(storePath.getGroup())
+                .path(storePath.getPath())
+                .build();
+        if (crc32 != null && crc32 != 0) {
+            com.ykrenz.fastdfs.model.fdfs.FileInfo fileInfo = fastDfs.queryFileInfo(infoRequest);
+            if (fileInfo.getCrc32() != crc32) {
+                throw new ApiException(ErrorCode.FILE_CRC32_ERROR);
+            }
+        }
     }
 
     @Override
@@ -141,9 +155,9 @@ public class FastDfsServerClient implements FileServerClient {
                 .path(initPart.getObjectName())
                 // 6.0.2以下版本设置为false
                 .regenerate(true)
-                .crc32(request.getFileCrc32() == null ? 0 : request.getFileCrc32())
                 .build();
         StorePath storePath = fastDfs.completeMultipartUpload(multipartRequest);
+        checkCrc32(request.getFileCrc32(), storePath);
 
         FileInfo fileInfo = new FileInfo();
         fileInfo.setBucketName(storePath.getGroup());

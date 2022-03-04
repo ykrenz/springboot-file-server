@@ -40,34 +40,14 @@ public enum ErrorCode {
     UPLOAD_ID_NOT_FOUND(10001, "uploadId不存在或已经过期"),
 
     /**
-     * uploadId已经过期
-     */
-    UPLOAD_ID_EXPIRE(10002, "uploadId已经过期,请重新申请"),
-
-    /**
      * 文件过大
      */
     FILE_TO_LARGE(20001, "文件大于5M,请使用分片上传"),
 
     /**
-     * 分片文件
+     * 文件CRC32校验失败
      */
-    FILE_PART_SIZE_ERROR(20002, "分片文件大小有误"),
-
-    /**
-     * 分片文件数量为空
-     */
-    FILE_PART_ISEMPTY(20003, "分片文件数量为空"),
-
-    /**
-     * 分片数量有误
-     */
-    FILE_PART_COUNT_ERROR(20004, "分片数量有误"),
-
-    /**
-     * 分片文件数量为空
-     */
-    FILE_PART_TOTAL_SIZE_ERROR(20005, "分片总大小有误,不等于文件总大小"),
+    FILE_CRC32_ERROR(30001, "文件CRC32校验失败"),
     ;
 
     /**
