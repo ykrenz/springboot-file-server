@@ -223,7 +223,7 @@
             fileReader.onload = function(e) {
                 spark.append(e.target.result);
 
-                // 计算crc32
+                // 计算crc32 TODO 并发计算错误解决
                 if(currentChunk==0){
                     crc32 = CRC32.buf(new Uint8Array(e.target.result));
                 }else{
