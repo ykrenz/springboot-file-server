@@ -12,12 +12,16 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value = "FastFilePart对象", description = "FastDFS分片文件")
-public class FastFilePart extends BaseEntity {
+@ApiModel(value = "FilePartInfo对象", description = "分片文件")
+public class FilePartInfo extends BaseEntity {
 
-    @ApiModelProperty(value = "分片索引")
+    @ApiModelProperty(value = "分片上传唯一标识")
     @TableField("uploadId")
     private String uploadId;
+
+    @ApiModelProperty(value = "文件名称")
+    @TableField("fileName")
+    private String fileName;
 
     @ApiModelProperty(value = "分片索引")
     @TableField("partNumber")
@@ -31,11 +35,12 @@ public class FastFilePart extends BaseEntity {
     @TableField("partSize")
     private Long partSize;
 
-    @ApiModelProperty(value = "groupName")
-    @TableField("groupName")
-    private String groupName;
+    @ApiModelProperty(value = "bucketName", notes = "存储桶 fastdfs对应group")
+    @TableField("bucketName")
+    private String bucketName;
 
-    @ApiModelProperty(value = "path")
-    private String path;
+    @ApiModelProperty(value = "objectName", notes = "文件路径 fastdfs对应path")
+    @TableField("objectName")
+    private String objectName;
 
 }

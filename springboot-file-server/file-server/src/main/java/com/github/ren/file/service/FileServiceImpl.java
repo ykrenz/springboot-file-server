@@ -1,39 +1,33 @@
-package com.github.ren.file.service.impl;
+package com.github.ren.file.service;
 
-import com.github.ren.file.entity.BaseEntity;
 import com.github.ren.file.ex.ApiException;
 import com.github.ren.file.model.ErrorCode;
+import com.github.ren.file.model.request.AbortPartRequest;
 import com.github.ren.file.model.request.CompletePartRequest;
 import com.github.ren.file.model.request.InitPartRequest;
 import com.github.ren.file.model.request.SimpleUploadRequest;
 import com.github.ren.file.model.request.UploadPartRequest;
 import com.github.ren.file.model.result.InitPartResult;
-import com.github.ren.file.service.FileService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.transaction.annotation.Transactional;
+import com.github.ren.file.service.impl.FileServerClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 /**
  * @author ykren
- * @date 2022/3/1
+ * @date 2022/3/4
  */
-@Slf4j
-public abstract class AbstractFileService<F extends BaseEntity, P extends BaseEntity> implements FileService {
-
-    public abstract F uploadFile(SimpleUploadRequest request) throws IOException;
-
-    public abstract P initUploadPart(InitPartRequest request);
-
-    public abstract P uploadPart(UploadPartRequest request) throws IOException;
-
-    public abstract F completePart(CompletePartRequest request);
+@Service
+public class FileServiceImpl implements FileService {
 
     /**
      * 5M
      */
     long simpleMaxSize = 1024L * 1024L * 5L;
+
+    @Autowired
+    FileServerClient fileServerClient;
 
     @Override
     public String upload(SimpleUploadRequest request) {
@@ -42,7 +36,7 @@ public abstract class AbstractFileService<F extends BaseEntity, P extends BaseEn
             if (request.getFile().getSize() > simpleMaxSize) {
                 throw new ApiException(ErrorCode.FILE_TO_LARGE);
             }
-            F f = uploadFile(request);
+            fileServerClient.upload(request);
         } catch (IOException e) {
             throw new ApiException(ErrorCode.UPLOAD_ERROR);
         }
@@ -50,32 +44,33 @@ public abstract class AbstractFileService<F extends BaseEntity, P extends BaseEn
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void initMultipart(InitPartRequest request) {
-        P part = initUploadPart(request);
+    public InitPartResult initMultipart(InitPartRequest request) {
+        return fileServerClient.initMultipart(request);
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void uploadMultipart(UploadPartRequest request) {
         try {
+            // 前端index=0
             request.setPartNumber(request.getPartNumber() + 1);
-            P part = uploadPart(request);
-            System.out.println(part);
+            fileServerClient.uploadMultipart(request);
         } catch (IOException e) {
             throw new ApiException(ErrorCode.UPLOAD_ERROR);
         }
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void completeMultipart(CompletePartRequest request) {
-        F f = completePart(request);
-        f.setCreateTime(LocalDateTime.now());
-        f.setUpdateTime(LocalDateTime.now());
-        f.setStatus(1);
-        System.out.println(f);
+        fileServerClient.completeMultipart(request);
     }
 
+    @Override
+    public void abortMultipart(AbortPartRequest request) {
+        fileServerClient.abortMultipart(request);
+    }
 
+    @Override
+    public void deleteAllFiles() {
+        fileServerClient.deleteAllFiles();
+    }
 }

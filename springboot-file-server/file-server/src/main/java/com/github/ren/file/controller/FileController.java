@@ -2,7 +2,6 @@ package com.github.ren.file.controller;
 
 import com.github.ren.file.model.ResultUtil;
 import com.github.ren.file.model.request.*;
-import com.github.ren.file.model.result.CheckResult;
 import com.github.ren.file.model.result.InitPartResult;
 import com.github.ren.file.service.FileService;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
@@ -32,19 +31,11 @@ public class FileController {
         return ResultUtil.success(fileService.upload(request));
     }
 
-    @ApiOperation("检测上传 秒传和断点续传")
-    @ApiOperationSupport(order = 2)
-    @PostMapping("/check")
-    public ResultUtil<CheckResult> check(@Validated CheckRequest request) {
-        return ResultUtil.success(fileService.check(request));
-    }
-
-    @ApiOperation("初始化分片上传")
+    @ApiOperation("初始化分片上传 秒传和断点续传")
     @ApiOperationSupport(order = 3)
     @PostMapping("/initMultipart")
-    public ResultUtil<InitPartRequest> initMultipart(@Validated InitPartRequest request) {
-        fileService.initMultipart(request);
-        return ResultUtil.success(request);
+    public ResultUtil<InitPartResult> initMultipart(@Validated InitPartRequest request) {
+        return ResultUtil.success(fileService.initMultipart(request));
     }
 
     @ApiOperation("上传文件分片")

@@ -1,7 +1,7 @@
 package com.github.ren.file.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.github.ren.file.entity.FastFilePart;
+import com.github.ren.file.entity.FilePartInfo;
 
 /**
  * <p>
@@ -11,6 +11,6 @@ import com.github.ren.file.entity.FastFilePart;
  * @author Mr Ren
  * @since 2021-05-24
  */
-public interface FastFilePartMapper extends BaseMapper<FastFilePart> {
+public interface FastFilePartMapper extends BaseMapper<FilePartInfo> {
 
 }

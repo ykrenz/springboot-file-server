@@ -50,6 +50,8 @@
                     <span class="qq-edit-filename-icon-selector qq-edit-filename-icon" aria-label="Edit filename"></span>
                     <input class="qq-edit-filename-selector qq-edit-filename" tabindex="0" type="text">
                     <span class="qq-upload-size-selector qq-upload-size"></span>
+                    <button type="button" class="qq-upload-pause-selector qq-upload-pause">Pause</button>
+                    <button type="button" class="qq-upload-continue-selector qq-upload-continue">Continue</button>
                     <button type="button" class="qq-btn qq-upload-cancel-selector qq-upload-cancel">Cancel</button>
                     <button type="button" class="qq-btn qq-upload-retry-selector qq-upload-retry">Retry</button>
                     <button type="button" class="qq-btn qq-upload-delete-selector qq-upload-delete">Delete</button>
@@ -164,14 +166,23 @@
                 enabled: true
             },
 
+            retry: {
+                enableAuto: true,
+                autoAttemptDelay: 1,
+                maxAutoAttempts: 3
+            },
             callbacks: {
                 onUpload: function(id,name){
-                   console.info("onupload",name);
-                   return md5(this,id);
+                console.info("md5",this.getFile(id).md5);
+                 if(this.getFile(id).md5 == undefined){
+                    // 计算md5 并初始化上传任务
+                    return md5(this,id);
+                  }
                 },
-                onStatusChange: function(id, oldStatus, newStatus){
-                       newStatus = "upload successful";
-                        console.info("onStatusChange",oldStatus,newStatus);
+                onCancel: function(id){
+                    console.info("onCancel",id);
+<!--                    this.addExtraDropzone (element);-->
+                    return false;
                 },
                 onDelete: function(id) {
                     // ...
@@ -233,26 +244,6 @@
 
     function computeMd5Success(uploader,id,md5){
         console.info("compute md5 success",md5);
-        console.info("uploader",uploader);
-        uploader.setParams({"fileMd5":md5},id);
-        // check
-<!--         $.ajax({-->
-<!--            type: "POST",-->
-<!--            url: "/check",-->
-<!--            data: {-->
-<!--                uploadId: uploader.getUuid(id),-->
-<!--                fileMd5: md5-->
-<!--            },-->
-<!--            cache: false,-->
-<!--            async: false, // 与js同步-->
-<!--            timeout: 1000, // 超时的话，只能认为该分片未上传过-->
-<!--            dataType: "json",-->
-<!--            success: function (response) {-->
-<!--                uploader.getFile(id).exist = true;-->
-<!--                console.info("check",response);-->
-<!--            }-->
-<!--        });-->
-
         // init
         $.ajax({
             type: "POST",
@@ -267,7 +258,10 @@
             async: false, // 与js同步
             dataType: "json",
             success: function (response) {
-                    console.info("init",response);
+                    if(response.success){
+                         uploader.getFile(id).md5 = md5;
+                         uploader.setParams({"fileMd5":md5},id);
+                    }
                  }
             });
     }

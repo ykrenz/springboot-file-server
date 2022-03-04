@@ -1,5 +1,7 @@
-package com.github.ren.file.service;
+package com.github.ren.file.service.impl;
 
+import com.github.ren.file.entity.FileInfo;
+import com.github.ren.file.entity.FilePartInfo;
 import com.github.ren.file.model.request.AbortPartRequest;
 import com.github.ren.file.model.request.CompletePartRequest;
 import com.github.ren.file.model.request.InitPartRequest;
@@ -7,25 +9,25 @@ import com.github.ren.file.model.request.SimpleUploadRequest;
 import com.github.ren.file.model.request.UploadPartRequest;
 import com.github.ren.file.model.result.InitPartResult;
 
-import java.io.Serializable;
+import java.io.IOException;
 
 /**
- * @Description 文件接口
- * @Author ren
- * @Since 1.0
+ * @author ykren
+ * @date 2022/3/1
  */
-public interface FileService extends Serializable {
+public interface FileServerClient {
 
     /**
-     * 上传简单文件
+     * 上传文件
      *
      * @param request
      * @return
+     * @throws IOException
      */
-    String upload(SimpleUploadRequest request);
+    FileInfo upload(SimpleUploadRequest request) throws IOException;
 
     /**
-     * 初始化分片上传任务
+     * 初始化分片
      *
      * @param request
      * @return
@@ -33,31 +35,31 @@ public interface FileService extends Serializable {
     InitPartResult initMultipart(InitPartRequest request);
 
     /**
-     * 上传文件分片
+     * 上传分片
      *
-     * @param uploadPartRequest
+     * @param request
      * @return
+     * @throws IOException
      */
-    void uploadMultipart(UploadPartRequest uploadPartRequest);
+    FilePartInfo uploadMultipart(UploadPartRequest request) throws IOException;
 
     /**
-     * 合并文件分片
+     * 完成分片上传
      *
      * @param request
      * @return
      */
-    void completeMultipart(CompletePartRequest request);
+    FileInfo completeMultipart(CompletePartRequest request);
 
     /**
      * 取消分片上传
      *
      * @param request
-     * @return
      */
     void abortMultipart(AbortPartRequest request);
 
     /**
-     * 清空临时文件 测试使用
+     * 删除数据库所有文件
      */
     void deleteAllFiles();
 
