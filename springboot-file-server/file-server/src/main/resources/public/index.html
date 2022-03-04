@@ -13,6 +13,7 @@
     <script src="../static/fine-uploader/fine-uploader.js"></script>
 
     <!--md5-->
+    <script type="text/javascript" src="../static/crc32/crc32.js"></script>
     <script type="text/javascript" src="../static/md5/spark-md5.min.js"></script>
     <!--jquery-->
     <script type="text/javascript" src="../static/jquery/jquery.min.js"></script>
@@ -147,6 +148,7 @@
 
             chunking: {
                 enabled: true,
+                mandatory: true, // 只有一个块
                 partSize: chunkSize, //5M
                 concurrent: {
                     enabled: true
@@ -174,15 +176,16 @@
             callbacks: {
                 onUpload: function(id,name){
                 console.info("md5",this.getFile(id).md5);
+                // fastdfs建议计算crc32 保证文件完整性
+                // 云存储建议使用md5验证
+                // 当然也可以都计算保存到数据库 但是这样会消耗一些不必要的性能 可以根据需求调整。
                  if(this.getFile(id).md5 == undefined){
                     // 计算md5 并初始化上传任务
-                    return md5(this,id);
+                    return computeMd5(this,id);
                   }
                 },
                 onCancel: function(id){
-                    console.info("onCancel",id);
-<!--                    this.addExtraDropzone (element);-->
-                    return false;
+                    // ...
                 },
                 onDelete: function(id) {
                     // ...
@@ -205,23 +208,34 @@
      * @param chunkSize 分片大小
      * @returns Promise
      */
-    function md5(uploader,id) {
+    function computeMd5(uploader,id) {
         return new Promise((resolve, reject) => {
             file = uploader.getFile(id);
             let blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice;
             let chunks = Math.ceil(file.size / chunkSize);
             let currentChunk = 0;
             let spark = new SparkMD5.ArrayBuffer();
+
+            let crc32;
+
             let fileReader = new FileReader();
 
             fileReader.onload = function(e) {
                 spark.append(e.target.result);
+
+                // 计算crc32
+                if(currentChunk==0){
+                    crc32 = CRC32.buf(new Uint8Array(e.target.result));
+                }else{
+                    crc32 = CRC32.buf(new Uint8Array(e.target.result), crc32);
+                }
+
                 currentChunk++;
                 if (currentChunk < chunks) {
                     loadNext();
                 } else {
                     let md5 = spark.end();
-                    computeMd5Success(uploader,id,md5);
+                    computeMd5Success(uploader,id,md5,crc32);
                     resolve(md5);
                 }
             };
@@ -242,7 +256,7 @@
         });
     }
 
-    function computeMd5Success(uploader,id,md5){
+    function computeMd5Success(uploader,id,md5,crc32){
         console.info("compute md5 success",md5);
         // init
         $.ajax({
@@ -260,7 +274,7 @@
             success: function (response) {
                     if(response.success){
                          uploader.getFile(id).md5 = md5;
-                         uploader.setParams({"fileMd5":md5},id);
+                         uploader.setParams({"fileMd5":md5,"fileCrc32":crc32},id);
                     }
                  }
             });
