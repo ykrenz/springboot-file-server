@@ -13,7 +13,6 @@
     <script src="../static/fine-uploader/fine-uploader.js"></script>
 
     <script type="text/javascript" src="../static/crc32/crc32.js"></script>
-    <script type="text/javascript" src="../static/crc32/crc2.js"></script>
     <!--md5-->
     <script type="text/javascript" src="../static/md5/spark-md5.min.js"></script>
     <!--jquery-->
@@ -173,7 +172,7 @@
         },
 
         retry: {
-            enableAuto: false,
+            enableAuto: true,
             autoAttemptDelay: 1,
             maxAutoAttempts: 3
         },
@@ -223,10 +222,10 @@
             let crc = new Crc32();
 
             let fileReader = new FileReader();
-
             fileReader.onload = function (e) {
                 spark.append(e.target.result);
                 crc.append(new Uint8Array(e.target.result));
+
                 currentChunk++;
                 if (currentChunk < chunks) {
                     loadNext();
@@ -267,7 +266,6 @@
                 fileSize: uploader.getSize(id),
                 partSize: chunkSize,
             },
-            timeout: 1000,
             cache: false,
             async: false, // 与js同步
             dataType: "json",
