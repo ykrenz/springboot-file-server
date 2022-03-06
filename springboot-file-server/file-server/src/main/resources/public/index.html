@@ -12,8 +12,9 @@
     ====================================================================== -->
     <script src="../static/fine-uploader/fine-uploader.js"></script>
 
-    <!--md5-->
     <script type="text/javascript" src="../static/crc32/crc32.js"></script>
+    <script type="text/javascript" src="../static/crc32/crc2.js"></script>
+    <!--md5-->
     <script type="text/javascript" src="../static/md5/spark-md5.min.js"></script>
     <!--jquery-->
     <script type="text/javascript" src="../static/jquery/jquery.min.js"></script>
@@ -23,7 +24,8 @@
     <script type="text/template" id="qq-template-manual-trigger">
         <div class="qq-uploader-selector qq-uploader" qq-drop-area-text="Drop files here">
             <div class="qq-total-progress-bar-container-selector qq-total-progress-bar-container">
-                <div role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" class="qq-total-progress-bar-selector qq-progress-bar qq-total-progress-bar"></div>
+                <div role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+                     class="qq-total-progress-bar-selector qq-progress-bar qq-total-progress-bar"></div>
             </div>
             <div class="qq-upload-drop-area-selector qq-upload-drop-area" qq-hide-dropzone>
                 <span class="qq-upload-drop-area-text-selector"></span>
@@ -43,12 +45,14 @@
             <ul class="qq-upload-list-selector qq-upload-list" aria-live="polite" aria-relevant="additions removals">
                 <li>
                     <div class="qq-progress-bar-container-selector">
-                        <div role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" class="qq-progress-bar-selector qq-progress-bar"></div>
+                        <div role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+                             class="qq-progress-bar-selector qq-progress-bar"></div>
                     </div>
                     <span class="qq-upload-spinner-selector qq-upload-spinner"></span>
                     <img class="qq-thumbnail-selector" qq-max-size="100" qq-server-scale>
                     <span class="qq-upload-file-selector qq-upload-file"></span>
-                    <span class="qq-edit-filename-icon-selector qq-edit-filename-icon" aria-label="Edit filename"></span>
+                    <span class="qq-edit-filename-icon-selector qq-edit-filename-icon"
+                          aria-label="Edit filename"></span>
                     <input class="qq-edit-filename-selector qq-edit-filename" tabindex="0" type="text">
                     <span class="qq-upload-size-selector qq-upload-size"></span>
                     <button type="button" class="qq-upload-pause-selector qq-upload-pause">Pause</button>
@@ -119,145 +123,140 @@
 ====================================================================== -->
 <script>
 
-       const chunkSize = 5242880; //5M
+    const chunkSize = 5242880; //5M
 
-        var manualUploader = new qq.FineUploader({
-            element: document.getElementById('fine-uploader-manual-trigger'),
-            template: 'qq-template-manual-trigger',
-            request: {
-                method: "post",
-                endpoint: '/uploadMultipart',
-                forceMultipart: true,
-                inputName: "file",
-                filenameParam: "fileName",
-                totalFileSizeName: "fileSize",
-                uuidName: "uploadId"
-            },
-            thumbnails: {
-                placeholders: {
-                    waitingPath: '../static/fine-uploader/placeholders/waiting-generic.png',
-                    notAvailablePath: '../static/fine-uploader/placeholders/not_available-generic.png'
-                }
-            },
-            autoUpload: false,
-            debug: true,
-            deleteFile: {
-                enabled: false, // defaults to false
-                endpoint: '/my/delete/endpoint'
-            },
+    var manualUploader = new qq.FineUploader({
+        element: document.getElementById('fine-uploader-manual-trigger'),
+        template: 'qq-template-manual-trigger',
+        request: {
+            method: "post",
+            endpoint: '/uploadMultipart',
+            forceMultipart: true,
+            inputName: "file",
+            filenameParam: "fileName",
+            totalFileSizeName: "fileSize",
+            uuidName: "uploadId"
+        },
+        thumbnails: {
+            placeholders: {
+                waitingPath: '../static/fine-uploader/placeholders/waiting-generic.png',
+                notAvailablePath: '../static/fine-uploader/placeholders/not_available-generic.png'
+            }
+        },
+        autoUpload: false,
+        debug: true,
+        deleteFile: {
+            enabled: false, // defaults to false
+            endpoint: '/my/delete/endpoint'
+        },
 
-            chunking: {
-                enabled: true,
-                mandatory: true, // 只有一个块
-                partSize: chunkSize, //5M
-                concurrent: {
-                    enabled: true
-                },
-                paramNames:{
-                    chunkSize: "partSize",
-                    partByteOffset: "partOffset",
-                    partIndex: "partNumber",
-                    totalParts: "totalPartCount",
-                },
-                success: {
-                    endpoint: "/completeMultipart"
-                 }
-            },
-
-            resume: {
+        chunking: {
+            enabled: true,
+            mandatory: true, // 只有一个块
+            partSize: chunkSize, //5M
+            concurrent: {
                 enabled: true
             },
-
-            retry: {
-                enableAuto: true,
-                autoAttemptDelay: 1,
-                maxAutoAttempts: 3
+            paramNames: {
+                chunkSize: "partSize",
+                partByteOffset: "partOffset",
+                partIndex: "partNumber",
+                totalParts: "totalPartCount",
             },
-            callbacks: {
-                onUpload: function(id,name){
-                console.info("md5",this.getFile(id).md5);
+            success: {
+                endpoint: "/completeMultipart"
+            }
+        },
+
+        resume: {
+            enabled: true
+        },
+
+        retry: {
+            enableAuto: false,
+            autoAttemptDelay: 1,
+            maxAutoAttempts: 3
+        },
+        callbacks: {
+            onUpload: function (id, name) {
+                console.info("md5", this.getFile(id).md5);
                 // fastdfs建议计算crc32 保证文件完整性
                 // 云存储建议使用md5验证
                 // 当然也可以都计算保存到数据库 但是这样会消耗一些不必要的性能 可以根据需求调整。
-                 if(this.getFile(id).md5 == undefined){
+                if (this.getFile(id).md5 === undefined) {
+                    // console.info("test", Crc32file(this.getFile(id),chunkSize));
                     // 计算md5 并初始化上传任务
-                    return computeMd5(this,id);
-                  }
-                },
-                onCancel: function(id){
-                    // ...
-                },
-                onDelete: function(id) {
-                    // ...
-                },
-                onDeleteComplete: function(id, xhr, isError) {
-                    //...
+                    return computeMd5(this, id);
                 }
+            },
+            onCancel: function (id) {
+                // ...
+            },
+            onDelete: function (id) {
+                // ...
+            },
+            onDeleteComplete: function (id, xhr, isError) {
+                //...
             }
-        });
+        }
+    });
 
-        qq(document.getElementById("trigger-upload")).attach("click", function() {
-            manualUploader.uploadStoredFiles();
-        });
-    </script>
+    qq(document.getElementById("trigger-upload")).attach("click", function () {
+        manualUploader.uploadStoredFiles();
+    });
+</script>
 
-    <script>
+<script>
 
-        /**
-     * @param file 文件
-     * @param chunkSize 分片大小
+    /**
      * @returns Promise
+     * @param uploader
+     * @param id
      */
-    function computeMd5(uploader,id) {
+    function computeMd5(uploader, id) {
         return new Promise((resolve, reject) => {
-            file = uploader.getFile(id);
+            var file = uploader.getFile(id);
             let blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice;
             let chunks = Math.ceil(file.size / chunkSize);
             let currentChunk = 0;
             let spark = new SparkMD5.ArrayBuffer();
-
-            let crc32;
+            let crc = new Crc32();
 
             let fileReader = new FileReader();
 
-            fileReader.onload = function(e) {
+            fileReader.onload = function (e) {
                 spark.append(e.target.result);
-
-                // 计算crc32 TODO 并发计算错误解决
-                if(currentChunk==0){
-                    crc32 = CRC32.buf(new Uint8Array(e.target.result));
-                }else{
-                    crc32 = CRC32.buf(new Uint8Array(e.target.result), crc32);
-                }
-
+                crc.append(new Uint8Array(e.target.result));
                 currentChunk++;
                 if (currentChunk < chunks) {
                     loadNext();
                 } else {
                     let md5 = spark.end();
-                    computeMd5Success(uploader,id,md5,crc32);
+                    let crc32 = crc.compute();
+                    computeMd5Success(uploader, id, md5, crc32);
                     resolve(md5);
                 }
             };
 
-            fileReader.onerror = function(e) {
+            fileReader.onerror = function (e) {
                 reject(e);
             };
 
             function loadNext() {
                 let start = currentChunk * chunkSize;
                 let end = start + chunkSize;
-                if (end > file.size){
+                if (end > file.size) {
                     end = file.size;
                 }
                 fileReader.readAsArrayBuffer(blobSlice.call(file, start, end));
             }
+
             loadNext();
         });
     }
 
-    function computeMd5Success(uploader,id,md5,crc32){
-        console.info("compute md5 success",md5);
+    function computeMd5Success(uploader, id, md5, crc32) {
+        console.info("compute md5 success", md5, crc32);
         // init
         $.ajax({
             type: "POST",
@@ -268,17 +267,18 @@
                 fileSize: uploader.getSize(id),
                 partSize: chunkSize,
             },
+            timeout: 1000,
             cache: false,
             async: false, // 与js同步
             dataType: "json",
             success: function (response) {
-                    if(response.success){
-                         uploader.getFile(id).md5 = md5;
-                         uploader.setParams({"fileMd5":md5,"fileCrc32":crc32},id);
-                    }
-                 }
-            });
+                if (response.success) {
+                    uploader.getFile(id).md5 = md5;
+                    uploader.setParams({"fileMd5": md5, "fileCrc32": crc32}, id);
+                }
+            }
+        });
     }
-    </script>
+</script>
 </body>
 </html>
