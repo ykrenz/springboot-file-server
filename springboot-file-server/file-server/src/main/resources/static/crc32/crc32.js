@@ -1,17 +1,21 @@
 function Crc32() {
-    crc = -1
-    table = makeTable();
+    this.crc = 0;
+    this.table = makeTable();
 
-    this.append = function append(data) {
-        let crcTemp = crc;
+    this.append = function (data) {
+        let crc = this.crc;
         for (let offset = 0; offset < data.byteLength; offset++) {
-            crcTemp = (crcTemp >>> 8) ^ table[(crcTemp ^ data[offset]) & 0xFF]
+            crc = (crc >>> 8) ^ this.table[(crc ^ data[offset]) & 0xFF]
         }
-        crc = crcTemp;
+        this.crc = crc;
     }
 
-    this.compute = function compute() {
-        return (crc ^ -1) >>> 0
+    this.compute = function () {
+        return (this.crc ^ -1) >>> 0
+    }
+
+    this.computeFastDfs = function () {
+        return (this.crc ^ -1)
     }
 
     function makeTable() {
@@ -31,3 +35,4 @@ function Crc32() {
         return table
     }
 }
+

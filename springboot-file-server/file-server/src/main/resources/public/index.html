@@ -231,7 +231,7 @@
                     loadNext();
                 } else {
                     let md5 = spark.end();
-                    let crc32 = crc.compute();
+                    let crc32 = crc.computeFastDfs();
                     computeMd5Success(uploader, id, md5, crc32);
                     resolve(md5);
                 }
@@ -255,7 +255,7 @@
     }
 
     function computeMd5Success(uploader, id, md5, crc32) {
-        console.info("compute md5 success", md5, crc32);
+        console.info("compute md5 success", uploader.getName(id), md5, crc32);
         // init
         $.ajax({
             type: "POST",

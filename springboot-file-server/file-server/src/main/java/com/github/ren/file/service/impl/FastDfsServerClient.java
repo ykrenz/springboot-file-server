@@ -150,6 +150,8 @@ public class FastDfsServerClient implements FileServerClient {
         if (initPart == null) {
             throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND);
         }
+
+        // TODO 如果crc异常或者其他异常 导致文件regenerate 会有脏数据
         CompleteMultipartRequest multipartRequest = CompleteMultipartRequest.builder()
                 .groupName(initPart.getBucketName())
                 .path(initPart.getObjectName())
@@ -179,12 +181,11 @@ public class FastDfsServerClient implements FileServerClient {
 
     private FilePartInfo getInitPart(String uploadId) {
         //TODO 加入缓存 upload重复校验
-        FilePartInfo initPart = fastFilePartMapper.selectOne(Wrappers.<FilePartInfo>lambdaQuery()
+        return fastFilePartMapper.selectOne(Wrappers.<FilePartInfo>lambdaQuery()
                 .eq(FilePartInfo::getUploadId, uploadId)
                 .eq(FilePartInfo::getPartNumber, 0)
                 .eq(FilePartInfo::getStatus, 1)
         );
-        return initPart;
     }
 
     private InitPartResult check(CheckRequest request) {
