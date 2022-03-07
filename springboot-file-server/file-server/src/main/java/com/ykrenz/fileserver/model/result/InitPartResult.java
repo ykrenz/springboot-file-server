@@ -18,21 +18,25 @@ import java.util.List;
 public class InitPartResult implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    @ApiModelProperty("上传文件唯一标识")
+    private String uploadId;
+
     @ApiModelProperty("是否存在 true:存在(秒传) false:不存在")
     private boolean exist;
 
     @ApiModelProperty("已经上传的分片数据 断点续传客户端可以跳过这些分片")
-    List<Integer> parts = new ArrayList<>();
+    private List<Integer> parts = new ArrayList<>(0);
 
     public InitPartResult() {
     }
 
-    public InitPartResult(boolean exist) {
+    public InitPartResult(String uploadId, boolean exist) {
+        this.uploadId = uploadId;
         this.exist = exist;
     }
 
-    public InitPartResult(boolean exist, List<Integer> parts) {
-        this.exist = exist;
+    public InitPartResult(String uploadId, List<Integer> parts) {
+        this.uploadId = uploadId;
         this.parts = parts;
     }
 }

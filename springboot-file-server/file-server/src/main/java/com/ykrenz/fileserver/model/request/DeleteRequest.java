@@ -11,8 +11,8 @@ import javax.validation.constraints.NotBlank;
  * @Since 1.0
  */
 @Data
-@ApiModel("取消分片上传参数")
-public class AbortPartRequest {
+@ApiModel("删除文件参数")
+public class DeleteRequest {
     @NotBlank(message = "不能为空")
-    private String uploadId;
+    private String id;
 }

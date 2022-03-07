@@ -1,5 +1,5 @@
 function Crc32() {
-    this.crc = 0;
+    this.crc = -1;
     this.table = makeTable();
 
     this.append = function (data) {
@@ -12,10 +12,6 @@ function Crc32() {
 
     this.compute = function () {
         return (this.crc ^ -1) >>> 0
-    }
-
-    this.computeFastDfs = function () {
-        return (this.crc ^ -1)
     }
 
     function makeTable() {

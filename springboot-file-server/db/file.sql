@@ -14,12 +14,10 @@
 
 
 -- 导出 filedb 的数据库结构
-DROP DATABASE IF EXISTS `filedb`;
 CREATE DATABASE IF NOT EXISTS `filedb` /*!40100 DEFAULT CHARACTER SET utf8mb4 */;
 USE `filedb`;
 
 -- 导出  表 filedb.file_info 结构
-DROP TABLE IF EXISTS `file_info`;
 CREATE TABLE IF NOT EXISTS `file_info` (
   `id` varchar(50) NOT NULL DEFAULT '',
   `fileName` varchar(255) CHARACTER SET utf8mb4 DEFAULT NULL COMMENT '文件名称',
@@ -28,8 +26,8 @@ CREATE TABLE IF NOT EXISTS `file_info` (
   `fileSize` bigint(20) DEFAULT '0' COMMENT '文件大小',
   `md5` varchar(50) DEFAULT NULL COMMENT '文件md5值',
   `crc32` bigint(20) NOT NULL DEFAULT '0' COMMENT '文件crc32值',
-  `create_time` date DEFAULT NULL,
-  `update_time` date DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `update_time` datetime DEFAULT NULL,
   `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '状态 1 正常 -1删除',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='文件信息';
@@ -37,11 +35,9 @@ CREATE TABLE IF NOT EXISTS `file_info` (
 -- 数据导出被取消选择。
 
 -- 导出  表 filedb.file_part_info 结构
-DROP TABLE IF EXISTS `file_part_info`;
 CREATE TABLE IF NOT EXISTS `file_part_info` (
   `id` varchar(50) NOT NULL DEFAULT '',
-  `uploadId` varchar(50) DEFAULT NULL COMMENT '分片上传唯一标识',
-  `cloudUploadId` varchar(50) DEFAULT NULL COMMENT '分片上传唯一标识 云存储服务返回的uploadId',
+  `uploadId` varchar(50) DEFAULT NULL COMMENT '分片上传唯一标识 云存储使用',
   `fileName` varchar(255) CHARACTER SET utf8mb4 DEFAULT NULL COMMENT '文件名称',
   `fileSize` bigint(20) NOT NULL DEFAULT '0' COMMENT '文件大小',
   `partNumber` int(11) NOT NULL DEFAULT '0' COMMENT '分片索引',

@@ -1,7 +1,7 @@
 package com.ykrenz.fileserver.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.ykrenz.fileserver.entity.FileInfo;
+import com.ykrenz.fileserver.entity.FilePartInfo;
 
 /**
  * <p>
@@ -11,6 +11,6 @@ import com.ykrenz.fileserver.entity.FileInfo;
  * @author Mr Ren
  * @since 2021-05-24
  */
-public interface FastFileMapper extends BaseMapper<FileInfo> {
+public interface FilePartInfoMapper extends BaseMapper<FilePartInfo> {
 
 }

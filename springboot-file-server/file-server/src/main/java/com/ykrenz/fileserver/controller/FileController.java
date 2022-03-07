@@ -1,12 +1,14 @@
 package com.ykrenz.fileserver.controller;
 
 import com.ykrenz.fileserver.model.ResultUtil;
-import com.ykrenz.fileserver.model.request.AbortPartRequest;
+import com.ykrenz.fileserver.model.request.CancelPartRequest;
 import com.ykrenz.fileserver.model.request.CompletePartRequest;
 import com.ykrenz.fileserver.model.request.InitPartRequest;
 import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
 import com.ykrenz.fileserver.model.request.UploadPartRequest;
 import com.ykrenz.fileserver.model.result.InitPartResult;
+import com.ykrenz.fileserver.model.result.CompletePartResult;
+import com.ykrenz.fileserver.model.result.SimpleUploadResult;
 import com.ykrenz.fileserver.service.FileService;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import io.swagger.annotations.Api;
@@ -31,7 +33,7 @@ public class FileController {
     @ApiOperation("简单上传 只支持小文件上传")
     @ApiOperationSupport(order = 1)
     @PostMapping("/upload")
-    public ResultUtil<String> upload(@Validated SimpleUploadRequest request) {
+    public ResultUtil<SimpleUploadResult> upload(@Validated SimpleUploadRequest request) {
         return ResultUtil.success(fileService.upload(request));
     }
 
@@ -53,21 +55,20 @@ public class FileController {
     @ApiOperation("合并文件分片")
     @ApiOperationSupport(order = 5)
     @PostMapping("/completeMultipart")
-    public ResultUtil<Object> completeMultipart(@Validated CompletePartRequest request) {
-        fileService.completeMultipart(request);
-        return ResultUtil.success();
+    public ResultUtil<CompletePartResult> completeMultipart(@Validated CompletePartRequest request) {
+        return ResultUtil.success(fileService.completeMultipart(request));
     }
 
     @ApiOperation("取消分片上传")
     @ApiOperationSupport(order = 6)
-    @PostMapping("/abortMultipart")
-    public ResultUtil<Object> abortMultipart(@Validated AbortPartRequest request) {
-        fileService.abortMultipart(request);
+    @PostMapping("/cancelMultipart")
+    public ResultUtil<Object> cancelMultipart(@Validated CancelPartRequest request) {
+        fileService.cancelMultipart(request);
         return ResultUtil.success();
     }
 
     @ApiOperation("清空临时文件 测试使用")
-    @ApiOperationSupport(order = 6)
+    @ApiOperationSupport(order = 8)
     @PostMapping("/deleteAllFiles")
     public ResultUtil<Object> deleteAllFiles() {
         fileService.deleteAllFiles();

@@ -101,7 +101,7 @@ public class ExceptionAdvice {
     /**
      * 业务异常直接抛给客户端
      */
-    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(ApiException.class)
     public ResultUtil<Object> apiException(ApiException e) {
         return ResultUtil.error(e.getCode(), e.getData(), e.getMessage());

@@ -19,11 +19,10 @@ public class InitPartRequest {
     @ApiModelProperty(name = "md5", value = "文件md5", notes = "客户端秒传")
     private String fileMd5;
 
-    @ApiModelProperty(name = "crc32", value = "文件crc32", notes = "fastdfs结合md5秒传")
+    @ApiModelProperty(name = "crc32", value = "文件crc32 fastdfs可结合md5秒传")
     private Long fileCrc32;
 
-    @ApiModelProperty(name = "标识id", value = "文件唯一标识", notes = "每个上传文件不能重复 例如uuid md5等")
-    @NotBlank(message = "不能为空")
+    @ApiModelProperty(name = "uploadId", value = "上传唯一标识 服务端返回的uploadId 可用于查询已经上传过的分片 断点续传")
     private String uploadId;
 
     @ApiModelProperty(name = "fileName", value = "文件名")

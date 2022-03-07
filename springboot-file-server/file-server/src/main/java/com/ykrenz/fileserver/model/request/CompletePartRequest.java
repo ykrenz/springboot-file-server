@@ -19,11 +19,11 @@ public class CompletePartRequest {
     /**
      * 文件md5
      */
-    @ApiModelProperty(name = "fileMd5", value = "文件md5值", notes = "fastdfs只保存用于妙传不做验证")
+    @ApiModelProperty(name = "fileMd5", value = "文件md5值 fastdfs只保存不做验证")
     private String fileMd5;
     /**
      * fastdfs可使用 保证数据完整性
      */
-    @ApiModelProperty(name = "fileCrc32", value = "文件crc32值", notes = "fastdfs使用 保证数据完整性")
+    @ApiModelProperty(name = "fileCrc32", value = "文件crc32值 fastdfs保证数据完整性")
     private Long fileCrc32;
 }

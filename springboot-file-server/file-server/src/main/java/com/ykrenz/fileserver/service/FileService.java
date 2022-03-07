@@ -1,11 +1,13 @@
 package com.ykrenz.fileserver.service;
 
-import com.ykrenz.fileserver.model.request.AbortPartRequest;
+import com.ykrenz.fileserver.model.request.CancelPartRequest;
 import com.ykrenz.fileserver.model.request.CompletePartRequest;
 import com.ykrenz.fileserver.model.request.InitPartRequest;
 import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
 import com.ykrenz.fileserver.model.request.UploadPartRequest;
 import com.ykrenz.fileserver.model.result.InitPartResult;
+import com.ykrenz.fileserver.model.result.CompletePartResult;
+import com.ykrenz.fileserver.model.result.SimpleUploadResult;
 
 import java.io.Serializable;
 
@@ -22,7 +24,7 @@ public interface FileService extends Serializable {
      * @param request
      * @return
      */
-    String upload(SimpleUploadRequest request);
+    SimpleUploadResult upload(SimpleUploadRequest request);
 
     /**
      * 初始化分片上传任务
@@ -46,7 +48,7 @@ public interface FileService extends Serializable {
      * @param request
      * @return
      */
-    void completeMultipart(CompletePartRequest request);
+    CompletePartResult completeMultipart(CompletePartRequest request);
 
     /**
      * 取消分片上传
@@ -54,10 +56,10 @@ public interface FileService extends Serializable {
      * @param request
      * @return
      */
-    void abortMultipart(AbortPartRequest request);
+    void cancelMultipart(CancelPartRequest request);
 
     /**
-     * 清空临时文件 测试使用
+     * 清空所有文件 测试使用
      */
     void deleteAllFiles();
 

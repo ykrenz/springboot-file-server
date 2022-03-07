@@ -2,8 +2,9 @@ package com.ykrenz.fileserver.service.impl;
 
 import com.ykrenz.fileserver.entity.FileInfo;
 import com.ykrenz.fileserver.entity.FilePartInfo;
-import com.ykrenz.fileserver.model.request.AbortPartRequest;
+import com.ykrenz.fileserver.model.request.CancelPartRequest;
 import com.ykrenz.fileserver.model.request.CompletePartRequest;
+import com.ykrenz.fileserver.model.request.DeleteRequest;
 import com.ykrenz.fileserver.model.request.InitPartRequest;
 import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
 import com.ykrenz.fileserver.model.request.UploadPartRequest;
@@ -56,7 +57,7 @@ public interface FileServerClient {
      *
      * @param request
      */
-    void abortMultipart(AbortPartRequest request);
+    void cancelMultipart(CancelPartRequest request);
 
     /**
      * 删除数据库所有文件

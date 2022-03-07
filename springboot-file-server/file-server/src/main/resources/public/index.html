@@ -146,7 +146,8 @@
         debug: true,
         deleteFile: {
             enabled: false, // defaults to false
-            endpoint: '/my/delete/endpoint'
+            endpoint: '/delete',
+            method: 'post',
         },
 
         chunking: {
@@ -163,7 +164,8 @@
                 totalParts: "totalPartCount",
             },
             success: {
-                endpoint: "/completeMultipart"
+                endpoint: "/completeMultipart",
+                resetOnStatus: "500",
             }
         },
 
@@ -182,14 +184,28 @@
                 // fastdfs建议计算crc32 保证文件完整性
                 // 云存储建议使用md5验证
                 // 当然也可以都计算保存到数据库 但是这样会消耗一些不必要的性能 可以根据需求调整。
-                if (this.getFile(id).md5 === undefined) {
-                    // console.info("test", Crc32file(this.getFile(id),chunkSize));
+                if (!this.getFile(id).init) {
                     // 计算md5 并初始化上传任务
                     return computeMd5(this, id);
                 }
             },
             onCancel: function (id) {
-                // ...
+                $.ajax({
+                    type: "POST",
+                    url: "/cancelMultipart",
+                    data: {
+                        uploadId: this.getUuid(id),
+                    },
+                    cache: false,
+                    async: false, // 与js同步
+                    dataType: "json",
+                    success: function (response) {
+                       console.info("cancel upload",response);
+                    }
+                });
+            },
+            onComplete: function (id,name,response,xhr) {
+                console.info("onComplete", id,name,response,xhr);
             },
             onDelete: function (id) {
                 // ...
@@ -231,7 +247,7 @@
                     loadNext();
                 } else {
                     let md5 = spark.end();
-                    let crc32 = crc.computeFastDfs();
+                    let crc32 = crc.compute();
                     computeMd5Success(uploader, id, md5, crc32);
                     resolve(md5);
                 }
@@ -261,17 +277,19 @@
             type: "POST",
             url: "/initMultipart",
             data: {
-                uploadId: uploader.getUuid(id),
                 fileName: uploader.getName(id),
                 fileSize: uploader.getSize(id),
                 partSize: chunkSize,
+                fileMd5: md5,
+                fileCrc32: crc32,
             },
             cache: false,
             async: false, // 与js同步
             dataType: "json",
             success: function (response) {
                 if (response.success) {
-                    uploader.getFile(id).md5 = md5;
+                    uploader.getFile(id).init = true;
+                    uploader.setUuid (id, response.data.uploadId);
                     uploader.setParams({"fileMd5": md5, "fileCrc32": crc32}, id);
                 }
             }

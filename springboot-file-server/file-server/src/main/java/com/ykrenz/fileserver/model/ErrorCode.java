@@ -47,7 +47,7 @@ public enum ErrorCode {
     /**
      * 文件CRC32校验失败
      */
-    FILE_CRC32_ERROR(30001, "文件CRC32校验失败"),
+    FILE_CRC32_ERROR(20002, "文件CRC32校验失败,请重新上传"),
     ;
 
     /**

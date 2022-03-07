@@ -6,11 +6,10 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.ykrenz.fileserver.entity.FileInfo;
 import com.ykrenz.fileserver.entity.FilePartInfo;
 import com.ykrenz.fileserver.ex.ApiException;
-import com.ykrenz.fileserver.mapper.FastFileMapper;
-import com.ykrenz.fileserver.mapper.FastFilePartMapper;
+import com.ykrenz.fileserver.mapper.FileInfoMapper;
+import com.ykrenz.fileserver.mapper.FilePartInfoMapper;
 import com.ykrenz.fileserver.model.ErrorCode;
-import com.ykrenz.fileserver.model.request.AbortPartRequest;
-import com.ykrenz.fileserver.model.request.CheckRequest;
+import com.ykrenz.fileserver.model.request.CancelPartRequest;
 import com.ykrenz.fileserver.model.request.CompletePartRequest;
 import com.ykrenz.fileserver.model.request.InitPartRequest;
 import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
@@ -23,6 +22,7 @@ import com.ykrenz.fastdfs.model.InitMultipartUploadRequest;
 import com.ykrenz.fastdfs.model.UploadFileRequest;
 import com.ykrenz.fastdfs.model.UploadMultipartPartRequest;
 import com.ykrenz.fastdfs.model.fdfs.StorePath;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,15 +36,16 @@ import java.util.stream.Collectors;
  * @author ykren
  * @date 2022/3/1
  */
+@Slf4j
 public class FastDfsServerClient implements FileServerClient {
 
     private FastDfs fastDfs;
 
     @Autowired
-    private FastFileMapper fastFileMapper;
+    private FileInfoMapper fileInfoMapper;
 
     @Autowired
-    private FastFilePartMapper fastFilePartMapper;
+    private FilePartInfoMapper filePartInfoMapper;
 
     public FastDfsServerClient(FastDfs fastDfs) {
         this.fastDfs = fastDfs;
@@ -63,10 +64,11 @@ public class FastDfsServerClient implements FileServerClient {
         FileInfo fileInfo = new FileInfo();
         fileInfo.setBucketName(storePath.getGroup());
         fileInfo.setObjectName(storePath.getPath());
+        // 注意: 这里保存的是有符号crc32 和fastdfs返回的不一致
         fileInfo.setCrc32(request.getCrc32());
         fileInfo.setMd5(request.getMd5());
 
-        fastFileMapper.insert(fileInfo);
+        fileInfoMapper.insert(fileInfo);
         return fileInfo;
     }
 
@@ -77,23 +79,26 @@ public class FastDfsServerClient implements FileServerClient {
                 .build();
         if (crc32 != null && crc32 != 0) {
             com.ykrenz.fastdfs.model.fdfs.FileInfo fileInfo = fastDfs.queryFileInfo(infoRequest);
-            if (fileInfo.getCrc32() != crc32) {
+            log.debug("check crc32 client crc32={} fastdfs crc32 ={} convert crc32={}", crc32, fileInfo.getCrc32(), intToUnsignedLong(fileInfo.getCrc32()));
+            if (intToUnsignedLong(fileInfo.getCrc32()) != crc32) {
                 throw new ApiException(ErrorCode.FILE_CRC32_ERROR);
             }
         }
+    }
+
+    /**
+     * 无符号 int类型转 long
+     */
+    private static long intToUnsignedLong(int x) {
+        return x & 0xffffffffL;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public InitPartResult initMultipart(InitPartRequest request) {
         String uploadId = request.getUploadId();
-        FilePartInfo initPart = getInitPart(uploadId);
-        if (initPart != null) {
-            CheckRequest checkRequest = new CheckRequest();
-            checkRequest.setFileMd5(request.getFileMd5());
-            checkRequest.setUploadId(request.getUploadId());
-            checkRequest.setFileCrc32(request.getFileCrc32());
-            return check(checkRequest);
+        if (StringUtils.isNotBlank(uploadId)) {
+            return check(request);
         }
         InitMultipartUploadRequest initMultipartUploadRequest = InitMultipartUploadRequest.builder()
                 .fileSize(request.getFileSize())
@@ -109,8 +114,8 @@ public class FastDfsServerClient implements FileServerClient {
         filePartInfo.setFileSize(request.getFileSize());
 
         filePartInfo.setUploadId(request.getUploadId());
-        fastFilePartMapper.insert(filePartInfo);
-        return new InitPartResult(false);
+        filePartInfoMapper.insert(filePartInfo);
+        return new InitPartResult(filePartInfo.getId(), false);
     }
 
     @Override
@@ -138,7 +143,7 @@ public class FastDfsServerClient implements FileServerClient {
         filePartInfo.setPartSize(initPart.getPartSize());
         filePartInfo.setFileSize(file.getSize());
 
-        fastFilePartMapper.insert(filePartInfo);
+        filePartInfoMapper.insert(filePartInfo);
         return filePartInfo;
     }
 
@@ -150,44 +155,61 @@ public class FastDfsServerClient implements FileServerClient {
             throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND);
         }
 
-        // TODO 如果crc异常或者其他异常 导致文件regenerate 会有脏数据
-        CompleteMultipartRequest multipartRequest = CompleteMultipartRequest.builder()
-                .groupName(initPart.getBucketName())
-                .path(initPart.getObjectName())
-                // 6.0.2以下版本设置为false
-                .regenerate(true)
-                .build();
-        StorePath storePath = fastDfs.completeMultipartUpload(multipartRequest);
-        checkCrc32(request.getFileCrc32(), storePath);
+        StorePath storePath = new StorePath(initPart.getBucketName(), initPart.getObjectName());
+        try {
+            CompleteMultipartRequest multipartRequest = CompleteMultipartRequest.builder()
+                    .groupName(storePath.getGroup())
+                    .path(storePath.getPath())
+                    // 6.0.2以下版本设置为false
+                    .regenerate(true)
+                    .build();
+            storePath = fastDfs.completeMultipartUpload(multipartRequest);
 
-        FileInfo fileInfo = new FileInfo();
-        fileInfo.setBucketName(storePath.getGroup());
-        fileInfo.setObjectName(storePath.getPath());
-        fileInfo.setCrc32(request.getFileCrc32());
-        fileInfo.setMd5(request.getFileMd5());
-        fileInfo.setFileSize(initPart.getFileSize());
-        fileInfo.setFileName(initPart.getFileName());
+            checkCrc32(request.getFileCrc32(), storePath);
 
-        fastFileMapper.insert(fileInfo);
+            FileInfo fileInfo = new FileInfo();
+            fileInfo.setBucketName(storePath.getGroup());
+            fileInfo.setObjectName(storePath.getPath());
+            fileInfo.setCrc32(request.getFileCrc32());
+            fileInfo.setMd5(request.getFileMd5());
+            fileInfo.setFileSize(initPart.getFileSize());
+            fileInfo.setFileName(initPart.getFileName());
+            fileInfoMapper.insert(fileInfo);
 
-        //清空所有分片记录
-        List<String> parts = fastFilePartMapper.selectList(Wrappers.<FilePartInfo>lambdaQuery()
-                .eq(FilePartInfo::getUploadId, request.getUploadId())
-                .select(FilePartInfo::getId)).stream().map(FilePartInfo::getId).collect(Collectors.toList());
-        fastFilePartMapper.deleteBatchIds(parts);
-        return fileInfo;
+            //清空所有分片记录
+            List<String> parts = filePartInfoMapper.selectList(Wrappers.<FilePartInfo>lambdaQuery()
+                    .eq(FilePartInfo::getUploadId, request.getUploadId())
+                    .select(FilePartInfo::getId)).stream().map(FilePartInfo::getId).collect(Collectors.toList());
+            filePartInfoMapper.deleteBatchIds(parts);
+            filePartInfoMapper.deleteById(request.getUploadId());
+            return fileInfo;
+        } catch (Exception e) {
+            CancelPartRequest cancelPartRequest = new CancelPartRequest();
+            cancelPartRequest.setUploadId(request.getUploadId());
+            cancelMultipart(cancelPartRequest);
+            if (e instanceof ApiException) {
+                throw e;
+            }
+            throw new ApiException(ErrorCode.UPLOAD_ERROR);
+        }
     }
 
     private FilePartInfo getInitPart(String uploadId) {
-        //TODO 加入缓存 upload重复校验
-        return fastFilePartMapper.selectOne(Wrappers.<FilePartInfo>lambdaQuery()
-                .eq(FilePartInfo::getUploadId, uploadId)
+        //TODO 加入缓存
+        return filePartInfoMapper.selectOne(Wrappers.<FilePartInfo>lambdaQuery()
+                .eq(FilePartInfo::getId, uploadId)
                 .eq(FilePartInfo::getPartNumber, 0)
                 .eq(FilePartInfo::getStatus, 1)
         );
     }
 
-    private InitPartResult check(CheckRequest request) {
+    private InitPartResult check(InitPartRequest request) {
+        String uploadId = request.getUploadId();
+        FilePartInfo initPart = getInitPart(uploadId);
+        if (initPart == null) {
+            throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND);
+        }
+
         Long crc32 = request.getFileCrc32();
         String md5 = request.getFileMd5();
         if (StringUtils.isNotBlank(md5)) {
@@ -195,15 +217,15 @@ public class FastDfsServerClient implements FileServerClient {
             if (crc32 != null) {
                 wrapper.eq(FileInfo::getCrc32, crc32);
             }
-            FileInfo fileInfo = fastFileMapper.selectOne(wrapper
+            FileInfo fileInfo = fileInfoMapper.selectOne(wrapper
                     .eq(FileInfo::getMd5, md5).last(" limit 1"));
             if (fileInfo != null) {
-                return new InitPartResult(true);
+                return new InitPartResult(request.getUploadId(), true);
             }
         }
 
         if (StringUtils.isNotBlank(request.getUploadId())) {
-            List<FilePartInfo> partList = fastFilePartMapper.selectList(Wrappers.<FilePartInfo>lambdaQuery()
+            List<FilePartInfo> partList = filePartInfoMapper.selectList(Wrappers.<FilePartInfo>lambdaQuery()
                     .eq(FilePartInfo::getUploadId, request.getUploadId())
                     .ne(FilePartInfo::getPartNumber, 0)
                     .select(FilePartInfo::getId, FilePartInfo::getPartNumber)
@@ -213,26 +235,37 @@ public class FastDfsServerClient implements FileServerClient {
                     .map(FilePartInfo::getPartNumber)
                     .distinct()
                     .collect(Collectors.toList());
-            return new InitPartResult(false, list);
+            return new InitPartResult(request.getUploadId(), list);
         }
         return new InitPartResult();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void abortMultipart(AbortPartRequest request) {
+    public void cancelMultipart(CancelPartRequest request) {
         FilePartInfo initPart = getInitPart(request.getUploadId());
         if (initPart == null) {
             throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND);
         }
-        initPart.setStatus(0);
-        fastFilePartMapper.updateById(initPart);
+        FileInfoRequest infoRequest = FileInfoRequest.builder()
+                .groupName(initPart.getBucketName())
+                .path(initPart.getObjectName())
+                .build();
+        fastDfs.deleteFile(infoRequest);
+        //清空所有分片记录
+        List<String> parts = filePartInfoMapper.selectList(Wrappers.<FilePartInfo>lambdaQuery()
+                .eq(FilePartInfo::getUploadId, request.getUploadId())
+                .select(FilePartInfo::getId)).stream().map(FilePartInfo::getId).collect(Collectors.toList());
+        if (!parts.isEmpty()) {
+            filePartInfoMapper.deleteBatchIds(parts);
+        }
+        filePartInfoMapper.deleteById(request.getUploadId());
     }
 
     @Override
     public void deleteAllFiles() {
-        List<FilePartInfo> filePartInfos = fastFilePartMapper.selectList(Wrappers.emptyWrapper());
-        List<FileInfo> fileInfos = fastFileMapper.selectList(Wrappers.emptyWrapper());
+        List<FilePartInfo> filePartInfos = filePartInfoMapper.selectList(Wrappers.emptyWrapper());
+        List<FileInfo> fileInfos = fileInfoMapper.selectList(Wrappers.emptyWrapper());
         for (FilePartInfo file : filePartInfos) {
             FileInfoRequest request = FileInfoRequest.builder()
                     .groupName(file.getBucketName())
@@ -242,7 +275,7 @@ public class FastDfsServerClient implements FileServerClient {
             if (fastDfs.queryFileInfo(request) != null) {
                 throw new ApiException(ErrorCode.SERVER_ERROR, "删除失败");
             }
-            fastFilePartMapper.deleteById(file.getId());
+            filePartInfoMapper.deleteById(file.getId());
         }
 
         for (FileInfo file : fileInfos) {
@@ -254,8 +287,7 @@ public class FastDfsServerClient implements FileServerClient {
             if (fastDfs.queryFileInfo(request) != null) {
                 throw new ApiException(ErrorCode.SERVER_ERROR, "删除失败");
             }
-            fastFileMapper.deleteById(file.getId());
+            fileInfoMapper.deleteById(file.getId());
         }
     }
-
 }
