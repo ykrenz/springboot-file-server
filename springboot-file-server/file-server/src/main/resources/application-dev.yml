@@ -35,7 +35,7 @@ file:
   #存储类型 对应的存储服务器配置要开启才可以正常使用
   storage: fastdfs
   #普通上传文件最大值
-  max-upload-size: 10MB
+  max-upload-size: 5MB
   #分片文件最小值 小于5M minio会上传错误
   multipart-min-size: 10MB
   #分片文件最大值
