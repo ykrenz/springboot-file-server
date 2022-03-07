@@ -143,6 +143,8 @@
             }
         },
         autoUpload: false,
+        multiple: true,
+        maxConnections: 3,
         debug: true,
         deleteFile: {
             enabled: false, // defaults to false
@@ -176,7 +178,7 @@
         retry: {
             enableAuto: true,
             autoAttemptDelay: 1,
-            maxAutoAttempts: 3
+            maxAutoAttempts: 1
         },
         callbacks: {
             onUpload: function (id, name) {
@@ -249,6 +251,9 @@
                     let md5 = spark.end();
                     let crc32 = crc.compute();
                     computeMd5Success(uploader, id, md5, crc32);
+                    if(!uploader.getFile(id).init){
+                        reject(e);
+                    }
                     resolve(md5);
                 }
             };
@@ -292,7 +297,7 @@
                     uploader.setUuid (id, response.data.uploadId);
                     uploader.setParams({"fileMd5": md5, "fileCrc32": crc32}, id);
                 }
-            }
+            },
         });
     }
 </script>

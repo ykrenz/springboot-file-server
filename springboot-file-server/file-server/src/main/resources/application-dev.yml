@@ -25,7 +25,7 @@ spring:
         max-wait: 2500
         min-idle: 0
   datasource:
-    url: jdbc:mysql://192.168.24.130:12345/filedb?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&autoReconnect=true&failOverReadOnly=false&useSSL=true
+    url: jdbc:mysql://192.168.24.130:12345/filedb?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&autoReconnect=true&failOverReadOnly=false&useSSL=false
     username: root
     password: 123456
     type: com.zaxxer.hikari.HikariDataSource
@@ -37,7 +37,7 @@ file:
   #普通上传文件最大值
   max-upload-size: 5MB
   #分片文件最小值 小于5M minio会上传错误
-  multipart-min-size: 10MB
+  multipart-min-size: 5MB
   #分片文件最大值
   multipart-max-size: 100MB
 #fastdfs 配置
