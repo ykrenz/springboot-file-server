@@ -1,5 +1,6 @@
 package com.ykrenz.fileserver.service;
 
+import com.ykrenz.fileserver.config.StorageProperties;
 import com.ykrenz.fileserver.entity.FileInfo;
 import com.ykrenz.fileserver.ex.ApiException;
 import com.ykrenz.fileserver.model.ErrorCode;
@@ -14,7 +15,9 @@ import com.ykrenz.fileserver.model.result.SimpleUploadResult;
 import com.ykrenz.fileserver.service.impl.FileServerClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.unit.DataSize;
 
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 
 /**
@@ -24,19 +27,27 @@ import java.io.IOException;
 @Service
 public class FileServiceImpl implements FileService {
 
-    /**
-     * 5M
-     */
-    long simpleMaxSize = 1024L * 1024L * 5L;
+    private StorageProperties storageProperties;
 
-    @Autowired
     private FileServerClient fileServerClient;
+
+    private final long maxUploadSize;
+    private final long multipartMinSize;
+    private final long multipartMaxSize;
+
+    public FileServiceImpl(StorageProperties storageProperties, FileServerClient fileServerClient) {
+        this.storageProperties = storageProperties;
+        this.fileServerClient = fileServerClient;
+        this.maxUploadSize = storageProperties.getMaxUploadSize().toBytes();
+        this.multipartMinSize = storageProperties.getMultipartMinSize().toBytes();
+        this.multipartMaxSize = storageProperties.getMultipartMaxSize().toBytes();
+    }
 
     @Override
     public SimpleUploadResult upload(SimpleUploadRequest request) {
         try {
             // 限制文件大小
-            if (request.getFile().getSize() > simpleMaxSize) {
+            if (request.getFile().getSize() > maxUploadSize) {
                 throw new ApiException(ErrorCode.FILE_TO_LARGE);
             }
             FileInfo fileInfo = fileServerClient.upload(request);
@@ -48,6 +59,11 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public InitPartResult initMultipart(InitPartRequest request) {
+        Long partSize = request.getPartSize();
+        if (partSize < multipartMinSize || partSize > multipartMaxSize) {
+            String msg = String.format("分片大小必须在%dM~%dM之间", multipartMinSize / 1024 / 1024, multipartMaxSize / 1024 / 1024);
+            throw new ApiException(ErrorCode.FILE_PART_SIZE_ERROR, msg);
+        }
         return fileServerClient.initMultipart(request);
     }
 

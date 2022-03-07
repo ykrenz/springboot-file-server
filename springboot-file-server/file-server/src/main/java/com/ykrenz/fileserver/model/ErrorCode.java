@@ -38,16 +38,18 @@ public enum ErrorCode {
      * uploadId不存在
      */
     UPLOAD_ID_NOT_FOUND(10001, "uploadId不存在或已经过期"),
-
-    /**
-     * 文件过大
-     */
-    FILE_TO_LARGE(20001, "文件大于5M,请使用分片上传"),
-
     /**
      * 文件CRC32校验失败
      */
-    FILE_CRC32_ERROR(20002, "文件CRC32校验失败,请重新上传"),
+    FILE_CRC32_ERROR(10002, "文件CRC32校验失败,请重新上传"),
+    /**
+     * 文件过大
+     */
+    FILE_TO_LARGE(20001, "文件过大,请使用分片上传"),
+    /**
+     * 文件分片大小错误
+     */
+    FILE_PART_SIZE_ERROR(20002, "文件分片大小错误"),
     ;
 
     /**

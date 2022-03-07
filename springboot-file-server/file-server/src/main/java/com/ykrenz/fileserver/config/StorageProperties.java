@@ -19,7 +19,6 @@ public class StorageProperties {
      */
     private StorageType storage = StorageType.fastdfs;
 
-    private String bucketName;
     /**
      * 普通上传支持最大文件Size
      */

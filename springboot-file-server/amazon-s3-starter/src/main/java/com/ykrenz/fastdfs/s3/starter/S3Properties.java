@@ -34,5 +34,8 @@ public class S3Properties {
      * your region
      */
     private String region;
-
+    /**
+     * your bucketName
+     */
+    private String bucketName;
 }
