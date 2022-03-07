@@ -192,19 +192,21 @@
                 }
             },
             onCancel: function (id) {
-                $.ajax({
-                    type: "POST",
-                    url: "/cancelMultipart",
-                    data: {
-                        uploadId: this.getUuid(id),
-                    },
-                    cache: false,
-                    async: false, // 与js同步
-                    dataType: "json",
-                    success: function (response) {
-                       console.info("cancel upload",response);
-                    }
-                });
+                 if (this.getFile(id).init) {
+                     $.ajax({
+                            type: "POST",
+                            url: "/cancelMultipart",
+                            data: {
+                                uploadId: this.getUuid(id),
+                            },
+                            cache: false,
+                            async: false, // 与js同步
+                            dataType: "json",
+                            success: function (response) {
+                               console.info("cancel upload",response);
+                            }
+                        });
+                 };
             },
             onComplete: function (id,name,response,xhr) {
                 console.info("onComplete", id,name,response,xhr);
