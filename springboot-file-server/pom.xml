@@ -3,8 +3,6 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <modules>
-        <module>fastdfs-client</module>
-        <module>fastdfs-client-starter</module>
         <module>amazon-s3-starter</module>
         <module>file-server</module>
     </modules>
@@ -18,15 +16,14 @@
     <artifactId>springboot-file-server</artifactId>
     <version>1.0</version>
     <name>springboot-file-server</name>
-    <description>file server project for Spring Boot</description>
+    <description>Spring Boot For File Server</description>
     <packaging>pom</packaging>
     <properties>
         <java.version>1.8</java.version>
         <fastjson.version>1.2.58</fastjson.version>
         <commons-io.version>2.4</commons-io.version>
         <hutool.version>5.3.7</hutool.version>
-        <fastdfs-client.version>1.27.2</fastdfs-client.version>
-        <fastdfs-client-java.version>1.29-SNAPSHOT</fastdfs-client-java.version>
+        <fastdfs-client-spring-boot-starter.version>1.0.0-SNAPSHOT</fastdfs-client-spring-boot-starter.version>
         <mysql.version>5.1.46</mysql.version>
         <mybatis-plus-boot-starter.version>3.4.2</mybatis-plus-boot-starter.version>
         <mybatis-plus-generator.version>3.4.1</mybatis-plus-generator.version>
@@ -58,6 +55,11 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>io.github.ykrenz</groupId>
+                <artifactId>fastdfs-client-spring-boot-starter</artifactId>
+                <version>${fastdfs-client-spring-boot-starter.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-java-sdk-bom</artifactId>
                 <version>1.12.15</version>
@@ -67,11 +69,6 @@
             <dependency>
                 <groupId>com.github.ren</groupId>
                 <artifactId>amazon-s3-starter</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.ren</groupId>
-                <artifactId>fastdfs-client-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -88,16 +85,6 @@
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commons-io.version}</version>
-            </dependency>
-            <!--  FastDFS -->
-            <!--        https://github.com/happyfish100/fastdfs-client-java -->
-            <!--        git clone https://github.com/happyfish100/fastdfs-client-java.git   -->
-            <!--        cd fastdfs-client-java  -->
-            <!--        mvn clean install   -->
-            <dependency>
-                <groupId>org.csource</groupId>
-                <artifactId>fastdfs-client-java</artifactId>
-                <version>${fastdfs-client-java.version}</version>
             </dependency>
             <dependency>
                 <groupId>mysql</groupId>
