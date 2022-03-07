@@ -24,7 +24,7 @@
         <commons-io.version>2.4</commons-io.version>
         <hutool.version>5.3.7</hutool.version>
         <fastdfs-client-spring-boot-starter.version>1.0.0-SNAPSHOT</fastdfs-client-spring-boot-starter.version>
-        <mysql.version>5.1.46</mysql.version>
+        <mysql.version>8.0.16</mysql.version>
         <mybatis-plus-boot-starter.version>3.4.2</mybatis-plus-boot-starter.version>
         <mybatis-plus-generator.version>3.4.1</mybatis-plus-generator.version>
         <velocity-engine-core.version>2.3</velocity-engine-core.version>
