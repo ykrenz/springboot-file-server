@@ -208,6 +208,7 @@
             },
             onComplete: function (id,name,response,xhr) {
                 console.info("onComplete", id,name,response,xhr);
+                this.removeFileRef (id);
             },
             onDelete: function (id) {
                 // ...
