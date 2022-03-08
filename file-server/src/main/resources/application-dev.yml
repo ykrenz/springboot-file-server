@@ -1,0 +1,47 @@
+server:
+  port: 3000
+  tomcat:
+    uri-encoding: UTF-8
+    accept-count: 1000
+    max-connections: 10000
+    threads:
+      max: 500
+      min-spare: 10
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 1024MB
+      max-request-size: 2048MB
+  redis:
+    database: 0
+    host: localhost
+    port: 6379
+    timeout: 5000
+    jedis:
+      pool:
+        max-active: 3000
+        max-idle: 100
+        max-wait: 2500
+        min-idle: 0
+  datasource:
+    url: jdbc:mysql://192.168.24.130:12345/filedb?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&autoReconnect=true&failOverReadOnly=false&useSSL=false
+    username: root
+    password: 123456
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.jdbc.Driver
+
+file:
+  #存储类型 对应的存储服务器配置要开启才可以正常使用
+  storage: fastdfs
+  #普通上传文件最大值
+  max-upload-size: 5MB
+  #分片文件最小值 小于5M minio会上传错误
+  multipart-min-size: 5MB
+  #分片文件最大值
+  multipart-max-size: 100MB
+#fastdfs 配置
+fastdfs:
+  tracker-servers: "192.168.24.130:22122"
+s3:
+  enabled: false
