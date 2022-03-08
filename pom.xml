@@ -28,7 +28,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <aws-java-sdk-bom.version>1.12.15</aws-java-sdk-bom.version>
         <fastdfs-client-spring-boot-starter.version>1.0.0-SNAPSHOT</fastdfs-client-spring-boot-starter.version>
-        <mysql.version>5.1.46</mysql.version>
+        <mysql.version>8.0.16</mysql.version>
         <mybatis-plus-boot-starter.version>3.4.2</mybatis-plus-boot-starter.version>
         <knife4j-spring-boot-starter.version>2.0.9</knife4j-spring-boot-starter.version>
     </properties>
