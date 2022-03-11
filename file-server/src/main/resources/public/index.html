@@ -192,25 +192,26 @@
                 }
             },
             onCancel: function (id) {
-                 if (this.getFile(id).init) {
-                     $.ajax({
-                            type: "POST",
-                            url: "/cancelMultipart",
-                            data: {
-                                uploadId: this.getUuid(id),
-                            },
-                            cache: false,
-                            async: false, // 与js同步
-                            dataType: "json",
-                            success: function (response) {
-                               console.info("cancel upload",response);
-                            }
-                        });
-                 };
+                if (this.getFile(id).init) {
+                    $.ajax({
+                        type: "POST",
+                        url: "/cancelMultipart",
+                        data: {
+                            uploadId: this.getUuid(id),
+                        },
+                        cache: false,
+                        async: false, // 与js同步
+                        dataType: "json",
+                        success: function (response) {
+                            console.info("cancel upload", response);
+                        }
+                    });
+                }
+                ;
             },
-            onComplete: function (id,name,response,xhr) {
-                console.info("onComplete", id,name,response,xhr);
-                this.removeFileRef (id);
+            onComplete: function (id, name, response, xhr) {
+                console.info("onComplete", id, name, response, xhr);
+                this.removeFileRef(id);
             },
             onDelete: function (id) {
                 // ...
@@ -254,7 +255,7 @@
                     let md5 = spark.end();
                     let crc32 = crc.compute();
                     computeMd5Success(uploader, id, md5, crc32);
-                    if(!uploader.getFile(id).init){
+                    if (!uploader.getFile(id).init) {
                         reject(e);
                     }
                     resolve(md5);
@@ -297,7 +298,7 @@
             success: function (response) {
                 if (response.success) {
                     uploader.getFile(id).init = true;
-                    uploader.setUuid (id, response.data.uploadId);
+                    uploader.setUuid(id, response.data.uploadId);
                     uploader.setParams({"fileMd5": md5, "fileCrc32": crc32}, id);
                 }
             },
