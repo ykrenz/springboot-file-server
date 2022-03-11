@@ -4,19 +4,17 @@ import com.ykrenz.fileserver.model.ResultUtil;
 import com.ykrenz.fileserver.model.request.CancelPartRequest;
 import com.ykrenz.fileserver.model.request.CompletePartRequest;
 import com.ykrenz.fileserver.model.request.FileInfoRequest;
-import com.ykrenz.fileserver.model.request.InitPartRequest;
+import com.ykrenz.fileserver.model.request.InitUploadMultipartRequest;
 import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
-import com.ykrenz.fileserver.model.request.UploadPartRequest;
+import com.ykrenz.fileserver.model.request.UploadMultipartRequest;
 import com.ykrenz.fileserver.model.result.FileInfoResult;
-import com.ykrenz.fileserver.model.result.InitPartResult;
-import com.ykrenz.fileserver.model.result.SimpleUploadResult;
+import com.ykrenz.fileserver.model.result.InitMultipartResult;
 import com.ykrenz.fileserver.service.FileService;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,29 +30,29 @@ public class FileController {
     @Autowired
     private FileService fileService;
 
-    @ApiOperation("简单上传 只支持小文件上传")
+    @ApiOperation(value = "简单上传", notes = "只支持小文件上传")
     @ApiOperationSupport(order = 1)
     @PostMapping("/upload")
     public ResultUtil<FileInfoResult> upload(@Validated SimpleUploadRequest request) {
         return ResultUtil.success(fileService.upload(request));
     }
 
-    @ApiOperation("初始化分片上传 秒传和断点续传")
+    @ApiOperation("初始化分片上传+秒传+断点续传")
     @ApiOperationSupport(order = 2)
     @PostMapping("/initMultipart")
-    public ResultUtil<InitPartResult> initMultipart(@Validated InitPartRequest request) {
+    public ResultUtil<InitMultipartResult> initMultipart(@Validated InitUploadMultipartRequest request) {
         return ResultUtil.success(fileService.initMultipart(request));
     }
 
     @ApiOperation("上传文件分片")
     @ApiOperationSupport(order = 3)
     @PostMapping("/uploadMultipart")
-    public ResultUtil<Object> uploadMultipart(@Validated UploadPartRequest uploadPartRequest) {
-        fileService.uploadMultipart(uploadPartRequest);
+    public ResultUtil<Object> uploadMultipart(@Validated UploadMultipartRequest uploadMultipartRequest) {
+        fileService.uploadMultipart(uploadMultipartRequest);
         return ResultUtil.success();
     }
 
-    @ApiOperation("合并文件分片")
+    @ApiOperation("完成分片上传")
     @ApiOperationSupport(order = 4)
     @PostMapping("/completeMultipart")
     public ResultUtil<FileInfoResult> completeMultipart(@Validated CompletePartRequest request) {

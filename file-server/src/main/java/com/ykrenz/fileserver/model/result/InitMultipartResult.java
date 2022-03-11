@@ -13,9 +13,9 @@ import java.util.List;
  * @Author ren
  * @Since 1.0
  */
-@ApiModel("初始化分片上传结果")
+@ApiModel(value = "InitMultipartResult", description = "初始化分片上传结果")
 @Data
-public class InitPartResult implements Serializable {
+public class InitMultipartResult implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty("上传文件唯一标识")
@@ -27,15 +27,15 @@ public class InitPartResult implements Serializable {
     @ApiModelProperty("已经上传的分片数据 断点续传客户端可以跳过这些分片")
     private List<Integer> parts = new ArrayList<>(0);
 
-    public InitPartResult() {
+    public InitMultipartResult() {
     }
 
-    public InitPartResult(String uploadId, boolean exist) {
+    public InitMultipartResult(String uploadId, boolean exist) {
         this.uploadId = uploadId;
         this.exist = exist;
     }
 
-    public InitPartResult(String uploadId, List<Integer> parts) {
+    public InitMultipartResult(String uploadId, List<Integer> parts) {
         this.uploadId = uploadId;
         this.parts = parts;
     }

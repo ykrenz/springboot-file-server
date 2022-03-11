@@ -12,9 +12,13 @@ import javax.validation.constraints.NotBlank;
  * @Since 1.0
  */
 @Data
-@ApiModel("合并分片参数")
+@ApiModel(value = "CompletePartRequest", description = "完成分片上传")
 public class CompletePartRequest {
 
+    /**
+     * 上传唯一标识
+     */
+    @ApiModelProperty(name = "uploadId", value = "上传唯一标识")
     @NotBlank(message = "不能为空")
     private String uploadId;
     /**

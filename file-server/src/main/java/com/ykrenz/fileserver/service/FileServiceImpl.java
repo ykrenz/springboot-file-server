@@ -7,12 +7,11 @@ import com.ykrenz.fileserver.model.ErrorCode;
 import com.ykrenz.fileserver.model.request.CancelPartRequest;
 import com.ykrenz.fileserver.model.request.CompletePartRequest;
 import com.ykrenz.fileserver.model.request.FileInfoRequest;
-import com.ykrenz.fileserver.model.request.InitPartRequest;
+import com.ykrenz.fileserver.model.request.InitUploadMultipartRequest;
 import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
-import com.ykrenz.fileserver.model.request.UploadPartRequest;
+import com.ykrenz.fileserver.model.request.UploadMultipartRequest;
 import com.ykrenz.fileserver.model.result.FileInfoResult;
-import com.ykrenz.fileserver.model.result.InitPartResult;
-import com.ykrenz.fileserver.model.result.SimpleUploadResult;
+import com.ykrenz.fileserver.model.result.InitMultipartResult;
 import com.ykrenz.fileserver.service.impl.FileServerClient;
 import org.springframework.stereotype.Service;
 
@@ -60,7 +59,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public InitPartResult initMultipart(InitPartRequest request) {
+    public InitMultipartResult initMultipart(InitUploadMultipartRequest request) {
         Long partSize = request.getPartSize();
         if (partSize < multipartMinSize || partSize > multipartMaxSize) {
             String msg = String.format("分片大小必须在%dM~%dM之间", multipartMinSize / 1024 / 1024, multipartMaxSize / 1024 / 1024);
@@ -70,7 +69,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public void uploadMultipart(UploadPartRequest request) {
+    public void uploadMultipart(UploadMultipartRequest request) {
         try {
             // 前端index=0
             request.setPartNumber(request.getPartNumber() + 1);

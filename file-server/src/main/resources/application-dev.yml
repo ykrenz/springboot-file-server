@@ -31,6 +31,10 @@ spring:
     type: com.zaxxer.hikari.HikariDataSource
     driver-class-name: com.mysql.jdbc.Driver
 
+# knife4j增强
+knife4j:
+  enable: true
+
 file:
   #存储类型 对应的存储服务器配置要开启才可以正常使用
   storage: fastdfs
@@ -51,9 +55,9 @@ fastdfs:
     # web访问地址
     web-server-url: "http://192.168.24.130:8888"
     # web访问地址是否包含group
-    web-server-url-has-group: false
+    web-server-url-has-group: true
     # 开启防盗链
-    http-anti-steal-token: false
+    http-anti-steal-token: true
     # 防盗链密钥
     secret-key: "FastDFS1234567890"
   connection:
@@ -73,3 +77,4 @@ fastdfs:
       test-on-borrow: true
 s3:
   enabled: false
+

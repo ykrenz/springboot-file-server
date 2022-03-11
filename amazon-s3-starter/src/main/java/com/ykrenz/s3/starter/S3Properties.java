@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @Author ren
  * @Since 1.0
  */
-@ConfigurationProperties(Constants.S3Prefix)
+@ConfigurationProperties(Constants.PREFIX)
 @Setter
 @Getter
 public class S3Properties {

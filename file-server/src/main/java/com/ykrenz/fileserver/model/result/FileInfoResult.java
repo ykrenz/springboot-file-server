@@ -3,7 +3,6 @@ package com.ykrenz.fileserver.model.result;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 
@@ -27,15 +26,15 @@ public class FileInfoResult implements Serializable {
     @ApiModelProperty(value = "文件大小")
     private Long fileSize;
 
-    @ApiModelProperty(value = "bucketName", notes = "存储桶 fastdfs对应group")
+    @ApiModelProperty(value = "存储桶 fastdfs对应group")
     private String bucketName;
 
-    @ApiModelProperty(value = "objectName", notes = "文件路径 fastdfs对应path")
+    @ApiModelProperty(value = "文件路径 fastdfs对应path")
     private String objectName;
 
-    @ApiModelProperty(value = "webPath", notes = "文件预览路径")
+    @ApiModelProperty(value = "文件预览路径", notes = "文件预览路径")
     private String webPath;
 
-    @ApiModelProperty(value = "downloadPath", notes = "文件下载路径")
+    @ApiModelProperty(value = "文件下载路径", notes = "文件下载路径")
     private String downloadPath;
 }

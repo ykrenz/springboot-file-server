@@ -1,2 +1,5 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
   com.ykrenz.s3.starter.AmazonS3AutoConfiguration
+
+org.springframework.context.ApplicationListener=\
+com.ykrenz.s3.starter.S3ApplicationListener

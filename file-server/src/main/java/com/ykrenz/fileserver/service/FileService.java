@@ -3,12 +3,11 @@ package com.ykrenz.fileserver.service;
 import com.ykrenz.fileserver.model.request.CancelPartRequest;
 import com.ykrenz.fileserver.model.request.CompletePartRequest;
 import com.ykrenz.fileserver.model.request.FileInfoRequest;
-import com.ykrenz.fileserver.model.request.InitPartRequest;
+import com.ykrenz.fileserver.model.request.InitUploadMultipartRequest;
 import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
-import com.ykrenz.fileserver.model.request.UploadPartRequest;
+import com.ykrenz.fileserver.model.request.UploadMultipartRequest;
 import com.ykrenz.fileserver.model.result.FileInfoResult;
-import com.ykrenz.fileserver.model.result.InitPartResult;
-import com.ykrenz.fileserver.model.result.SimpleUploadResult;
+import com.ykrenz.fileserver.model.result.InitMultipartResult;
 
 import java.io.Serializable;
 
@@ -33,15 +32,15 @@ public interface FileService extends Serializable {
      * @param request
      * @return
      */
-    InitPartResult initMultipart(InitPartRequest request);
+    InitMultipartResult initMultipart(InitUploadMultipartRequest request);
 
     /**
      * 上传文件分片
      *
-     * @param uploadPartRequest
+     * @param uploadMultipartRequest
      * @return
      */
-    void uploadMultipart(UploadPartRequest uploadPartRequest);
+    void uploadMultipart(UploadMultipartRequest uploadMultipartRequest);
 
     /**
      * 合并文件分片

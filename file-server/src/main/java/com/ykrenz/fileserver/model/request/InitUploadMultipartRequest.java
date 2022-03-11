@@ -13,8 +13,8 @@ import javax.validation.constraints.NotNull;
  * @Since 1.0
  */
 @Data
-@ApiModel("初始化分片上传参数")
-public class InitPartRequest {
+@ApiModel(value = "InitUploadMultipartRequest", description = "初始化分片上传")
+public class InitUploadMultipartRequest {
 
     @ApiModelProperty(name = "md5", value = "文件md5", notes = "客户端秒传")
     private String fileMd5;
@@ -30,10 +30,10 @@ public class InitPartRequest {
     private String fileName;
 
     @ApiModelProperty(name = "fileSize", value = "文件大小")
-    @NotNull(message = "不能为空")
+    @NotNull(message = "文件大小不能为空")
     private Long fileSize;
 
     @ApiModelProperty(name = "partSize", value = "分片大小")
-    @NotNull(message = "不能为空")
+    @NotNull(message = "分片大小不能为空")
     private Long partSize;
 }
