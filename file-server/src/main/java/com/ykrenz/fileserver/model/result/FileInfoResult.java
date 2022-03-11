@@ -5,10 +5,12 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.io.Serializable;
+
 @Data
-@EqualsAndHashCode(callSuper = false)
 @ApiModel(value = "FileInfoResult", description = "文件信息")
-public class FileInfoResult {
+public class FileInfoResult implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     @ApiModelProperty(value = "主键")
     private String id;
