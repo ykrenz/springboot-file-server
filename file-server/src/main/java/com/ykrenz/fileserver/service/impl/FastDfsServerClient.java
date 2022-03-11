@@ -57,11 +57,8 @@ public class FastDfsServerClient implements FileServerClient {
     public FileInfo upload(SimpleUploadRequest request) throws IOException {
         MultipartFile file = request.getFile();
         String originalFilename = file.getOriginalFilename();
-        UploadFileRequest uploadFileRequest = UploadFileRequest.builder()
-                .stream(file.getInputStream(), file.getSize(),
-                        FilenameUtils.getExtension(originalFilename))
-                .build();
-        StorePath storePath = fastDfs.uploadFile(uploadFileRequest);
+        String extension = FilenameUtils.getExtension(originalFilename);
+        StorePath storePath = fastDfs.uploadFile(file.getInputStream(), file.getSize(), extension);
         checkCrc32(request.getCrc32(), storePath);
         FileInfo fileInfo = new FileInfo();
         fileInfo.setBucketName(storePath.getGroup());
@@ -92,8 +89,8 @@ public class FastDfsServerClient implements FileServerClient {
         if (StringUtils.isNotBlank(uploadId)) {
             return check(request);
         }
-        StorePath storePath = fastDfs.initMultipartUpload(request.getFileSize(),
-                FilenameUtils.getExtension(request.getFileName()));
+        String extension = FilenameUtils.getExtension(request.getFileName());
+        StorePath storePath = fastDfs.initMultipartUpload(request.getFileSize(), extension);
         FilePartInfo filePartInfo = new FilePartInfo();
         filePartInfo.setFileName(request.getFileName());
         filePartInfo.setBucketName(storePath.getGroup());
