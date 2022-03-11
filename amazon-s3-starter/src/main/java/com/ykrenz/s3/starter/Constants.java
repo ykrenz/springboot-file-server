@@ -7,6 +7,6 @@ package com.ykrenz.s3.starter;
  */
 public final class Constants {
 
-    public static final String S3Prefix = "s3";
+    public static final String PREFIX = "s3";
 
 }

@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -14,7 +13,6 @@ import java.time.LocalDateTime;
  * @date 2022/3/1
  */
 @Data
-@EqualsAndHashCode(callSuper = false)
 public abstract class BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

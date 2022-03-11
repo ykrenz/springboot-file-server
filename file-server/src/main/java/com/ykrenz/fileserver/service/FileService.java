@@ -2,12 +2,12 @@ package com.ykrenz.fileserver.service;
 
 import com.ykrenz.fileserver.model.request.CancelPartRequest;
 import com.ykrenz.fileserver.model.request.CompletePartRequest;
-import com.ykrenz.fileserver.model.request.InitPartRequest;
+import com.ykrenz.fileserver.model.request.FileInfoRequest;
+import com.ykrenz.fileserver.model.request.InitUploadMultipartRequest;
 import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
-import com.ykrenz.fileserver.model.request.UploadPartRequest;
-import com.ykrenz.fileserver.model.result.InitPartResult;
-import com.ykrenz.fileserver.model.result.CompletePartResult;
-import com.ykrenz.fileserver.model.result.SimpleUploadResult;
+import com.ykrenz.fileserver.model.request.UploadMultipartRequest;
+import com.ykrenz.fileserver.model.result.FileInfoResult;
+import com.ykrenz.fileserver.model.result.InitMultipartResult;
 
 import java.io.Serializable;
 
@@ -24,7 +24,7 @@ public interface FileService extends Serializable {
      * @param request
      * @return
      */
-    SimpleUploadResult upload(SimpleUploadRequest request);
+    FileInfoResult upload(SimpleUploadRequest request);
 
     /**
      * 初始化分片上传任务
@@ -32,15 +32,15 @@ public interface FileService extends Serializable {
      * @param request
      * @return
      */
-    InitPartResult initMultipart(InitPartRequest request);
+    InitMultipartResult initMultipart(InitUploadMultipartRequest request);
 
     /**
      * 上传文件分片
      *
-     * @param uploadPartRequest
+     * @param uploadMultipartRequest
      * @return
      */
-    void uploadMultipart(UploadPartRequest uploadPartRequest);
+    void uploadMultipart(UploadMultipartRequest uploadMultipartRequest);
 
     /**
      * 合并文件分片
@@ -48,7 +48,7 @@ public interface FileService extends Serializable {
      * @param request
      * @return
      */
-    CompletePartResult completeMultipart(CompletePartRequest request);
+    FileInfoResult completeMultipart(CompletePartRequest request);
 
     /**
      * 取消分片上传
@@ -57,6 +57,14 @@ public interface FileService extends Serializable {
      * @return
      */
     void cancelMultipart(CancelPartRequest request);
+
+    /**
+     * 查询文件信息
+     *
+     * @param id
+     * @return
+     */
+    FileInfoResult info(FileInfoRequest id);
 
     /**
      * 清空所有文件 测试使用

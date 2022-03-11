@@ -12,7 +12,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value = "FilePartInfo对象", description = "分片文件")
+@ApiModel(value = "FilePartInfo", description = "分片文件")
 public class FilePartInfo extends BaseEntity {
 
     @ApiModelProperty(value = "分片上传唯一标识")

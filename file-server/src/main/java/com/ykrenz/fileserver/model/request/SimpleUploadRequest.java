@@ -1,5 +1,6 @@
 package com.ykrenz.fileserver.model.request;
 
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,8 +13,13 @@ import javax.validation.constraints.NotNull;
  * @Since 1.0
  */
 @Data
+@ApiModel(value = "SimpleUploadRequest", description = "上传简单文件")
 public class SimpleUploadRequest {
 
+    /**
+     * 文件
+     */
+    @ApiModelProperty(name = "file", value = "文件")
     @NotNull(message = "文件不能为空")
     private MultipartFile file;
 
@@ -28,4 +34,10 @@ public class SimpleUploadRequest {
      */
     @ApiModelProperty(name = "crc32", value = "文件crc32值 fastdfs保证数据完整性")
     private Long crc32;
+
+    /**
+     * 是否返回文件信息
+     */
+    @ApiModelProperty(name = "info", value = "是否返回文件信息")
+    private boolean info;
 }

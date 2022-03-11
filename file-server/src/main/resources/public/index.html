@@ -299,7 +299,7 @@
                 if (response.success) {
                     uploader.getFile(id).init = true;
                     uploader.setUuid(id, response.data.uploadId);
-                    uploader.setParams({"fileMd5": md5, "fileCrc32": crc32}, id);
+                    uploader.setParams({"fileMd5": md5, "fileCrc32": crc32, "info": true}, id);
                 }
             },
         });

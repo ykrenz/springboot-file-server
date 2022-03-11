@@ -6,18 +6,15 @@ import com.ykrenz.fileserver.ex.ApiException;
 import com.ykrenz.fileserver.model.ErrorCode;
 import com.ykrenz.fileserver.model.request.CancelPartRequest;
 import com.ykrenz.fileserver.model.request.CompletePartRequest;
-import com.ykrenz.fileserver.model.request.InitPartRequest;
+import com.ykrenz.fileserver.model.request.FileInfoRequest;
+import com.ykrenz.fileserver.model.request.InitUploadMultipartRequest;
 import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
-import com.ykrenz.fileserver.model.request.UploadPartRequest;
-import com.ykrenz.fileserver.model.result.InitPartResult;
-import com.ykrenz.fileserver.model.result.CompletePartResult;
-import com.ykrenz.fileserver.model.result.SimpleUploadResult;
+import com.ykrenz.fileserver.model.request.UploadMultipartRequest;
+import com.ykrenz.fileserver.model.result.FileInfoResult;
+import com.ykrenz.fileserver.model.result.InitMultipartResult;
 import com.ykrenz.fileserver.service.impl.FileServerClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.unit.DataSize;
 
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 
 /**
@@ -44,7 +41,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public SimpleUploadResult upload(SimpleUploadRequest request) {
+    public FileInfoResult upload(SimpleUploadRequest request) {
         try {
             // 限制文件大小
             if (request.getFile().getSize() > maxUploadSize) {
@@ -52,14 +49,17 @@ public class FileServiceImpl implements FileService {
                 throw new ApiException(ErrorCode.FILE_TO_LARGE, msg);
             }
             FileInfo fileInfo = fileServerClient.upload(request);
-            return new SimpleUploadResult(fileInfo);
+            if (request.isInfo()) {
+                return info(new FileInfoRequest(fileInfo.getBucketName(), fileInfo.getObjectName()));
+            }
+            return new FileInfoResult();
         } catch (IOException e) {
             throw new ApiException(ErrorCode.UPLOAD_ERROR);
         }
     }
 
     @Override
-    public InitPartResult initMultipart(InitPartRequest request) {
+    public InitMultipartResult initMultipart(InitUploadMultipartRequest request) {
         Long partSize = request.getPartSize();
         if (partSize < multipartMinSize || partSize > multipartMaxSize) {
             String msg = String.format("分片大小必须在%dM~%dM之间", multipartMinSize / 1024 / 1024, multipartMaxSize / 1024 / 1024);
@@ -69,7 +69,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public void uploadMultipart(UploadPartRequest request) {
+    public void uploadMultipart(UploadMultipartRequest request) {
         try {
             // 前端index=0
             request.setPartNumber(request.getPartNumber() + 1);
@@ -80,14 +80,22 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public CompletePartResult completeMultipart(CompletePartRequest request) {
+    public FileInfoResult completeMultipart(CompletePartRequest request) {
         FileInfo fileInfo = fileServerClient.completeMultipart(request);
-        return new CompletePartResult(request.getUploadId(), fileInfo);
+        if (request.isInfo()) {
+            return info(new FileInfoRequest(fileInfo.getBucketName(), fileInfo.getObjectName()));
+        }
+        return new FileInfoResult();
     }
 
     @Override
     public void cancelMultipart(CancelPartRequest request) {
         fileServerClient.cancelMultipart(request);
+    }
+
+    @Override
+    public FileInfoResult info(FileInfoRequest request) {
+        return fileServerClient.info(request);
     }
 
     @Override

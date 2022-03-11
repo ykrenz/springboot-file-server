@@ -12,7 +12,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value = "FileInfo对象", description = "文件信息")
+@ApiModel(value = "FileInfo", description = "文件信息")
 public class FileInfo extends BaseEntity {
 
     @ApiModelProperty(value = "文件md5值")

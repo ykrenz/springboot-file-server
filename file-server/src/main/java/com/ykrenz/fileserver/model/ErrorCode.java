@@ -50,6 +50,10 @@ public enum ErrorCode {
      * 文件分片大小错误
      */
     FILE_PART_SIZE_ERROR(20002, "文件分片大小错误"),
+    /**
+     * 文件不存在
+     */
+    FILE_NOT_FOUND(20003, "文件不存在"),
     ;
 
     /**

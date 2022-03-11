@@ -21,10 +21,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConditionalOnClass(AmazonS3.class)
 @EnableConfigurationProperties(S3Properties.class)
+@ConditionalOnProperty(prefix = Constants.PREFIX, name = "enabled", matchIfMissing = true)
 public class AmazonS3AutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
-    @ConditionalOnProperty(prefix = Constants.S3Prefix, name = "enabled", matchIfMissing = true)
     public AmazonS3 s3(S3Properties s3Properties) {
         String accessKey = s3Properties.getAccessKey();
         String secretKey = s3Properties.getSecretKey();

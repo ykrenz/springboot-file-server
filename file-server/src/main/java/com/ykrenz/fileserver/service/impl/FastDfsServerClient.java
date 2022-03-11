@@ -12,19 +12,19 @@ import com.ykrenz.fileserver.mapper.FilePartInfoMapper;
 import com.ykrenz.fileserver.model.ErrorCode;
 import com.ykrenz.fileserver.model.request.CancelPartRequest;
 import com.ykrenz.fileserver.model.request.CompletePartRequest;
-import com.ykrenz.fileserver.model.request.InitPartRequest;
+import com.ykrenz.fileserver.model.request.FileInfoRequest;
+import com.ykrenz.fileserver.model.request.InitUploadMultipartRequest;
 import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
-import com.ykrenz.fileserver.model.request.UploadPartRequest;
-import com.ykrenz.fileserver.model.result.InitPartResult;
+import com.ykrenz.fileserver.model.request.UploadMultipartRequest;
+import com.ykrenz.fileserver.model.result.FileInfoResult;
+import com.ykrenz.fileserver.model.result.InitMultipartResult;
 import com.ykrenz.fastdfs.FastDfs;
 import com.ykrenz.fastdfs.model.CompleteMultipartRequest;
-import com.ykrenz.fastdfs.model.FileInfoRequest;
-import com.ykrenz.fastdfs.model.InitMultipartUploadRequest;
-import com.ykrenz.fastdfs.model.UploadFileRequest;
 import com.ykrenz.fastdfs.model.UploadMultipartPartRequest;
 import com.ykrenz.fastdfs.model.fdfs.StorePath;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -56,11 +56,8 @@ public class FastDfsServerClient implements FileServerClient {
     public FileInfo upload(SimpleUploadRequest request) throws IOException {
         MultipartFile file = request.getFile();
         String originalFilename = file.getOriginalFilename();
-        UploadFileRequest uploadFileRequest = UploadFileRequest.builder()
-                .stream(file.getInputStream(), file.getSize(),
-                        FilenameUtils.getExtension(originalFilename))
-                .build();
-        StorePath storePath = fastDfs.uploadFile(uploadFileRequest);
+        String extension = FilenameUtils.getExtension(originalFilename);
+        StorePath storePath = fastDfs.uploadFile(file.getInputStream(), file.getSize(), extension);
         checkCrc32(request.getCrc32(), storePath);
         FileInfo fileInfo = new FileInfo();
         fileInfo.setBucketName(storePath.getGroup());
@@ -86,13 +83,13 @@ public class FastDfsServerClient implements FileServerClient {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public InitPartResult initMultipart(InitPartRequest request) {
+    public InitMultipartResult initMultipart(InitUploadMultipartRequest request) {
         String uploadId = request.getUploadId();
         if (StringUtils.isNotBlank(uploadId)) {
             return check(request);
         }
-        StorePath storePath = fastDfs.initMultipartUpload(request.getFileSize(),
-                FilenameUtils.getExtension(request.getFileName()));
+        String extension = FilenameUtils.getExtension(request.getFileName());
+        StorePath storePath = fastDfs.initMultipartUpload(request.getFileSize(), extension);
         FilePartInfo filePartInfo = new FilePartInfo();
         filePartInfo.setFileName(request.getFileName());
         filePartInfo.setBucketName(storePath.getGroup());
@@ -103,12 +100,12 @@ public class FastDfsServerClient implements FileServerClient {
 
         filePartInfo.setUploadId(request.getUploadId());
         filePartInfoMapper.insert(filePartInfo);
-        return new InitPartResult(filePartInfo.getId(), false);
+        return new InitMultipartResult(filePartInfo.getId(), false);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public FilePartInfo uploadMultipart(UploadPartRequest request) throws IOException {
+    public FilePartInfo uploadMultipart(UploadMultipartRequest request) throws IOException {
         MultipartFile file = request.getFile();
         Integer partNumber = request.getPartNumber();
         FilePartInfo initPart = getInitPart(request.getUploadId());
@@ -191,7 +188,7 @@ public class FastDfsServerClient implements FileServerClient {
         );
     }
 
-    private InitPartResult check(InitPartRequest request) {
+    private InitMultipartResult check(InitUploadMultipartRequest request) {
         String uploadId = request.getUploadId();
         FilePartInfo initPart = getInitPart(uploadId);
         if (initPart == null) {
@@ -208,7 +205,7 @@ public class FastDfsServerClient implements FileServerClient {
             FileInfo fileInfo = fileInfoMapper.selectOne(wrapper
                     .eq(FileInfo::getMd5, md5).last(" limit 1"));
             if (fileInfo != null) {
-                return new InitPartResult(request.getUploadId(), true);
+                return new InitMultipartResult(request.getUploadId(), true);
             }
         }
 
@@ -223,9 +220,9 @@ public class FastDfsServerClient implements FileServerClient {
                     .map(FilePartInfo::getPartNumber)
                     .distinct()
                     .collect(Collectors.toList());
-            return new InitPartResult(request.getUploadId(), list);
+            return new InitMultipartResult(request.getUploadId(), list);
         }
-        return new InitPartResult();
+        return new InitMultipartResult();
     }
 
     @Override
@@ -244,6 +241,25 @@ public class FastDfsServerClient implements FileServerClient {
             filePartInfoMapper.deleteBatchIds(parts);
         }
         filePartInfoMapper.deleteById(request.getUploadId());
+    }
+
+    @Override
+    public FileInfoResult info(FileInfoRequest request) {
+        LambdaQueryWrapper<FileInfo> wrapper = Wrappers.<FileInfo>lambdaQuery()
+                .eq(FileInfo::getBucketName, request.getBucketName())
+                .eq(FileInfo::getObjectName, request.getObjectName());
+        FileInfo fileInfo = fileInfoMapper.selectOne(wrapper);
+        if (fileInfo == null) {
+            throw new ApiException(ErrorCode.FILE_NOT_FOUND);
+        }
+
+        FileInfoResult fileInfoResult = new FileInfoResult();
+        BeanUtils.copyProperties(fileInfo, fileInfoResult);
+
+        fileInfoResult.setWebPath(fastDfs.getWebPath(fileInfo.getBucketName(), fileInfo.getObjectName()));
+        fileInfoResult.setDownloadPath(
+                fastDfs.getDownLoadPath(fileInfo.getBucketName(), fileInfo.getObjectName(), fileInfo.getFileName()));
+        return fileInfoResult;
     }
 
     @Override
