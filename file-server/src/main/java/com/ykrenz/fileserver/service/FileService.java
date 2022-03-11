@@ -8,7 +8,6 @@ import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
 import com.ykrenz.fileserver.model.request.UploadPartRequest;
 import com.ykrenz.fileserver.model.result.FileInfoResult;
 import com.ykrenz.fileserver.model.result.InitPartResult;
-import com.ykrenz.fileserver.model.result.CompletePartResult;
 import com.ykrenz.fileserver.model.result.SimpleUploadResult;
 
 import java.io.Serializable;
@@ -26,7 +25,7 @@ public interface FileService extends Serializable {
      * @param request
      * @return
      */
-    SimpleUploadResult upload(SimpleUploadRequest request);
+    FileInfoResult upload(SimpleUploadRequest request);
 
     /**
      * 初始化分片上传任务
@@ -50,7 +49,7 @@ public interface FileService extends Serializable {
      * @param request
      * @return
      */
-    CompletePartResult completeMultipart(CompletePartRequest request);
+    FileInfoResult completeMultipart(CompletePartRequest request);
 
     /**
      * 取消分片上传

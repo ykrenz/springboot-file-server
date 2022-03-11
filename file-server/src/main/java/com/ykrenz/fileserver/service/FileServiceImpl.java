@@ -12,7 +12,6 @@ import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
 import com.ykrenz.fileserver.model.request.UploadPartRequest;
 import com.ykrenz.fileserver.model.result.FileInfoResult;
 import com.ykrenz.fileserver.model.result.InitPartResult;
-import com.ykrenz.fileserver.model.result.CompletePartResult;
 import com.ykrenz.fileserver.model.result.SimpleUploadResult;
 import com.ykrenz.fileserver.service.impl.FileServerClient;
 import org.springframework.stereotype.Service;
@@ -43,7 +42,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public SimpleUploadResult upload(SimpleUploadRequest request) {
+    public FileInfoResult upload(SimpleUploadRequest request) {
         try {
             // 限制文件大小
             if (request.getFile().getSize() > maxUploadSize) {
@@ -51,7 +50,10 @@ public class FileServiceImpl implements FileService {
                 throw new ApiException(ErrorCode.FILE_TO_LARGE, msg);
             }
             FileInfo fileInfo = fileServerClient.upload(request);
-            return new SimpleUploadResult(fileInfo);
+            if (request.isInfo()) {
+                return info(new FileInfoRequest(fileInfo.getBucketName(), fileInfo.getObjectName()));
+            }
+            return new FileInfoResult();
         } catch (IOException e) {
             throw new ApiException(ErrorCode.UPLOAD_ERROR);
         }
@@ -79,9 +81,12 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public CompletePartResult completeMultipart(CompletePartRequest request) {
+    public FileInfoResult completeMultipart(CompletePartRequest request) {
         FileInfo fileInfo = fileServerClient.completeMultipart(request);
-        return new CompletePartResult(request.getUploadId(), fileInfo);
+        if (request.isInfo()) {
+            return info(new FileInfoRequest(fileInfo.getBucketName(), fileInfo.getObjectName()));
+        }
+        return new FileInfoResult();
     }
 
     @Override

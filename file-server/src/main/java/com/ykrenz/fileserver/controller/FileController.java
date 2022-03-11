@@ -9,7 +9,6 @@ import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
 import com.ykrenz.fileserver.model.request.UploadPartRequest;
 import com.ykrenz.fileserver.model.result.FileInfoResult;
 import com.ykrenz.fileserver.model.result.InitPartResult;
-import com.ykrenz.fileserver.model.result.CompletePartResult;
 import com.ykrenz.fileserver.model.result.SimpleUploadResult;
 import com.ykrenz.fileserver.service.FileService;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
@@ -36,7 +35,7 @@ public class FileController {
     @ApiOperation("简单上传 只支持小文件上传")
     @ApiOperationSupport(order = 1)
     @PostMapping("/upload")
-    public ResultUtil<SimpleUploadResult> upload(@Validated SimpleUploadRequest request) {
+    public ResultUtil<FileInfoResult> upload(@Validated SimpleUploadRequest request) {
         return ResultUtil.success(fileService.upload(request));
     }
 
@@ -58,7 +57,7 @@ public class FileController {
     @ApiOperation("合并文件分片")
     @ApiOperationSupport(order = 4)
     @PostMapping("/completeMultipart")
-    public ResultUtil<CompletePartResult> completeMultipart(@Validated CompletePartRequest request) {
+    public ResultUtil<FileInfoResult> completeMultipart(@Validated CompletePartRequest request) {
         return ResultUtil.success(fileService.completeMultipart(request));
     }
 

@@ -28,4 +28,7 @@ public class SimpleUploadRequest {
      */
     @ApiModelProperty(name = "crc32", value = "文件crc32值 fastdfs保证数据完整性")
     private Long crc32;
+
+    @ApiModelProperty(name = "info", value = "是否返回文件信息")
+    private boolean info;
 }
