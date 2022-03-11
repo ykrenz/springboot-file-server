@@ -12,19 +12,20 @@ import com.ykrenz.fileserver.mapper.FilePartInfoMapper;
 import com.ykrenz.fileserver.model.ErrorCode;
 import com.ykrenz.fileserver.model.request.CancelPartRequest;
 import com.ykrenz.fileserver.model.request.CompletePartRequest;
+import com.ykrenz.fileserver.model.request.FileInfoRequest;
 import com.ykrenz.fileserver.model.request.InitPartRequest;
 import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
 import com.ykrenz.fileserver.model.request.UploadPartRequest;
+import com.ykrenz.fileserver.model.result.FileInfoResult;
 import com.ykrenz.fileserver.model.result.InitPartResult;
 import com.ykrenz.fastdfs.FastDfs;
 import com.ykrenz.fastdfs.model.CompleteMultipartRequest;
-import com.ykrenz.fastdfs.model.FileInfoRequest;
-import com.ykrenz.fastdfs.model.InitMultipartUploadRequest;
 import com.ykrenz.fastdfs.model.UploadFileRequest;
 import com.ykrenz.fastdfs.model.UploadMultipartPartRequest;
 import com.ykrenz.fastdfs.model.fdfs.StorePath;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -244,6 +245,25 @@ public class FastDfsServerClient implements FileServerClient {
             filePartInfoMapper.deleteBatchIds(parts);
         }
         filePartInfoMapper.deleteById(request.getUploadId());
+    }
+
+    @Override
+    public FileInfoResult info(FileInfoRequest request) {
+        LambdaQueryWrapper<FileInfo> wrapper = Wrappers.<FileInfo>lambdaQuery()
+                .eq(FileInfo::getBucketName, request.getBucketName())
+                .eq(FileInfo::getObjectName, request.getObjectName());
+        FileInfo fileInfo = fileInfoMapper.selectOne(wrapper);
+        if (fileInfo == null) {
+            throw new ApiException(ErrorCode.FILE_NOT_FOUND);
+        }
+
+        FileInfoResult fileInfoResult = new FileInfoResult();
+        BeanUtils.copyProperties(fileInfo, fileInfoResult);
+
+        fileInfoResult.setWebPath(fastDfs.getWebPath(fileInfo.getBucketName(), fileInfo.getObjectName()));
+        fileInfoResult.setDownloadPath(
+                fastDfs.getDownLoadPath(fileInfo.getBucketName(), fileInfo.getObjectName(), fileInfo.getFileName()));
+        return fileInfoResult;
     }
 
     @Override

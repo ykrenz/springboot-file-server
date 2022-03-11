@@ -6,18 +6,17 @@ import com.ykrenz.fileserver.ex.ApiException;
 import com.ykrenz.fileserver.model.ErrorCode;
 import com.ykrenz.fileserver.model.request.CancelPartRequest;
 import com.ykrenz.fileserver.model.request.CompletePartRequest;
+import com.ykrenz.fileserver.model.request.FileInfoRequest;
 import com.ykrenz.fileserver.model.request.InitPartRequest;
 import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
 import com.ykrenz.fileserver.model.request.UploadPartRequest;
+import com.ykrenz.fileserver.model.result.FileInfoResult;
 import com.ykrenz.fileserver.model.result.InitPartResult;
 import com.ykrenz.fileserver.model.result.CompletePartResult;
 import com.ykrenz.fileserver.model.result.SimpleUploadResult;
 import com.ykrenz.fileserver.service.impl.FileServerClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.unit.DataSize;
 
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 
 /**
@@ -88,6 +87,11 @@ public class FileServiceImpl implements FileService {
     @Override
     public void cancelMultipart(CancelPartRequest request) {
         fileServerClient.cancelMultipart(request);
+    }
+
+    @Override
+    public FileInfoResult info(FileInfoRequest request) {
+        return fileServerClient.info(request);
     }
 
     @Override

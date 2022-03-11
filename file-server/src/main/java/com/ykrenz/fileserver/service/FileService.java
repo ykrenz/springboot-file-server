@@ -2,9 +2,11 @@ package com.ykrenz.fileserver.service;
 
 import com.ykrenz.fileserver.model.request.CancelPartRequest;
 import com.ykrenz.fileserver.model.request.CompletePartRequest;
+import com.ykrenz.fileserver.model.request.FileInfoRequest;
 import com.ykrenz.fileserver.model.request.InitPartRequest;
 import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
 import com.ykrenz.fileserver.model.request.UploadPartRequest;
+import com.ykrenz.fileserver.model.result.FileInfoResult;
 import com.ykrenz.fileserver.model.result.InitPartResult;
 import com.ykrenz.fileserver.model.result.CompletePartResult;
 import com.ykrenz.fileserver.model.result.SimpleUploadResult;
@@ -57,6 +59,14 @@ public interface FileService extends Serializable {
      * @return
      */
     void cancelMultipart(CancelPartRequest request);
+
+    /**
+     * 查询文件信息
+     *
+     * @param id
+     * @return
+     */
+    FileInfoResult info(FileInfoRequest id);
 
     /**
      * 清空所有文件 测试使用

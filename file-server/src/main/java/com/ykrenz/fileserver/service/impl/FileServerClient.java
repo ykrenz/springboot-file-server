@@ -4,10 +4,11 @@ import com.ykrenz.fileserver.entity.FileInfo;
 import com.ykrenz.fileserver.entity.FilePartInfo;
 import com.ykrenz.fileserver.model.request.CancelPartRequest;
 import com.ykrenz.fileserver.model.request.CompletePartRequest;
-import com.ykrenz.fileserver.model.request.DeleteRequest;
+import com.ykrenz.fileserver.model.request.FileInfoRequest;
 import com.ykrenz.fileserver.model.request.InitPartRequest;
 import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
 import com.ykrenz.fileserver.model.request.UploadPartRequest;
+import com.ykrenz.fileserver.model.result.FileInfoResult;
 import com.ykrenz.fileserver.model.result.InitPartResult;
 
 import java.io.IOException;
@@ -60,8 +61,15 @@ public interface FileServerClient {
     void cancelMultipart(CancelPartRequest request);
 
     /**
+     * 查询文件信息
+     *
+     * @param id
+     * @return
+     */
+    FileInfoResult info(FileInfoRequest id);
+
+    /**
      * 删除数据库所有文件
      */
     void deleteAllFiles();
-
 }

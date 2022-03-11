@@ -3,9 +3,11 @@ package com.ykrenz.fileserver.controller;
 import com.ykrenz.fileserver.model.ResultUtil;
 import com.ykrenz.fileserver.model.request.CancelPartRequest;
 import com.ykrenz.fileserver.model.request.CompletePartRequest;
+import com.ykrenz.fileserver.model.request.FileInfoRequest;
 import com.ykrenz.fileserver.model.request.InitPartRequest;
 import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
 import com.ykrenz.fileserver.model.request.UploadPartRequest;
+import com.ykrenz.fileserver.model.result.FileInfoResult;
 import com.ykrenz.fileserver.model.result.InitPartResult;
 import com.ykrenz.fileserver.model.result.CompletePartResult;
 import com.ykrenz.fileserver.model.result.SimpleUploadResult;
@@ -15,6 +17,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,14 +41,14 @@ public class FileController {
     }
 
     @ApiOperation("初始化分片上传 秒传和断点续传")
-    @ApiOperationSupport(order = 3)
+    @ApiOperationSupport(order = 2)
     @PostMapping("/initMultipart")
     public ResultUtil<InitPartResult> initMultipart(@Validated InitPartRequest request) {
         return ResultUtil.success(fileService.initMultipart(request));
     }
 
     @ApiOperation("上传文件分片")
-    @ApiOperationSupport(order = 4)
+    @ApiOperationSupport(order = 3)
     @PostMapping("/uploadMultipart")
     public ResultUtil<Object> uploadMultipart(@Validated UploadPartRequest uploadPartRequest) {
         fileService.uploadMultipart(uploadPartRequest);
@@ -53,18 +56,25 @@ public class FileController {
     }
 
     @ApiOperation("合并文件分片")
-    @ApiOperationSupport(order = 5)
+    @ApiOperationSupport(order = 4)
     @PostMapping("/completeMultipart")
     public ResultUtil<CompletePartResult> completeMultipart(@Validated CompletePartRequest request) {
         return ResultUtil.success(fileService.completeMultipart(request));
     }
 
     @ApiOperation("取消分片上传")
-    @ApiOperationSupport(order = 6)
+    @ApiOperationSupport(order = 5)
     @PostMapping("/cancelMultipart")
     public ResultUtil<Object> cancelMultipart(@Validated CancelPartRequest request) {
         fileService.cancelMultipart(request);
         return ResultUtil.success();
+    }
+
+    @ApiOperation("查询文件信息")
+    @ApiOperationSupport(order = 6)
+    @PostMapping("/info")
+    public ResultUtil<FileInfoResult> info(@Validated FileInfoRequest request) {
+        return ResultUtil.success(fileService.info(request));
     }
 
 //    @ApiOperation("删除所有文件-测试使用")
