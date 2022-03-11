@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  com.ykrenz.fastdfs.s3.starter.AmazonS3AutoConfiguration
+  com.ykrenz.s3.starter.AmazonS3AutoConfiguration

@@ -1,4 +1,4 @@
-package com.ykrenz.fastdfs.s3.starter;
+package com.ykrenz.s3.starter;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;

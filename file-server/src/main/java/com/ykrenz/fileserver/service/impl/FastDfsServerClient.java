@@ -74,12 +74,8 @@ public class FastDfsServerClient implements FileServerClient {
     }
 
     private void checkCrc32(Long crc32, StorePath storePath) {
-        FileInfoRequest infoRequest = FileInfoRequest.builder()
-                .groupName(storePath.getGroup())
-                .path(storePath.getPath())
-                .build();
         if (crc32 != null && crc32 > 0) {
-            com.ykrenz.fastdfs.model.fdfs.FileInfo fileInfo = fastDfs.queryFileInfo(infoRequest);
+            com.ykrenz.fastdfs.model.fdfs.FileInfo fileInfo = fastDfs.queryFileInfo(storePath.getGroup(), storePath.getPath());
             log.debug("check crc32 client crc32={} fastdfs crc32 ={} convert crc32={}",
                     crc32, fileInfo.getCrc32(), Crc32.convertUnsigned(fileInfo.getCrc32()));
             if (crc32 != Crc32.convertUnsigned(fileInfo.getCrc32())) {
@@ -95,11 +91,8 @@ public class FastDfsServerClient implements FileServerClient {
         if (StringUtils.isNotBlank(uploadId)) {
             return check(request);
         }
-        InitMultipartUploadRequest initMultipartUploadRequest = InitMultipartUploadRequest.builder()
-                .fileSize(request.getFileSize())
-                .fileExtName(FilenameUtils.getExtension(request.getFileName()))
-                .build();
-        StorePath storePath = fastDfs.initMultipartUpload(initMultipartUploadRequest);
+        StorePath storePath = fastDfs.initMultipartUpload(request.getFileSize(),
+                FilenameUtils.getExtension(request.getFileName()));
         FilePartInfo filePartInfo = new FilePartInfo();
         filePartInfo.setFileName(request.getFileName());
         filePartInfo.setBucketName(storePath.getGroup());
@@ -242,11 +235,7 @@ public class FastDfsServerClient implements FileServerClient {
         if (initPart == null) {
             throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND);
         }
-        FileInfoRequest infoRequest = FileInfoRequest.builder()
-                .groupName(initPart.getBucketName())
-                .path(initPart.getObjectName())
-                .build();
-        fastDfs.deleteFile(infoRequest);
+        fastDfs.deleteFile(initPart.getBucketName(), initPart.getObjectName());
         //清空所有分片记录
         List<String> parts = filePartInfoMapper.selectList(Wrappers.<FilePartInfo>lambdaQuery()
                 .eq(FilePartInfo::getUploadId, request.getUploadId())
@@ -262,24 +251,16 @@ public class FastDfsServerClient implements FileServerClient {
         List<FilePartInfo> filePartInfos = filePartInfoMapper.selectList(Wrappers.emptyWrapper());
         List<FileInfo> fileInfos = fileInfoMapper.selectList(Wrappers.emptyWrapper());
         for (FilePartInfo file : filePartInfos) {
-            FileInfoRequest request = FileInfoRequest.builder()
-                    .groupName(file.getBucketName())
-                    .path(file.getObjectName())
-                    .build();
-            fastDfs.deleteFile(request);
-            if (fastDfs.queryFileInfo(request) != null) {
+            fastDfs.deleteFile(file.getBucketName(), file.getObjectName());
+            if (fastDfs.queryFileInfo(file.getBucketName(), file.getObjectName()) != null) {
                 throw new ApiException(ErrorCode.SERVER_ERROR, "删除失败");
             }
             filePartInfoMapper.deleteById(file.getId());
         }
 
         for (FileInfo file : fileInfos) {
-            FileInfoRequest request = FileInfoRequest.builder()
-                    .groupName(file.getBucketName())
-                    .path(file.getObjectName())
-                    .build();
-            fastDfs.deleteFile(request);
-            if (fastDfs.queryFileInfo(request) != null) {
+            fastDfs.deleteFile(file.getBucketName(), file.getObjectName());
+            if (fastDfs.queryFileInfo(file.getBucketName(), file.getObjectName()) != null) {
                 throw new ApiException(ErrorCode.SERVER_ERROR, "删除失败");
             }
             fileInfoMapper.deleteById(file.getId());

@@ -1,4 +1,4 @@
-package com.ykrenz.fastdfs.s3.starter;
+package com.ykrenz.s3.starter;
 
 /**
  * @Description 常量

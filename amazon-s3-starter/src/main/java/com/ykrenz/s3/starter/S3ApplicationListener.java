@@ -1,4 +1,4 @@
-package com.ykrenz.fastdfs.s3.starter;
+package com.ykrenz.s3.starter;
 
 import com.amazonaws.services.s3.AmazonS3;
 import org.slf4j.Logger;
