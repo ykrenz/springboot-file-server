@@ -7,7 +7,6 @@ server:
     threads:
       max: 500
       min-spare: 10
-
 spring:
   servlet:
     multipart:
@@ -50,7 +49,7 @@ fastdfs:
   # tracker服务
   tracker-servers: "192.168.24.130:22122"
   # 固定分组
-  default-group: "group1"
+#  default-group: "group1"
   http:
     # web访问地址
     web-server-url: "http://192.168.24.130:8888"
@@ -75,6 +74,14 @@ fastdfs:
       min-evictable-idle-time-millis: 1800000
       soft-min-evictable-idle-time-millis: 60000
       test-on-borrow: true
+
+# 健康检查端点 actuator/fastdfs
+management:
+  endpoints:
+    web:
+      exposure:
+        include: 'fastdfs'
+
 s3:
   enabled: false
 
