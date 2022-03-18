@@ -256,9 +256,9 @@ public class FastDfsServerClient implements FileServerClient {
         FileInfoResult fileInfoResult = new FileInfoResult();
         BeanUtils.copyProperties(fileInfo, fileInfoResult);
 
-        fileInfoResult.setWebPath(fastDfs.getWebPath(fileInfo.getBucketName(), fileInfo.getObjectName()));
+        fileInfoResult.setWebPath(fastDfs.accessUrl(fileInfo.getBucketName(), fileInfo.getObjectName()));
         fileInfoResult.setDownloadPath(
-                fastDfs.getDownLoadPath(fileInfo.getBucketName(), fileInfo.getObjectName(), fileInfo.getFileName()));
+                fastDfs.downLoadUrl(fileInfo.getBucketName(), fileInfo.getObjectName(), fileInfo.getFileName()));
         return fileInfoResult;
     }
 
