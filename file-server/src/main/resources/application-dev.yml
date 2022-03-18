@@ -51,10 +51,10 @@ fastdfs:
   # 固定分组
 #  default-group: "group1"
   http:
-    # web访问地址
-    web-server-url: "http://192.168.24.130:8888"
-    # web访问地址是否包含group
-    web-server-url-has-group: true
+    # web地址
+    web-servers: "http://192.168.24.130:8888"
+    # 访问地址是否包含group
+    url-have-group: true
     # 开启防盗链
     http-anti-steal-token: true
     # 防盗链密钥
