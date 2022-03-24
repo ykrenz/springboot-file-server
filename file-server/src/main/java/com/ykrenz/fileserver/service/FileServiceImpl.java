@@ -12,7 +12,7 @@ import com.ykrenz.fileserver.model.request.SimpleUploadRequest;
 import com.ykrenz.fileserver.model.request.UploadMultipartRequest;
 import com.ykrenz.fileserver.model.result.FileInfoResult;
 import com.ykrenz.fileserver.model.result.InitMultipartResult;
-import com.ykrenz.fileserver.service.impl.FileServerClient;
+import com.ykrenz.fileserver.service.client.FileServerClient;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;

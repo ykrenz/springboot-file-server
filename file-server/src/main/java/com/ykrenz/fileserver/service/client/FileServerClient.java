@@ -1,4 +1,4 @@
-package com.ykrenz.fileserver.service.impl;
+package com.ykrenz.fileserver.service.client;
 
 import com.ykrenz.fileserver.entity.FileInfo;
 import com.ykrenz.fileserver.entity.FilePartInfo;

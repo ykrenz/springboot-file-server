@@ -8,17 +8,8 @@ public enum StorageType {
      * FastDfs
      */
     fastdfs,
-//    /**
-//     * Minio
-//     */
-//    Minio,
-//    /**
-//     * 阿里云Oss
-//     */
-//    AliOss,
     /**
      * S3协议云存储
      */
     S3,
-    ;
 }

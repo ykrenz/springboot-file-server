@@ -1,7 +1,7 @@
 package com.ykrenz.fileserver.config;
 
-import com.ykrenz.fileserver.service.impl.FastDfsServerClient;
-import com.ykrenz.fileserver.service.impl.FileServerClient;
+import com.ykrenz.fileserver.service.client.FastDfsServerClient;
+import com.ykrenz.fileserver.service.client.FileServerClient;
 import com.ykrenz.fastdfs.FastDfs;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

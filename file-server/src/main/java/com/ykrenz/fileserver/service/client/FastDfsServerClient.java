@@ -1,4 +1,4 @@
-package com.ykrenz.fileserver.service.impl;
+package com.ykrenz.fileserver.service.client;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -25,12 +25,15 @@ import com.ykrenz.fastdfs.model.fdfs.StorePath;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -40,16 +43,17 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FastDfsServerClient implements FileServerClient {
 
-    private FastDfs fastDfs;
+    private final FastDfs fastDfs;
 
-    @Autowired
+    @Resource
     private FileInfoMapper fileInfoMapper;
 
-    @Autowired
+    @Resource
     private FilePartInfoMapper filePartInfoMapper;
 
     public FastDfsServerClient(FastDfs fastDfs) {
         this.fastDfs = fastDfs;
+        initClearTask(7);
     }
 
     @Override
@@ -106,12 +110,9 @@ public class FastDfsServerClient implements FileServerClient {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public FilePartInfo uploadMultipart(UploadMultipartRequest request) throws IOException {
+        FilePartInfo initPart = checkUpload(request.getUploadId());
         MultipartFile file = request.getFile();
         Integer partNumber = request.getPartNumber();
-        FilePartInfo initPart = getInitPart(request.getUploadId());
-        if (initPart == null) {
-            throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND);
-        }
         UploadMultipartPartRequest multipartPartRequest = UploadMultipartPartRequest.builder()
                 .groupName(initPart.getBucketName())
                 .path(initPart.getObjectName())
@@ -135,11 +136,7 @@ public class FastDfsServerClient implements FileServerClient {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public FileInfo completeMultipart(CompletePartRequest request) {
-        FilePartInfo initPart = getInitPart(request.getUploadId());
-        if (initPart == null) {
-            throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND);
-        }
-
+        FilePartInfo initPart = checkUpload(request.getUploadId());
         StorePath storePath = new StorePath(initPart.getBucketName(), initPart.getObjectName());
         try {
             CompleteMultipartRequest multipartRequest = CompleteMultipartRequest.builder()
@@ -190,10 +187,7 @@ public class FastDfsServerClient implements FileServerClient {
 
     private InitMultipartResult check(InitUploadMultipartRequest request) {
         String uploadId = request.getUploadId();
-        FilePartInfo initPart = getInitPart(uploadId);
-        if (initPart == null) {
-            throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND);
-        }
+        checkUpload(uploadId);
 
         Long crc32 = request.getFileCrc32();
         String md5 = request.getFileMd5();
@@ -225,22 +219,34 @@ public class FastDfsServerClient implements FileServerClient {
         return new InitMultipartResult();
     }
 
+    private FilePartInfo checkUpload(String uploadId) {
+        FilePartInfo initPart = getInitPart(uploadId);
+        if (initPart == null) {
+            throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND);
+        }
+        return initPart;
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void cancelMultipart(CancelPartRequest request) {
         FilePartInfo initPart = getInitPart(request.getUploadId());
         if (initPart == null) {
-            throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND);
+            return;
         }
-        fastDfs.deleteFile(initPart.getBucketName(), initPart.getObjectName());
+        deleteUpload(request.getUploadId(), initPart.getBucketName(), initPart.getObjectName());
+    }
+
+    private void deleteUpload(String uploadId, String bucketName, String objectName) {
+        fastDfs.deleteFile(bucketName, objectName);
         //清空所有分片记录
         List<String> parts = filePartInfoMapper.selectList(Wrappers.<FilePartInfo>lambdaQuery()
-                .eq(FilePartInfo::getUploadId, request.getUploadId())
+                .eq(FilePartInfo::getUploadId, uploadId)
                 .select(FilePartInfo::getId)).stream().map(FilePartInfo::getId).collect(Collectors.toList());
         if (!parts.isEmpty()) {
             filePartInfoMapper.deleteBatchIds(parts);
         }
-        filePartInfoMapper.deleteById(request.getUploadId());
+        filePartInfoMapper.deleteById(uploadId);
     }
 
     @Override
@@ -281,5 +287,36 @@ public class FastDfsServerClient implements FileServerClient {
             }
             fileInfoMapper.deleteById(file.getId());
         }
+    }
+
+    private final ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
+
+    public void initClearTask(int expireDays) {
+        service.scheduleAtFixedRate(() -> {
+            //TODO 获取锁
+            clearExpireUpload(expireDays);
+            //TOTO 释放锁
+        }, 0, 30, TimeUnit.SECONDS);
+    }
+
+    public void clearExpireUpload(int expireDays) {
+        if (expireDays <= 0) {
+            return;
+        }
+        List<FilePartInfo> uploads = getPartUploads(expireDays);
+        while (!uploads.isEmpty()) {
+            for (FilePartInfo upload : uploads) {
+                clearUpload(upload);
+            }
+            uploads = getPartUploads(expireDays);
+        }
+    }
+
+    private List<FilePartInfo> getPartUploads(int expireDays) {
+        return filePartInfoMapper.selectExpireUploads(expireDays);
+    }
+
+    private void clearUpload(FilePartInfo filePartInfo) {
+        this.deleteUpload(filePartInfo.getUploadId(), filePartInfo.getBucketName(), filePartInfo.getObjectName());
     }
 }
