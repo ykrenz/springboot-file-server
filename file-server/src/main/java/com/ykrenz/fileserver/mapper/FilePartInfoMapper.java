@@ -17,7 +17,7 @@ import java.util.List;
 public interface FilePartInfoMapper extends BaseMapper<FilePartInfo> {
 
     @Select({
-            "select * from table where now() > date_add(createTime,interval #{expireDays} day) " +
+            "select * from file_part_info where now() > DATE_ADD(create_time,INTERVAL #{expireDays} day) " +
                     "and partNumber = 0 and status = 1 limit 500"
     })
     List<FilePartInfo> selectExpireUploads(int expireDays);

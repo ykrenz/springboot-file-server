@@ -25,6 +25,7 @@ import com.ykrenz.fastdfs.model.fdfs.StorePath;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -41,7 +42,7 @@ import java.util.stream.Collectors;
  * @date 2022/3/1
  */
 @Slf4j
-public class FastDfsServerClient implements FileServerClient {
+public class FastDfsServerClient implements FileServerClient, InitializingBean {
 
     private final FastDfs fastDfs;
 
@@ -53,7 +54,6 @@ public class FastDfsServerClient implements FileServerClient {
 
     public FastDfsServerClient(FastDfs fastDfs) {
         this.fastDfs = fastDfs;
-        initClearTask(7);
     }
 
     @Override
@@ -293,9 +293,13 @@ public class FastDfsServerClient implements FileServerClient {
 
     public void initClearTask(int expireDays) {
         service.scheduleAtFixedRate(() -> {
-            //TODO 获取锁
-            clearExpireUpload(expireDays);
-            //TOTO 释放锁
+            try {
+                //TODO 获取锁
+                clearExpireUpload(expireDays);
+                //TOTO 释放锁
+            } catch (Exception e) {
+                log.error("clear part error", e);
+            }
         }, 0, 30, TimeUnit.SECONDS);
     }
 
@@ -318,5 +322,10 @@ public class FastDfsServerClient implements FileServerClient {
 
     private void clearUpload(FilePartInfo filePartInfo) {
         this.deleteUpload(filePartInfo.getUploadId(), filePartInfo.getBucketName(), filePartInfo.getObjectName());
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        initClearTask(7);
     }
 }

@@ -14,7 +14,7 @@
     </parent>
     <groupId>io.github.ykrenz</groupId>
     <artifactId>spring-boot-file-server</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>spring-boot-file-server</name>
     <description>Spring Boot File Server</description>
     <packaging>pom</packaging>
