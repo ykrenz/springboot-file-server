@@ -1,8 +1,10 @@
 package com.ykrenz.fileserver.config;
 
+import com.ykrenz.fileserver.service.client.FastDfsClearApplicationListener;
 import com.ykrenz.fileserver.service.client.FastDfsServerClient;
 import com.ykrenz.fileserver.service.client.FileServerClient;
 import com.ykrenz.fastdfs.FastDfs;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -21,7 +23,9 @@ public class StorageConfiguration {
     @ConditionalOnMissingBean()
     @ConditionalOnProperty(value = "file.storage", havingValue = "fastdfs")
     public FileServerClient fstDfsClient(FastDfs fastDfs) {
-        return new FastDfsServerClient(fastDfs);
+        FastDfsServerClient client = new FastDfsServerClient(fastDfs);
+        new FastDfsClearApplicationListener(client);
+        return client;
     }
 
     //TODO 定期删除过期分片任务

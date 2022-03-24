@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  * @date 2022/3/1
  */
 @Slf4j
-public class FastDfsServerClient implements FileServerClient, InitializingBean {
+public class FastDfsServerClient implements FileServerClient {
 
     private final FastDfs fastDfs;
 
@@ -322,10 +322,5 @@ public class FastDfsServerClient implements FileServerClient, InitializingBean {
 
     private void clearUpload(FilePartInfo filePartInfo) {
         this.deleteUpload(filePartInfo.getUploadId(), filePartInfo.getBucketName(), filePartInfo.getObjectName());
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        initClearTask(7);
     }
 }
