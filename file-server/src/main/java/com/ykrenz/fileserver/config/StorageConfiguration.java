@@ -23,9 +23,13 @@ public class StorageConfiguration {
     @ConditionalOnMissingBean()
     @ConditionalOnProperty(value = "file.storage", havingValue = "fastdfs")
     public FileServerClient fstDfsClient(FastDfs fastDfs) {
-        FastDfsServerClient client = new FastDfsServerClient(fastDfs);
-        new FastDfsClearApplicationListener(client);
-        return client;
+        return new FastDfsServerClient(fastDfs);
+    }
+
+    @Bean
+    @ConditionalOnBean(FastDfsServerClient.class)
+    public FastDfsClearApplicationListener fastDfsClearApplicationListener(FastDfsServerClient client) {
+        return new FastDfsClearApplicationListener(client);
     }
 
     //TODO 定期删除过期分片任务
