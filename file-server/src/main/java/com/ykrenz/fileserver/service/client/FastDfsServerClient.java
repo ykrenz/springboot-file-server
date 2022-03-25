@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.ykrenz.fastdfs.common.Crc32;
+import com.ykrenz.fileserver.config.StorageProperties;
 import com.ykrenz.fileserver.entity.FileInfo;
 import com.ykrenz.fileserver.entity.FilePartInfo;
 import com.ykrenz.fileserver.ex.ApiException;
@@ -25,12 +26,16 @@ import com.ykrenz.fastdfs.model.fdfs.StorePath;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -42,9 +47,13 @@ import java.util.stream.Collectors;
  * @date 2022/3/1
  */
 @Slf4j
-public class FastDfsServerClient implements FileServerClient {
+public class FastDfsServerClient implements FileServerClient, ApplicationListener<ContextRefreshedEvent> {
 
     private final FastDfs fastDfs;
+
+    private final StorageProperties storageProperties;
+
+    private final int expireDays;
 
     @Resource
     private FileInfoMapper fileInfoMapper;
@@ -52,8 +61,10 @@ public class FastDfsServerClient implements FileServerClient {
     @Resource
     private FilePartInfoMapper filePartInfoMapper;
 
-    public FastDfsServerClient(FastDfs fastDfs) {
+    public FastDfsServerClient(FastDfs fastDfs, StorageProperties storageProperties) {
         this.fastDfs = fastDfs;
+        this.storageProperties = storageProperties;
+        this.expireDays = storageProperties.getFastdfs().getExpireDays();
     }
 
     @Override
@@ -192,7 +203,7 @@ public class FastDfsServerClient implements FileServerClient {
         Long crc32 = request.getFileCrc32();
         String md5 = request.getFileMd5();
         if (StringUtils.isNotBlank(md5)) {
-            LambdaQueryWrapper<FileInfo> wrapper = Wrappers.<FileInfo>lambdaQuery();
+            LambdaQueryWrapper<FileInfo> wrapper = Wrappers.lambdaQuery();
             if (crc32 != null) {
                 wrapper.eq(FileInfo::getCrc32, crc32);
             }
@@ -224,7 +235,15 @@ public class FastDfsServerClient implements FileServerClient {
         if (initPart == null) {
             throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND);
         }
+        LocalDateTime createTime = initPart.getCreateTime();
+        if (expireDays > 0 && createTime != null && isExpire(createTime)) {
+            throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND);
+        }
         return initPart;
+    }
+
+    private boolean isExpire(LocalDateTime createTime) {
+        return createTime.plusDays(expireDays).isBefore(LocalDateTime.now());
     }
 
     @Override
@@ -289,24 +308,7 @@ public class FastDfsServerClient implements FileServerClient {
         }
     }
 
-    private final ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
-
-    public void initClearTask(int expireDays) {
-        service.scheduleAtFixedRate(() -> {
-            try {
-                //TODO 获取锁
-                clearExpireUpload(expireDays);
-                //TOTO 释放锁
-            } catch (Exception e) {
-                log.error("clear part error", e);
-            }
-        }, 0, 30, TimeUnit.SECONDS);
-    }
-
-    public void clearExpireUpload(int expireDays) {
-        if (expireDays <= 0) {
-            return;
-        }
+    public void clearExpireUpload() {
         List<FilePartInfo> uploads = getPartUploads(expireDays);
         while (!uploads.isEmpty()) {
             for (FilePartInfo upload : uploads) {
@@ -322,5 +324,47 @@ public class FastDfsServerClient implements FileServerClient {
 
     private void clearUpload(FilePartInfo filePartInfo) {
         this.deleteUpload(filePartInfo.getUploadId(), filePartInfo.getBucketName(), filePartInfo.getObjectName());
+    }
+
+    private final static ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
+
+    @Override
+    public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
+        log.info("start clear part service...");
+        long evictableTimeMillis = storageProperties.getFastdfs().getEvictableTimeMillis();
+        service.scheduleAtFixedRate(() -> {
+            try {
+                if (expireDays <= 0) {
+                    return;
+                }
+                //TODO 获取锁
+                clearExpireUpload();
+            } catch (Exception e) {
+                log.error("clear part error", e);
+            } finally {
+                //TODO 释放锁
+            }
+        }, 0, evictableTimeMillis, TimeUnit.MILLISECONDS);
+    }
+
+    @Configuration
+    static class FastDfsClearShutdown implements ApplicationListener<ContextClosedEvent> {
+
+        int awaitTime = 5;
+
+        @Override
+        public void onApplicationEvent(ContextClosedEvent contextClosedEvent) {
+            log.info("shutdown clear part service soon.");
+            service.shutdown();
+            try {
+                if (!service.awaitTermination(awaitTime, TimeUnit.SECONDS)) {
+                    log.warn("Executor did not terminate in the specified time.");
+                    service.shutdownNow();
+                }
+            } catch (Exception e) {
+                log.error("stop service awaitTermination failed.", e);
+                service.shutdownNow();
+            }
+        }
     }
 }

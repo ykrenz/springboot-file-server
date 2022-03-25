@@ -10,7 +10,6 @@ import org.springframework.util.unit.DataSize;
  * @date 2020/6/10 11:35
  */
 @Data
-@Component
 @ConfigurationProperties("file")
 public class StorageProperties {
 
@@ -31,5 +30,21 @@ public class StorageProperties {
      * 上传分片支持最大Size
      */
     private DataSize multipartMaxSize = DataSize.ofBytes(1L);
+
+
+    private FastDfs fastdfs = new FastDfs();
+
+    @Data
+    public static class FastDfs {
+        /**
+         * 分片过期天数 默认7天
+         */
+        private int expireDays = 7;
+
+        /**
+         * 清理分片周期 默认1小时
+         */
+        private long evictableTimeMillis = 60 * 60 * 1000L;
+    }
 
 }
