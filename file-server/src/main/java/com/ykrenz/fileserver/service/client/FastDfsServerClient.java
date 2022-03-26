@@ -61,10 +61,20 @@ public class FastDfsServerClient implements FileServerClient, ApplicationListene
     @Resource
     private FilePartInfoMapper filePartInfoMapper;
 
+    private FileLock fileLock = new SimpleMysqlLock();
+
     public FastDfsServerClient(FastDfs fastDfs, StorageProperties storageProperties) {
         this.fastDfs = fastDfs;
         this.storageProperties = storageProperties;
         this.expireDays = storageProperties.getFastdfs().getExpireDays();
+    }
+
+    public FileLock getFileLock() {
+        return fileLock;
+    }
+
+    public void setFileLock(FileLock fileLock) {
+        this.fileLock = fileLock;
     }
 
     @Override
@@ -328,6 +338,8 @@ public class FastDfsServerClient implements FileServerClient, ApplicationListene
 
     private final static ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
 
+    private static final String CLEAR_LOCK_KEY = "FastDfsClearPartTask";
+
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         log.info("start clear part service...");
@@ -337,12 +349,13 @@ public class FastDfsServerClient implements FileServerClient, ApplicationListene
                 if (expireDays <= 0) {
                     return;
                 }
-                //TODO 获取锁
-                clearExpireUpload();
+                if (fileLock.tryLock(CLEAR_LOCK_KEY)) {
+                    clearExpireUpload();
+                }
             } catch (Exception e) {
                 log.error("clear part error", e);
             } finally {
-                //TODO 释放锁
+                fileLock.unlock(CLEAR_LOCK_KEY);
             }
         }, 0, evictableTimeMillis, TimeUnit.MILLISECONDS);
     }
