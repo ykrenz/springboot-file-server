@@ -15,8 +15,8 @@ import java.time.LocalDateTime;
 @ApiModel(value = "Lock", description = "锁")
 public class Lock implements Serializable {
     private static final long serialVersionUID = 1L;
-    @ApiModelProperty(value = "key")
-    private String key;
+    @ApiModelProperty(value = "锁key")
+    private String lockKey;
     @ApiModelProperty(value = "生成时间")
     private LocalDateTime createTime;
     @ApiModelProperty(value = "过期时间")

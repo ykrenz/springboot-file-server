@@ -21,7 +21,7 @@ public class SimpleMysqlLock implements FileLock {
     @Transactional(rollbackFor = Exception.class)
     public boolean tryLock(String key) {
         try {
-            Lock lock = lockMapper.selectOne(Wrappers.<Lock>lambdaQuery().eq(Lock::getKey, key));
+            Lock lock = lockMapper.selectOne(Wrappers.<Lock>lambdaQuery().eq(Lock::getLockKey, key));
             if (lock != null) {
                 // 防止宕机等意外
                 if (isExpire(lock)) {
@@ -30,7 +30,7 @@ public class SimpleMysqlLock implements FileLock {
                 return false;
             }
             lock = new Lock();
-            lock.setKey(key);
+            lock.setLockKey(key);
             lock.setCreateTime(LocalDateTime.now());
             lock.setExpireTime(LocalDateTime.now().plusHours(1));
             return lockMapper.insertIgnore(lock) == 1;
@@ -47,6 +47,6 @@ public class SimpleMysqlLock implements FileLock {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void unlock(String key) {
-        lockMapper.delete(Wrappers.<Lock>lambdaQuery().eq(Lock::getKey, key));
+        lockMapper.delete(Wrappers.<Lock>lambdaQuery().eq(Lock::getLockKey, key));
     }
 }
