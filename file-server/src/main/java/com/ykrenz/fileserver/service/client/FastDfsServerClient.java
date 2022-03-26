@@ -1,6 +1,7 @@
 package com.ykrenz.fileserver.service.client;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.ykrenz.fastdfs.common.Crc32;
@@ -116,8 +117,12 @@ public class FastDfsServerClient implements FileServerClient, ApplicationListene
         filePartInfo.setPartSize(request.getPartSize());
         filePartInfo.setFileSize(request.getFileSize());
 
-        filePartInfo.setUploadId(request.getUploadId());
         filePartInfoMapper.insert(filePartInfo);
+        filePartInfo.setUploadId(uploadId);
+        LambdaUpdateWrapper<FilePartInfo> updateWrapper = Wrappers.<FilePartInfo>lambdaUpdate()
+                .eq(FilePartInfo::getId, filePartInfo.getId())
+                .set(FilePartInfo::getUploadId, filePartInfo.getId());
+        filePartInfoMapper.update(null, updateWrapper);
         return new InitMultipartResult(filePartInfo.getId(), false);
     }
 
