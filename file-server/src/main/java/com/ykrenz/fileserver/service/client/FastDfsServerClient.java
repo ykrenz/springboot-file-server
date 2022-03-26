@@ -61,20 +61,13 @@ public class FastDfsServerClient implements FileServerClient, ApplicationListene
     @Resource
     private FilePartInfoMapper filePartInfoMapper;
 
-    private FileLock fileLock = new SimpleMysqlLock();
+    @Resource
+    private FileLock fileLock;
 
     public FastDfsServerClient(FastDfs fastDfs, StorageProperties storageProperties) {
         this.fastDfs = fastDfs;
         this.storageProperties = storageProperties;
         this.expireDays = storageProperties.getFastdfs().getExpireDays();
-    }
-
-    public FileLock getFileLock() {
-        return fileLock;
-    }
-
-    public void setFileLock(FileLock fileLock) {
-        this.fileLock = fileLock;
     }
 
     @Override
@@ -336,7 +329,7 @@ public class FastDfsServerClient implements FileServerClient, ApplicationListene
         this.deleteUpload(filePartInfo.getUploadId(), filePartInfo.getBucketName(), filePartInfo.getObjectName());
     }
 
-    private final static ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
+    private static final ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
 
     private static final String CLEAR_LOCK_KEY = "FastDfsClearPartTask";
 

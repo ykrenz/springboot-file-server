@@ -58,5 +58,5 @@
         <appender-ref ref="fileError" />
     </root>
 
-<!--    <logger name="com.ykrenz.fileserver.mapper" level="DEBUG"/>-->
+    <logger name="com.ykrenz.fileserver.mapper" level="DEBUG"/>
 </configuration>
