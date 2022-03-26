@@ -15,7 +15,7 @@ import org.apache.ibatis.annotations.Insert;
 public interface LockMapper extends BaseMapper<FileLock> {
 
     @Insert(
-            "insert ignore into lock(lock_key,create_time,expire_time) values (#{lockKey},#{createTime},#{expireTime})"
+            "insert ignore into file_lock(lock_key,create_time,expire_time) values (#{lockKey},#{createTime},#{expireTime})"
     )
     int insertIgnore(FileLock fileLock);
 }
