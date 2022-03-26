@@ -1,7 +1,7 @@
 package com.ykrenz.fileserver.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.ykrenz.fileserver.entity.Lock;
+import com.ykrenz.fileserver.entity.FileLock;
 import org.apache.ibatis.annotations.Insert;
 
 /**
@@ -12,10 +12,10 @@ import org.apache.ibatis.annotations.Insert;
  * @author Mr Ren
  * @since 2021-05-24
  */
-public interface LockMapper extends BaseMapper<Lock> {
+public interface LockMapper extends BaseMapper<FileLock> {
 
     @Insert(
             "insert ignore into lock(key,create_time,expire_time) values (#{key},#{createTime},#{expireTime})"
     )
-    int insertIgnore(Lock lock);
+    int insertIgnore(FileLock fileLock);
 }

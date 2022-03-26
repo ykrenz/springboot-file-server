@@ -1,7 +1,7 @@
 package com.ykrenz.fileserver.service.client;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.ykrenz.fileserver.entity.Lock;
+import com.ykrenz.fileserver.entity.FileLock;
 import com.ykrenz.fileserver.mapper.LockMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 
 @Service
 @Slf4j
-public class SimpleMysqlLock implements FileLock {
+public class SimpleMysqlLock implements LockClient {
 
     @Resource
     private LockMapper lockMapper;
@@ -21,7 +21,7 @@ public class SimpleMysqlLock implements FileLock {
     @Transactional(rollbackFor = Exception.class)
     public boolean tryLock(String key) {
         try {
-            Lock lock = lockMapper.selectOne(Wrappers.<Lock>lambdaQuery().eq(Lock::getLockKey, key));
+            FileLock lock = lockMapper.selectOne(Wrappers.<FileLock>lambdaQuery().eq(FileLock::getLockKey, key));
             if (lock != null) {
                 // 防止宕机等意外
                 if (isExpire(lock)) {
@@ -29,7 +29,7 @@ public class SimpleMysqlLock implements FileLock {
                 }
                 return false;
             }
-            lock = new Lock();
+            lock = new FileLock();
             lock.setLockKey(key);
             lock.setCreateTime(LocalDateTime.now());
             lock.setExpireTime(LocalDateTime.now().plusHours(1));
@@ -40,13 +40,13 @@ public class SimpleMysqlLock implements FileLock {
         }
     }
 
-    private boolean isExpire(Lock lock) {
+    private boolean isExpire(FileLock lock) {
         return lock.getExpireTime().isAfter(LocalDateTime.now());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void unlock(String key) {
-        lockMapper.delete(Wrappers.<Lock>lambdaQuery().eq(Lock::getLockKey, key));
+        lockMapper.delete(Wrappers.<FileLock>lambdaQuery().eq(FileLock::getLockKey, key));
     }
 }

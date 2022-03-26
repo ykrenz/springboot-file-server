@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @ApiModel(value = "Lock", description = "锁")
-public class Lock implements Serializable {
+public class FileLock implements Serializable {
     private static final long serialVersionUID = 1L;
     @ApiModelProperty(value = "锁key")
     private String lockKey;

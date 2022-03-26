@@ -62,7 +62,7 @@ public class FastDfsServerClient implements FileServerClient, ApplicationListene
     private FilePartInfoMapper filePartInfoMapper;
 
     @Resource
-    private FileLock fileLock;
+    private LockClient lockClient;
 
     public FastDfsServerClient(FastDfs fastDfs, StorageProperties storageProperties) {
         this.fastDfs = fastDfs;
@@ -342,13 +342,13 @@ public class FastDfsServerClient implements FileServerClient, ApplicationListene
                 if (expireDays <= 0) {
                     return;
                 }
-                if (fileLock.tryLock(CLEAR_LOCK_KEY)) {
+                if (lockClient.tryLock(CLEAR_LOCK_KEY)) {
                     clearExpireUpload();
                 }
             } catch (Exception e) {
                 log.error("clear part error", e);
             } finally {
-                fileLock.unlock(CLEAR_LOCK_KEY);
+                lockClient.unlock(CLEAR_LOCK_KEY);
             }
         }, 0, evictableTimeMillis, TimeUnit.MILLISECONDS);
     }

@@ -1,6 +1,6 @@
 package com.ykrenz.fileserver.service.client;
 
-public interface FileLock {
+public interface LockClient {
     /**
      * 尝试获取锁
      *
