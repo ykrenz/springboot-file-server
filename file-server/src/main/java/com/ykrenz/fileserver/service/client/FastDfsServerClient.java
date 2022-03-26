@@ -53,7 +53,7 @@ public class FastDfsServerClient implements FileServerClient, ApplicationListene
 
     private final StorageProperties storageProperties;
 
-    private final int expireDays;
+    private final int partExpireDays;
 
     @Resource
     private FileInfoMapper fileInfoMapper;
@@ -67,7 +67,7 @@ public class FastDfsServerClient implements FileServerClient, ApplicationListene
     public FastDfsServerClient(FastDfs fastDfs, StorageProperties storageProperties) {
         this.fastDfs = fastDfs;
         this.storageProperties = storageProperties;
-        this.expireDays = storageProperties.getFastdfs().getExpireDays();
+        this.partExpireDays = storageProperties.getFastdfs().getPartExpireDays();
     }
 
     @Override
@@ -239,14 +239,14 @@ public class FastDfsServerClient implements FileServerClient, ApplicationListene
             throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND);
         }
         LocalDateTime createTime = initPart.getCreateTime();
-        if (expireDays > 0 && createTime != null && isExpire(createTime)) {
+        if (partExpireDays > 0 && createTime != null && isExpire(createTime)) {
             throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND);
         }
         return initPart;
     }
 
     private boolean isExpire(LocalDateTime createTime) {
-        return createTime.plusDays(expireDays).isBefore(LocalDateTime.now());
+        return createTime.plusDays(partExpireDays).isBefore(LocalDateTime.now());
     }
 
     @Override
@@ -312,12 +312,12 @@ public class FastDfsServerClient implements FileServerClient, ApplicationListene
     }
 
     public void clearExpireUpload() {
-        List<FilePartInfo> uploads = getPartUploads(expireDays);
+        List<FilePartInfo> uploads = getPartUploads(partExpireDays);
         while (!uploads.isEmpty()) {
             for (FilePartInfo upload : uploads) {
                 clearUpload(upload);
             }
-            uploads = getPartUploads(expireDays);
+            uploads = getPartUploads(partExpireDays);
         }
     }
 
@@ -336,10 +336,10 @@ public class FastDfsServerClient implements FileServerClient, ApplicationListene
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         log.info("start clear part service...");
-        long evictableTimeMillis = storageProperties.getFastdfs().getEvictableTimeMillis();
+        long evictableSeconds = storageProperties.getFastdfs().getPartEvictableSeconds();
         service.scheduleAtFixedRate(() -> {
             try {
-                if (expireDays <= 0) {
+                if (partExpireDays <= 0) {
                     return;
                 }
                 if (lockClient.tryLock(CLEAR_LOCK_KEY)) {
@@ -350,7 +350,7 @@ public class FastDfsServerClient implements FileServerClient, ApplicationListene
             } finally {
                 lockClient.unlock(CLEAR_LOCK_KEY);
             }
-        }, 0, evictableTimeMillis, TimeUnit.MILLISECONDS);
+        }, 0, evictableSeconds, TimeUnit.SECONDS);
     }
 
     @Configuration

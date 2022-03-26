@@ -39,12 +39,12 @@ public class StorageProperties {
         /**
          * 分片过期天数 默认7天
          */
-        private int expireDays = 7;
+        private int partExpireDays = 7;
 
         /**
          * 清理分片周期 默认1小时
          */
-        private long evictableTimeMillis = 60 * 60 * 1000L;
+        private long partEvictableSeconds = 3600L;
     }
 
 }

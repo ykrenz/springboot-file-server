@@ -35,10 +35,20 @@ CREATE TABLE IF NOT EXISTS `file_info` (
 
 -- 数据导出被取消选择。
 
+-- 导出  表 filedb.file_lock 结构
+CREATE TABLE IF NOT EXISTS `file_lock` (
+    `lock_key` varchar(32) NOT NULL DEFAULT '' COMMENT '锁名称',
+    `create_time` datetime NOT NULL COMMENT '生成时间',
+    `expire_time` datetime NOT NULL COMMENT '过期时间',
+    PRIMARY KEY (`lock_key`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 数据导出被取消选择。
+
 -- 导出  表 filedb.file_part_info 结构
 CREATE TABLE IF NOT EXISTS `file_part_info` (
     `id` varchar(50) NOT NULL DEFAULT '',
-    `uploadId` varchar(50) DEFAULT NULL COMMENT '分片上传唯一标识 云存储使用',
+    `uploadId` varchar(50) DEFAULT NULL COMMENT '分片上传唯一标识',
     `fileName` varchar(255) CHARACTER SET utf8mb4 DEFAULT NULL COMMENT '文件名称',
     `fileSize` bigint(20) NOT NULL DEFAULT '0' COMMENT '文件大小',
     `partNumber` int(11) NOT NULL DEFAULT '0' COMMENT '分片索引',
