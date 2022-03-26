@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `file_lock` (
     `create_time` datetime NOT NULL COMMENT '生成时间',
     `expire_time` datetime NOT NULL COMMENT '过期时间',
     PRIMARY KEY (`lock_key`) USING BTREE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文件锁';
 
 -- 数据导出被取消选择。
 
