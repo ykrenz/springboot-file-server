@@ -55,8 +55,8 @@ CREATE TABLE IF NOT EXISTS `file_part_info` (
     `partSize` bigint(20) NOT NULL DEFAULT '0' COMMENT '分片大小',
     `bucketName` varchar(50) NOT NULL COMMENT '存储桶 fastdfs对应group',
     `objectName` varchar(50) NOT NULL COMMENT '文件路径 fastdfs对应path',
-    `create_time` date DEFAULT NULL,
-    `update_time` date DEFAULT NULL,
+    `create_time` datetime DEFAULT NULL,
+    `update_time` datetime DEFAULT NULL,
     `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '状态 1 正常 -1删除 0 终止',
     PRIMARY KEY (`id`),
     KEY `uploadId` (`uploadId`)
