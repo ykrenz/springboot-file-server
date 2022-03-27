@@ -45,8 +45,8 @@ public class FileServiceImpl implements FileService {
         try {
             // 限制文件大小
             if (request.getFile().getSize() > maxUploadSize) {
-                String msg = String.format("文件大小必须小于%dM", maxUploadSize / 1024 / 1024);
-                throw new ApiException(ErrorCode.FILE_TO_LARGE, msg);
+                String msg = String.format("文件限制%dM,请使用分片上传", maxUploadSize / 1024 / 1024);
+                throw new ApiException(msg);
             }
             FileInfo fileInfo = fileServerClient.upload(request);
             if (request.isInfo()) {
@@ -63,7 +63,7 @@ public class FileServiceImpl implements FileService {
         Long partSize = request.getPartSize();
         if (partSize < multipartMinSize || partSize > multipartMaxSize) {
             String msg = String.format("分片大小必须在%dM~%dM之间", multipartMinSize / 1024 / 1024, multipartMaxSize / 1024 / 1024);
-            throw new ApiException(ErrorCode.FILE_PART_SIZE_ERROR, msg);
+            throw new ApiException(msg);
         }
         return fileServerClient.initMultipart(request);
     }

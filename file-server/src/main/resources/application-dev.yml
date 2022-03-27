@@ -29,6 +29,9 @@ spring:
     password: 123456
     type: com.zaxxer.hikari.HikariDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 100
+      minimum-idle: 10
 
 # knife4j增强
 knife4j:
