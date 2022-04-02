@@ -12,12 +12,9 @@ fastdfs starter客户端 https://github.com/ykrenz/fastdfs-client-spring-boot-st
 前端案例组件为fine-uploader https://github.com/FineUploader/fine-uploader
 
 ![show](show.gif)
-
 ![db](db.png)
-
-
-
 ![api](api.png)
+![api](request.png)
 
 TODO s3云存储。。。
 

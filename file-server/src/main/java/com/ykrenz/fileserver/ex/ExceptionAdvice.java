@@ -104,7 +104,7 @@ public class ExceptionAdvice {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(ApiException.class)
     public ResultUtil<Object> apiException(ApiException e) {
-        return ResultUtil.error(e.getCode(), e.getData(), e.getMessage());
+        return ResultUtil.error(e.getMessage(), e.isReset());
     }
 
     /**
@@ -121,8 +121,7 @@ public class ExceptionAdvice {
      */
     private ResultUtil<String> paramError(String msg) {
         String message = ErrorCode.PARAM_ERROR.getMessage();
-        int code = ErrorCode.PARAM_ERROR.getCode();
-        return ResultUtil.error(code, message + msg);
+        return ResultUtil.error(message + msg);
     }
 
     /**

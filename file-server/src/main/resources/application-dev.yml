@@ -29,6 +29,9 @@ spring:
     password: 123456
     type: com.zaxxer.hikari.HikariDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 100
+      minimum-idle: 10
 
 # knife4j增强
 knife4j:
@@ -43,18 +46,21 @@ file:
   multipart-min-size: 5MB
   #分片文件最大值
   multipart-max-size: 100MB
+  fastdfs:
+    part-expire-days: 7
+    part-evictable-seconds: 3600
 #fastdfs 配置
 fastdfs:
   enabled: true
   # tracker服务
   tracker-servers: "192.168.24.130:22122"
   # 固定分组
-#  default-group: "group1"
+  #  default-group: "group1"
   http:
-    # web访问地址
-    web-server-url: "http://192.168.24.130:8888"
-    # web访问地址是否包含group
-    web-server-url-has-group: true
+    # web地址
+    web-servers: "http://192.168.24.130:8888"
+    # 访问地址是否包含group
+    url-have-group: true
     # 开启防盗链
     http-anti-steal-token: true
     # 防盗链密钥

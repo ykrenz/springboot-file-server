@@ -1,5 +1,7 @@
 package com.ykrenz.fileserver.model;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,36 +14,34 @@ import java.io.Serializable;
  */
 @Setter
 @Getter
+@ApiModel(value = "Result", description = "响应结果")
 public class ResultUtil<T> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private int code;
+    @ApiModelProperty("成功")
     private boolean success;
+    @ApiModelProperty("数据")
     private T data;
+    @ApiModelProperty("错误信息")
     private String error;
+    @ApiModelProperty("重置分片上传")
+    private boolean reset;
 
 
     private ResultUtil(T data) {
         this.data = data;
         this.success = true;
-        this.code = 200;
     }
 
-    private ResultUtil(ErrorCode errorCode, T data) {
-        this.data = data;
-        this.error = errorCode.getMessage();
-        this.code = errorCode.getCode();
-    }
-
-    private ResultUtil(int code, T data, String msg) {
-        this.code = code;
-        this.data = data;
-        this.error = msg;
+    private ResultUtil(String error, boolean reset) {
+        this.error = error;
+        this.success = false;
+        this.reset = reset;
     }
 
     /**
-     * 成功时
+     * success
      *
      * @param <T>
      * @return
@@ -51,7 +51,7 @@ public class ResultUtil<T> implements Serializable {
     }
 
     /**
-     * 成功时
+     * success
      *
      * @param
      * @return
@@ -66,20 +66,15 @@ public class ResultUtil<T> implements Serializable {
      * @param <T>
      * @return
      */
-    public static <T> ResultUtil<T> error(ErrorCode errorCode) {
-        return new ResultUtil<>(errorCode, null);
+    public static <T> ResultUtil<T> error(ErrorCode error) {
+        return new ResultUtil<>(error.getMessage(), false);
     }
 
-    public static <T> ResultUtil<T> error(ErrorCode errorCode, T data) {
-        return new ResultUtil<>(errorCode, data);
+    public static <T> ResultUtil<T> error(String error) {
+        return new ResultUtil<>(error, false);
     }
 
-    public static <T> ResultUtil<T> error(int code, String msg) {
-        return new ResultUtil<>(code, null, msg);
+    public static <T> ResultUtil<T> error(String error, boolean reset) {
+        return new ResultUtil<>(error, reset);
     }
-
-    public static <T> ResultUtil<T> error(int code, T data, String msg) {
-        return new ResultUtil<>(code, data, msg);
-    }
-
 }

@@ -1,33 +1,39 @@
 package com.ykrenz.fileserver.ex;
 
 import com.ykrenz.fileserver.model.ErrorCode;
+import lombok.Getter;
 
 /**
  * @author Mr Ren
  * @Description: api异常
  * @date 2021/4/7 10:57
  */
+@Getter
 public class ApiException extends RuntimeException {
 
-    protected int code;
-    protected Object data;
+    private final String error;
+
+    private boolean reset;
 
     public ApiException(ErrorCode errorCode) {
         super(errorCode.getMessage());
-        this.code = errorCode.getCode();
+        this.error = errorCode.getMessage();
     }
 
-    public ApiException(ErrorCode errorCode, Object data) {
+    public ApiException(ErrorCode errorCode, boolean reset) {
         super(errorCode.getMessage());
-        this.code = errorCode.getCode();
-        this.data = data;
+        this.error = errorCode.getMessage();
+        this.reset = reset;
     }
 
-    public int getCode() {
-        return code;
+    public ApiException(String error) {
+        super(error);
+        this.error = error;
     }
 
-    public Object getData() {
-        return data;
+    public ApiException(String error, boolean reset) {
+        super(error);
+        this.error = error;
+        this.reset = reset;
     }
 }

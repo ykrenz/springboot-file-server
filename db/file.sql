@@ -35,18 +35,28 @@ CREATE TABLE IF NOT EXISTS `file_info` (
 
 -- 数据导出被取消选择。
 
+-- 导出  表 filedb.file_lock 结构
+CREATE TABLE IF NOT EXISTS `file_lock` (
+    `lock_key` varchar(32) NOT NULL DEFAULT '' COMMENT '锁名称',
+    `create_time` datetime NOT NULL COMMENT '生成时间',
+    `expire_time` datetime NOT NULL COMMENT '过期时间',
+    PRIMARY KEY (`lock_key`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文件锁';
+
+-- 数据导出被取消选择。
+
 -- 导出  表 filedb.file_part_info 结构
 CREATE TABLE IF NOT EXISTS `file_part_info` (
     `id` varchar(50) NOT NULL DEFAULT '',
-    `uploadId` varchar(50) DEFAULT NULL COMMENT '分片上传唯一标识 云存储使用',
+    `uploadId` varchar(50) DEFAULT NULL COMMENT '分片上传唯一标识',
     `fileName` varchar(255) CHARACTER SET utf8mb4 DEFAULT NULL COMMENT '文件名称',
     `fileSize` bigint(20) NOT NULL DEFAULT '0' COMMENT '文件大小',
     `partNumber` int(11) NOT NULL DEFAULT '0' COMMENT '分片索引',
     `partSize` bigint(20) NOT NULL DEFAULT '0' COMMENT '分片大小',
     `bucketName` varchar(50) NOT NULL COMMENT '存储桶 fastdfs对应group',
     `objectName` varchar(50) NOT NULL COMMENT '文件路径 fastdfs对应path',
-    `create_time` date DEFAULT NULL,
-    `update_time` date DEFAULT NULL,
+    `create_time` datetime DEFAULT NULL,
+    `update_time` datetime DEFAULT NULL,
     `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '状态 1 正常 -1删除 0 终止',
     PRIMARY KEY (`id`),
     KEY `uploadId` (`uploadId`)
