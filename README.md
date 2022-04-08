@@ -1,6 +1,8 @@
 # springboot-file-server
 springboot 文件服务 mybatis-plus web h5 大文件 分片 断点续传 fastdfs oss minio 七牛云等兼容s3协议的 文件服务器
 
+代码正在重构...
+
 启动步骤：localhost:3000
 
 swagger接口文档localhost:3000/doc.html
