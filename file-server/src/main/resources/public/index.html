@@ -190,7 +190,7 @@
                 }
             },
             onUploadChunk: function (id, name, chunkData) {
-                this.setParams({"partNumber": chunkData.partIndex + 1}, id);
+                this.setParams({"partNumber": chunkData.partIndex + 1, "crc": this.getFile(id).crc}, id);
             },
             onCancel: function (id) {
                 if (this.getFile(id).init) {
@@ -208,7 +208,6 @@
                         }
                     });
                 }
-                ;
             },
             onComplete: function (id, name, response, xhr) {
                 console.info("onComplete", id, name, response, xhr);
@@ -339,7 +338,7 @@
 
     function computeCrcSuccess(uploader, id, crc) {
         console.info("compute crc success", uploader.getName(id), crc);
-        uploader.setParams({"crc": crc}, id);
+        uploader.getFile(id).crc = crc;
     }
 </script>
 </body>
