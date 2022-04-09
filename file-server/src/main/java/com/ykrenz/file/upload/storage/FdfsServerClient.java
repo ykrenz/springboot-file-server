@@ -141,7 +141,7 @@ public class FdfsServerClient implements FileServerClient {
         if (StringUtils.isNotBlank(crc32)) {
             FileInfo fileInfo = fastDfs.queryFileInfo(path.getGroup(), path.getPath());
             if (Long.parseLong(crc32) != Crc32.convertUnsigned(fileInfo.getCrc32())) {
-                throw new ApiException(ErrorCode.FILE_CRC_ERROR, true);
+                throw new ApiException(ErrorCode.FILE_CRC_ERROR);
             }
         }
     }
@@ -187,7 +187,7 @@ public class FdfsServerClient implements FileServerClient {
     private InitUploadModel checkUpload(String uploadId) {
         InitUploadModel upload = uploadManager.getUpload(uploadId);
         if (Objects.isNull(upload)) {
-            throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND);
+            throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND, true);
         }
         return upload;
     }

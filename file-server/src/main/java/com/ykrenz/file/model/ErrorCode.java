@@ -35,7 +35,7 @@ public enum ErrorCode {
     /**
      * crc校验失败
      */
-    FILE_CRC_ERROR("crc校验失败,请重新上传"),
+    FILE_CRC_ERROR("crc校验失败"),
     /**
      * 文件不存在
      */
