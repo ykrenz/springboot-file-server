@@ -115,6 +115,7 @@ public class DbUploadManager implements UploadManager<InitUploadModel, UploadMod
 
     @Override
     public void clearParts(String uploadId) {
+        fileUploadMapper.delete(Wrappers.<FileUploadEntity>lambdaQuery().eq(FileUploadEntity::getUploadId, uploadId));
         filePartMapper.delete(Wrappers.<FilePartEntity>lambdaQuery().eq(FilePartEntity::getUploadId, uploadId));
     }
 
