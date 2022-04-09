@@ -140,7 +140,8 @@ public class FdfsServerClient implements FileServerClient {
     private void checkCrc32(String crc32, StorePath path) {
         if (StringUtils.isNotBlank(crc32)) {
             FileInfo fileInfo = fastDfs.queryFileInfo(path.getGroup(), path.getPath());
-            if (Long.parseLong(crc32) != Crc32.convertUnsigned(fileInfo.getCrc32())) {
+            long crcUnsigned = Crc32.convertUnsigned(fileInfo.getCrc32());
+            if (!StringUtils.equalsIgnoreCase(crc32, String.valueOf(crcUnsigned))) {
                 throw new ApiException(ErrorCode.FILE_CRC_ERROR);
             }
         }
