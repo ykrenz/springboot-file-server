@@ -66,8 +66,9 @@ public class FileServiceImpl implements FileService {
                 throw new ApiException(msg);
             }
             UploadResponse response = uploadServer(request);
+            String md5 = DigestUtils.md5DigestAsHex(file.getInputStream());
+            response.setCrc(md5);
             String fileId = saveFile(response);
-
 //            fileResult.setUrl(fileServerClient2.getUrl());
             return getFileResultByResponse(fileId, response);
         } catch (IOException e) {
@@ -90,8 +91,6 @@ public class FileServiceImpl implements FileService {
         UploadRequest uploadRequest = new UploadRequest();
         MultipartFile file = request.getFile();
         uploadRequest.setFile(file);
-        String md5 = DigestUtils.md5DigestAsHex(file.getInputStream());
-        uploadRequest.setCrc(md5);
         return fileServerClient.upload(uploadRequest);
     }
 

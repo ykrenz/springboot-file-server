@@ -33,7 +33,7 @@ public class FileController {
         return ResultUtil.success(fileService.upload(request));
     }
 
-    @ApiOperation(value = "急速上传", notes = "匹配md5秒传,仅当crc为md5类型时可用 返回null则上传失败")
+    @ApiOperation(value = "急速上传", notes = "匹配md5秒传,仅当crc为md5类型时可用 返回null妙传失败")
     @ApiOperationSupport(order = 2)
     @PostMapping("/fastUpload")
     public ResultUtil<FileResult> upload(@Validated FastUploadRequest request) {
