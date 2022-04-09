@@ -132,6 +132,8 @@ public class FdfsServerClient implements FileServerClient {
         response.setBucketName(storePath.getGroup());
         response.setObjectName(storePath.getPath());
         response.setCrc(request.getCrc());
+
+        uploadManager.clearParts(uploadId);
         return response;
     }
 

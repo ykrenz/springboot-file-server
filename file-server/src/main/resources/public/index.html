@@ -162,7 +162,7 @@
             paramNames: {
                 chunkSize: "partSize",
                 partByteOffset: "partOffset",
-                partIndex: "partNumber",
+                partIndex: "partIndex",
                 totalParts: "totalPartCount",
             },
             success: {
@@ -183,9 +183,14 @@
         callbacks: {
             onUpload: function (id, name) {
                 let file = this.getFile(id);
+                file.init = false;
                 if (!file.init) {
                     initPartUpload(this, id);
+                    file.init = true;
                 }
+            },
+            onUploadChunk: function (id, name, chunkData) {
+                this.setParams({"partNumber": chunkData.partIndex + 1}, id);
             },
             onCancel: function (id) {
                 if (this.getFile(id).init) {
@@ -239,7 +244,6 @@
             dataType: "json",
             success: function (response) {
                 if (response.success) {
-                    file.init = true;
                     uploader.setUuid(id, response.data.uploadId);
                     // 根据crc校验方式计算校验码
                     if (response.data.crc === "md5") {
