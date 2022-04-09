@@ -14,7 +14,7 @@
     </appender>
 
     <!--输出到文件-->
-    <appender name="fileInfo" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <appender name="fileStorageEntity" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${logPath}/${applicationName}_info.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <!-- daily rollover -->
@@ -54,9 +54,9 @@
 
     <root level="INFO">
         <appender-ref ref="console" />
-        <appender-ref ref="fileInfo" />
+        <appender-ref ref="fileStorageEntity" />
         <appender-ref ref="fileError" />
     </root>
 
-<!--    <logger name="com.ykrenz.fileserver.mapper" level="DEBUG"/>-->
+<!--    <logger name="com.ykrenz.file.dao.mapper" level="DEBUG"/>-->
 </configuration>

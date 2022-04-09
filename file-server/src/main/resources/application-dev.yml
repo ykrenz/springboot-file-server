@@ -41,14 +41,14 @@ file:
   #存储类型 对应的存储服务器配置要开启才可以正常使用
   storage: fastdfs
   #普通上传文件最大值
-  max-upload-size: 5MB
+  max-upload-size: 10MB
   #分片文件最小值 小于5M minio会上传错误
   multipart-min-size: 5MB
   #分片文件最大值
-  multipart-max-size: 100MB
-  fastdfs:
-    part-expire-days: 7
-    part-evictable-seconds: 3600
+  multipart-max-size: 50MB
+  #上传过期天数 默认7天
+  expire-day: 1
+
 #fastdfs 配置
 fastdfs:
   enabled: true

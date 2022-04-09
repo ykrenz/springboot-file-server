@@ -3,8 +3,11 @@ spring:
     name: file-server
   profiles:
     active: dev
+  jackson:
+    default-property-inclusion: non_null
 # 日志
 logging:
   config: classpath:logback-spring.xml
+
 
 
