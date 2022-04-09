@@ -279,9 +279,6 @@
                 } else {
                     let md5 = spark.end();
                     computeCrcSuccess(uploader, id, md5);
-                    if (!uploader.getFile(id).init) {
-                        reject(e);
-                    }
                     resolve(md5);
                 }
             };
@@ -319,9 +316,6 @@
                 } else {
                     let crc32 = crc.compute();
                     computeCrcSuccess(uploader, id, crc32);
-                    if (!uploader.getFile(id).init) {
-                        reject(e);
-                    }
                     resolve(crc32);
                 }
             };
