@@ -5,6 +5,7 @@ import com.ykrenz.file.model.request.*;
 import com.ykrenz.file.model.result.FileResult;
 import com.ykrenz.file.model.result.ListMultipartResult;
 
+import java.io.IOException;
 import java.io.Serializable;
 
 /**
@@ -20,7 +21,7 @@ public interface FileService extends Serializable {
      * @param request
      * @return
      */
-    FileResult upload(SimpleUploadRequest request);
+    FileResult upload(SimpleUploadRequest request) throws IOException;
 
     /**
      * 秒传
@@ -52,7 +53,7 @@ public interface FileService extends Serializable {
      * @param uploadMultipartRequest
      * @return
      */
-    void uploadMultipart(UploadMultipartRequest uploadMultipartRequest);
+    void uploadMultipart(UploadMultipartRequest uploadMultipartRequest) throws IOException;
 
     /**
      * 完成文件分片上传

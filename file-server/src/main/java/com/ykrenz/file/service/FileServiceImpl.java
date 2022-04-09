@@ -51,25 +51,21 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public FileResult upload(SimpleUploadRequest request) {
-        try {
-            // 限制文件大小
-            MultipartFile file = request.getFile();
-            if (file.getSize() > maxUploadSize) {
-                String msg = String.format("文件限制%dM,请使用分片上传", maxUploadSize / 1024 / 1024);
-                throw new ApiException(msg);
-            }
-            UploadResponse response = uploadServer(request);
-            String md5 = DigestUtils.md5DigestAsHex(file.getInputStream());
-            String fileId = saveFile(response, md5);
-
-            FileResult fileResult = convert2FileResult(response);
-            fileResult.setId(fileId);
-            fileResult.setMd5(md5);
-            return fileResult;
-        } catch (IOException e) {
-            throw new ApiException(ErrorCode.UPLOAD_ERROR);
+    public FileResult upload(SimpleUploadRequest request) throws IOException {
+        // 限制文件大小
+        MultipartFile file = request.getFile();
+        if (file.getSize() > maxUploadSize) {
+            String msg = String.format("文件限制%dM,请使用分片上传", maxUploadSize / 1024 / 1024);
+            throw new ApiException(msg);
         }
+        UploadResponse response = uploadServer(request);
+        String md5 = DigestUtils.md5DigestAsHex(file.getInputStream());
+        String fileId = saveFile(response, md5);
+
+        FileResult fileResult = convert2FileResult(response);
+        fileResult.setId(fileId);
+        fileResult.setMd5(md5);
+        return fileResult;
     }
 
     @Override
@@ -139,16 +135,12 @@ public class FileServiceImpl implements FileService {
 
 
     @Override
-    public void uploadMultipart(UploadMultipartRequest request) {
-        try {
-            MultipartRequest multipartRequest = new MultipartRequest();
-            multipartRequest.setUploadId(request.getUploadId());
-            multipartRequest.setPartFile(request.getFile());
-            multipartRequest.setPartNumber(request.getPartNumber());
-            fileServerClient.uploadMultipart(multipartRequest);
-        } catch (IOException e) {
-            throw new ApiException(ErrorCode.UPLOAD_ERROR);
-        }
+    public void uploadMultipart(UploadMultipartRequest request) throws IOException {
+        MultipartRequest multipartRequest = new MultipartRequest();
+        multipartRequest.setUploadId(request.getUploadId());
+        multipartRequest.setPartFile(request.getFile());
+        multipartRequest.setPartNumber(request.getPartNumber());
+        fileServerClient.uploadMultipart(multipartRequest);
     }
 
     @Override

@@ -29,17 +29,13 @@ public enum ErrorCode {
      */
     FILE_TO_LARGE("文件过大,请使用分片上传"),
     /**
-     * 上传失败
-     */
-    UPLOAD_ERROR("上传失败,请重试"),
-    /**
      * uploadId不存在
      */
     UPLOAD_ID_NOT_FOUND("uploadId不存在或已经过期"),
     /**
-     * 文件CRC32校验失败
+     * crc校验失败
      */
-    FILE_CRC32_ERROR("文件CRC32校验失败,请重新上传"),
+    FILE_CRC_ERROR("crc校验失败,请重新上传"),
     /**
      * 文件不存在
      */

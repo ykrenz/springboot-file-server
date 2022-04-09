@@ -141,7 +141,7 @@ public class FdfsServerClient implements FileServerClient {
         if (StringUtils.isNotBlank(crc32)) {
             FileInfo fileInfo = fastDfs.queryFileInfo(path.getGroup(), path.getPath());
             if (Long.parseLong(crc32) != Crc32.convertUnsigned(fileInfo.getCrc32())) {
-                throw new ApiException(ErrorCode.FILE_CRC32_ERROR, true);
+                throw new ApiException(ErrorCode.FILE_CRC_ERROR, true);
             }
         }
     }

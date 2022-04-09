@@ -14,6 +14,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+
 /**
  * @Description 文件接口
  * @Author ren
@@ -29,7 +31,7 @@ public class FileController {
     @ApiOperation(value = "简单上传", notes = "文件大小10Mb以内")
     @ApiOperationSupport(order = 1)
     @PostMapping("/simpleUpload")
-    public ResultUtil<FileResult> upload(@Validated SimpleUploadRequest request) {
+    public ResultUtil<FileResult> upload(@Validated SimpleUploadRequest request) throws IOException {
         return ResultUtil.success(fileService.upload(request));
     }
 
@@ -57,7 +59,7 @@ public class FileController {
     @ApiOperation("上传文件分片")
     @ApiOperationSupport(order = 5)
     @PostMapping("/uploadMultipart")
-    public ResultUtil<Object> uploadMultipart(@Validated UploadMultipartRequest uploadMultipartRequest) {
+    public ResultUtil<Object> uploadMultipart(@Validated UploadMultipartRequest uploadMultipartRequest) throws IOException {
         fileService.uploadMultipart(uploadMultipartRequest);
         return ResultUtil.success();
     }

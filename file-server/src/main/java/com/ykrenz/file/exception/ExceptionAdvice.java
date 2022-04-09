@@ -101,7 +101,7 @@ public class ExceptionAdvice {
     /**
      * 业务异常直接抛给客户端
      */
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(ApiException.class)
     public ResultUtil<Object> apiException(ApiException e) {
         return ResultUtil.error(e.getMessage(), e.getReset());
