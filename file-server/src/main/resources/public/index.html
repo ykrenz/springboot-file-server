@@ -190,7 +190,11 @@
                 }
             },
             onUploadChunk: function (id, name, chunkData) {
-                this.setParams({"partNumber": chunkData.partIndex + 1, "crc": this.getFile(id).crc}, id);
+                if (chunkData.totalParts === chunkData.partIndex) {
+                    this.setParams({"partNumber": chunkData.partIndex + 1, "crc": this.getFile(id).crc}, id);
+                } else {
+                    this.setParams({"partNumber": chunkData.partIndex + 1}, id);
+                }
             },
             onCancel: function (id) {
                 if (this.getFile(id).init) {
