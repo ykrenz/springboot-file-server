@@ -17,6 +17,9 @@ public class FileResult implements Serializable {
     @ApiModelProperty(value = "校验码")
     private String crc;
 
+    @ApiModelProperty(value = "md5")
+    private String md5;
+
     @ApiModelProperty(value = "文件名称")
     private String fileName;
 

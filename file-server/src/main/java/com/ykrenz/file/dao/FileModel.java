@@ -32,4 +32,8 @@ public class FileModel {
      */
     private String crc;
 
+    /**
+     * md5
+     */
+    private String md5;
 }

@@ -32,5 +32,4 @@ public class StorageProperties {
      * 上传过期天数 默认7天
      */
     private int expireDay = 7;
-
 }

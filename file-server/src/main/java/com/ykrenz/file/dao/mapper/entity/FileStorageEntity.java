@@ -39,4 +39,8 @@ public class FileStorageEntity extends BaseEntity {
      */
     private String crc;
 
+    /**
+     * md5
+     */
+    private String md5;
 }

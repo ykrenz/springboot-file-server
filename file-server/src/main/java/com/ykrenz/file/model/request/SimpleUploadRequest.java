@@ -14,13 +14,15 @@ import java.io.Serializable;
  * @Since 1.0
  */
 @Data
-@ApiModel(value = "SimpleUploadRequest", description = "上传简单文件")
+@ApiModel(value = "SimpleUploadRequest", description = "简单文件")
 public class SimpleUploadRequest implements Serializable {
+
     private static final long serialVersionUID = 1L;
+
     /**
      * 文件
      */
-    @ApiModelProperty(name = "file", value = "文件")
+    @ApiModelProperty(name = "file", value = "文件", required = true)
     @NotNull(message = "文件不能为空")
     private MultipartFile file;
 

@@ -13,21 +13,15 @@ import com.ykrenz.file.model.result.ListMultipartResult;
 import com.ykrenz.file.upload.storage.FileServerClient;
 import com.ykrenz.file.upload.storage.StorageType;
 import com.ykrenz.file.upload.storage.model.*;
-import org.apache.commons.lang3.time.DateFormatUtils;
-import org.joda.time.DateTimeUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -67,10 +61,12 @@ public class FileServiceImpl implements FileService {
             }
             UploadResponse response = uploadServer(request);
             String md5 = DigestUtils.md5DigestAsHex(file.getInputStream());
-            response.setCrc(md5);
-            String fileId = saveFile(response);
-//            fileResult.setUrl(fileServerClient2.getUrl());
-            return getFileResultByResponse(fileId, response);
+            String fileId = saveFile(response, md5);
+
+            FileResult fileResult = convert2FileResult(response);
+            fileResult.setId(fileId);
+            fileResult.setMd5(md5);
+            return fileResult;
         } catch (IOException e) {
             throw new ApiException(ErrorCode.UPLOAD_ERROR);
         }
@@ -78,13 +74,15 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public FileResult fastUpload(FastUploadRequest request) {
-        FileModel fileModel = fileDao.getOneByCrc(request.getMd5());
+        FileModel fileModel = fileDao.getOneByMd5(request.getMd5());
         if (fileModel == null) {
             return null;
         }
         fileModel.setFileName(request.getFileName());
         String fileId = fileDao.save(fileModel);
-        return getFileResultByFileModel(fileId, fileModel);
+        FileResult fileResult = convert2FileResult(fileModel);
+        fileResult.setId(fileId);
+        return fileResult;
     }
 
     private UploadResponse uploadServer(SimpleUploadRequest request) throws IOException {
@@ -106,9 +104,7 @@ public class FileServiceImpl implements FileService {
 
         InitUploadMultipartResult initUploadMultipartResult = new InitUploadMultipartResult();
         initUploadMultipartResult.setUploadId(response.getUploadId());
-        initUploadMultipartResult.setCrc(fileServerClient.crc());
         initUploadMultipartResult.setExpireTime(-1);
-
         if (expireDay > 0) {
             long createTime = response.getCreateTime();
             initUploadMultipartResult.setExpireTime(CommonUtils.plusDays(createTime, expireDay));
@@ -161,8 +157,13 @@ public class FileServiceImpl implements FileService {
         completeRequest.setUploadId(request.getUploadId());
         completeRequest.setCrc(request.getCrc());
         UploadResponse response = fileServerClient.completeMultipart(completeRequest);
-        String fileId = saveFile(response);
-        return getFileResultByResponse(fileId, response);
+        String md5 = request.getMd5();
+        String fileId = saveFile(response, md5);
+
+        FileResult fileResult = convert2FileResult(response);
+        fileResult.setId(fileId);
+        fileResult.setMd5(md5);
+        return fileResult;
     }
 
     @Override
@@ -177,7 +178,9 @@ public class FileServiceImpl implements FileService {
         if (fileModel == null) {
             throw new ApiException(ErrorCode.FILE_NOT_FOUND);
         }
-        return getFileResultByFileModel(fileId, fileModel);
+        FileResult fileResult = convert2FileResult(fileModel);
+        fileResult.setId(fileId);
+        return fileResult;
     }
 
     @Override
@@ -186,34 +189,37 @@ public class FileServiceImpl implements FileService {
     }
 
 
-    private String saveFile(UploadResponse response) {
+    private String saveFile(UploadResponse response, String md5) {
         return fileDao.save(FileModel.builder()
                 .fileName(response.getFileName())
                 .fileSize(response.getFileSize())
                 .bucketName(response.getBucketName())
                 .objectName(response.getObjectName())
                 .crc(response.getCrc())
+                .md5(md5)
                 .build());
     }
 
-    private FileResult getFileResultByResponse(String fileId, UploadResponse response) {
+
+    private FileResult convert2FileResult(UploadResponse response) {
         FileResult fileResult = new FileResult();
-        fileResult.setId(fileId);
         fileResult.setFileName(response.getFileName());
         fileResult.setFileSize(response.getFileSize());
         fileResult.setBucketName(response.getBucketName());
         fileResult.setObjectName(response.getObjectName());
         fileResult.setCrc(response.getCrc());
+        //            fileResult.setUrl(fileServerClient2.getUrl());
         return fileResult;
     }
 
-    private FileResult getFileResultByFileModel(String fileId, FileModel fileModel) {
+    private FileResult convert2FileResult(FileModel fileModel) {
         FileResult fileResult = new FileResult();
-        fileResult.setId(fileId);
         fileResult.setFileName(fileModel.getFileName());
         fileResult.setFileSize(fileModel.getFileSize());
         fileResult.setBucketName(fileModel.getBucketName());
         fileResult.setObjectName(fileModel.getObjectName());
+        fileResult.setMd5(fileModel.getMd5());
+        //            fileResult.setUrl(fileServerClient2.getUrl());
         return fileResult;
     }
 

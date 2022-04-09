@@ -23,6 +23,7 @@ public class MapperDao implements FileDao {
         fileStorageEntity.setObjectName(fileModel.getObjectName());
         fileStorageEntity.setFileSize(fileModel.getFileSize());
         fileStorageEntity.setCrc(fileModel.getCrc());
+        fileStorageEntity.setMd5(fileModel.getMd5());
         fileStorageEntity.setStatus(1);
         fileStorageMapper.insert(fileStorageEntity);
         return fileStorageEntity.getId();
@@ -40,14 +41,15 @@ public class MapperDao implements FileDao {
                 .objectName(fileStorageEntity.getObjectName())
                 .bucketName(fileStorageEntity.getBucketName())
                 .crc(fileStorageEntity.getCrc())
+                .md5(fileStorageEntity.getMd5())
                 .build();
     }
 
     @Override
-    public FileModel getOneByCrc(String crc) {
+    public FileModel getOneByMd5(String md5) {
         FileStorageEntity fileStorageEntity = fileStorageMapper.selectOne(
                 Wrappers.<FileStorageEntity>lambdaQuery()
-                        .eq(FileStorageEntity::getCrc, crc).last(" limit 1"));
+                        .eq(FileStorageEntity::getMd5, md5).last(" limit 1"));
         return FileModel.builder()
                 .fileSize(fileStorageEntity.getFileSize())
                 .objectName(fileStorageEntity.getObjectName())

@@ -15,11 +15,13 @@ import java.io.Serializable;
 @Data
 @ApiModel(value = "CancelPartRequest", description = "取消分片上传")
 public class CancelMultipartRequest implements Serializable {
+
     private static final long serialVersionUID = 1L;
+
     /**
      * 上传唯一标识
      */
-    @ApiModelProperty(name = "uploadId", value = "上传唯一标识")
+    @ApiModelProperty(name = "uploadId", value = "上传唯一标识", required = true)
     @NotBlank(message = "不能为空")
     private String uploadId;
 }
