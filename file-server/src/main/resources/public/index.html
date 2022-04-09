@@ -183,36 +183,8 @@
         callbacks: {
             onUpload: function (id, name) {
                 let file = this.getFile(id);
-                console.info("md5", file.md5);
                 if (!file.init) {
-                    // init
-                    $.ajax({
-                        type: "POST",
-                        url: "/initMultipart",
-                        data: {
-                            fileName: this.getName(id),
-                            fileSize: this.getSize(id),
-                            partSize: chunkSize,
-                        },
-                        cache: false,
-                        async: false, // 与js同步
-                        dataType: "json",
-                        success: function (response) {
-                            if (response.success) {
-                                file.init = true;
-                                this.setUuid(id, response.data.uploadId);
-                                // 根据crc校验方式计算校验码
-                                if (response.data.crc === "md5") {
-                                    computeMd5(this, id);
-                                }
-                                if (response.data.crc === "crc32") {
-                                    computeCrc32(this, id);
-                                }
-                            }
-                        },
-                    });
-                    // 计算md5 并初始化上传任务
-                    return computeMd5(this, id);
+                    initPartUpload(this, id);
                 }
             },
             onCancel: function (id) {
@@ -252,6 +224,34 @@
 </script>
 
 <script>
+
+    function initPartUpload(uploader, id) {
+        $.ajax({
+            type: "POST",
+            url: "/initMultipart",
+            data: {
+                fileName: uploader.getName(id),
+                fileSize: uploader.getSize(id),
+                partSize: chunkSize,
+            },
+            cache: false,
+            async: false, // 与js同步
+            dataType: "json",
+            success: function (response) {
+                if (response.success) {
+                    file.init = true;
+                    uploader.setUuid(id, response.data.uploadId);
+                    // 根据crc校验方式计算校验码
+                    if (response.data.crc === "md5") {
+                        return computeMd5(uploader, id);
+                    }
+                    if (response.data.crc === "crc32") {
+                        return computeCrc32(uploader, id);
+                    }
+                }
+            },
+        });
+    }
 
     /**
      * @returns Promise
@@ -297,11 +297,6 @@
 
             loadNext();
         });
-    }
-
-    function computeMd5Success(uploader, id, md5, crc32) {
-        console.info("compute md5 success", uploader.getName(id), md5, crc32);
-
     }
 
     function computeCrc32(uploader, id) {
