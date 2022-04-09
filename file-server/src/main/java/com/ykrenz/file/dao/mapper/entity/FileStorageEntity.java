@@ -14,6 +14,10 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 @TableName("file_storage")
 public class FileStorageEntity extends BaseEntity {
+    /**
+     * 文件名称
+     */
+    private String fileName;
 
     /**
      * 文件大小

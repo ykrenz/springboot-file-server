@@ -174,6 +174,9 @@ public class FileServiceImpl implements FileService {
     public FileResult info(FileInfoRequest request) {
         String fileId = request.getId();
         FileModel fileModel = fileDao.getById(fileId);
+        if (fileModel == null) {
+            throw new ApiException(ErrorCode.FILE_NOT_FOUND);
+        }
         return getFileResultByFileModel(fileId, fileModel);
     }
 
