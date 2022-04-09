@@ -183,8 +183,7 @@
         callbacks: {
             onUpload: function (id, name) {
                 let file = this.getFile(id);
-                file.init = false;
-                if (!file.init) {
+                if (file.init === undefined || !file.init) {
                     initPartUpload(this, id);
                     file.init = true;
                 }
