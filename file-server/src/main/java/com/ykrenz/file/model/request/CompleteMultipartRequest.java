@@ -26,8 +26,7 @@ public class CompleteMultipartRequest implements Serializable {
     /**
      * crc校验码
      */
-    @ApiModelProperty(name = "crc", value = "校验码,必须保证和初始化分片返回crc类型一致", required = true)
-    @NotBlank(message = "校验码不能为空")
+    @ApiModelProperty(name = "crc", value = "校验码,必须保证和初始化分片返回crc类型一致")
     private String crc;
 
     /**

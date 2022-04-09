@@ -13,6 +13,7 @@ import com.ykrenz.file.model.result.ListMultipartResult;
 import com.ykrenz.file.upload.storage.FileServerClient;
 import com.ykrenz.file.upload.storage.StorageType;
 import com.ykrenz.file.upload.storage.model.*;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
@@ -100,6 +101,7 @@ public class FileServiceImpl implements FileService {
 
         InitUploadMultipartResult initUploadMultipartResult = new InitUploadMultipartResult();
         initUploadMultipartResult.setUploadId(response.getUploadId());
+        initUploadMultipartResult.setCrc(fileServerClient.crc());
         initUploadMultipartResult.setExpireTime(-1);
         if (expireDay > 0) {
             long createTime = response.getCreateTime();
@@ -148,6 +150,11 @@ public class FileServiceImpl implements FileService {
         CompleteRequest completeRequest = new CompleteRequest();
         completeRequest.setUploadId(request.getUploadId());
         completeRequest.setCrc(request.getCrc());
+
+        if (StringUtils.isNotBlank(fileServerClient.crc()) && StringUtils.isBlank(request.getCrc())) {
+            throw new ApiException(ErrorCode.PARAM_ERROR.getMessage() + "crc校验码不能为空");
+        }
+
         UploadResponse response = fileServerClient.completeMultipart(completeRequest);
         String md5 = request.getMd5();
         String fileId = saveFile(response, md5);
