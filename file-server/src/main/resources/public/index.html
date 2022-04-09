@@ -191,10 +191,12 @@
             },
             onUploadChunk: function (id, name, chunkData) {
                 const partNumber = chunkData.partIndex + 1;
+                this.setParams({"partNumber": partNumber}, id);
+            },
+            onUploadChunkSuccess: function (id, chunkData, response, xhr) {
+                const partNumber = chunkData.partIndex + 1;
                 if (chunkData.totalParts === partNumber) {
-                    this.setParams({"partNumber": partNumber, "crc": this.getFile(id).crc}, id);
-                } else {
-                    this.setParams({"partNumber": partNumber}, id);
+                    this.setParams({"crc": this.getFile(id).crc}, id);
                 }
             },
             onCancel: function (id) {
