@@ -1,5 +1,6 @@
 package com.ykrenz.file.dao.mapper.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -8,6 +9,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
+@TableName("file_upload")
 public class FileUploadEntity extends BaseEntity {
 
     /**

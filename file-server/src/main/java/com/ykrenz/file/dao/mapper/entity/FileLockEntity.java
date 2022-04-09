@@ -1,8 +1,7 @@
 package com.ykrenz.file.dao.mapper.entity;
 
 import com.baomidou.mybatisplus.annotation.TableId;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -13,14 +12,20 @@ import java.time.LocalDateTime;
  * @date 2022/3/1
  */
 @Data
-@ApiModel(value = "Lock", description = "锁")
+@TableName("file_lock")
 public class FileLockEntity implements Serializable {
     private static final long serialVersionUID = 1L;
-    @ApiModelProperty(value = "锁key")
+    /**
+     * 锁key
+     */
     @TableId
     private String lockKey;
-    @ApiModelProperty(value = "生成时间")
+    /**
+     * 生成时间
+     */
     private LocalDateTime createTime;
-    @ApiModelProperty(value = "过期时间")
+    /**
+     * 过期时间
+     */
     private LocalDateTime expireTime;
 }
