@@ -183,10 +183,33 @@
         callbacks: {
             onUpload: function (id, name) {
                 console.info("md5", this.getFile(id).md5);
-                // fastdfs建议计算crc32 保证文件完整性
-                // 云存储建议使用md5验证
-                // 当然也可以都计算保存到数据库 但是这样会消耗一些不必要的性能 可以根据需求调整。
                 if (!this.getFile(id).init) {
+                    // init
+                    $.ajax({
+                        type: "POST",
+                        url: "/initMultipart",
+                        data: {
+                            fileName: uploader.getName(id),
+                            fileSize: uploader.getSize(id),
+                            partSize: chunkSize,
+                        },
+                        cache: false,
+                        async: false, // 与js同步
+                        dataType: "json",
+                        success: function (response) {
+                            if (response.success) {
+                                this.getFile(id).init = true;
+                                this.setUuid(id, response.data.uploadId);
+                                // 根据crc校验方式计算校验码
+                                if (response.data.crc === "md5") {
+                                    computeMd5(this, id);
+                                }
+                                if (response.data.crc === "crc32") {
+                                    computeCrc32(this, id);
+                                }
+                            }
+                        },
+                    });
                     // 计算md5 并初始化上传任务
                     return computeMd5(this, id);
                 }
@@ -236,25 +259,21 @@
      */
     function computeMd5(uploader, id) {
         return new Promise((resolve, reject) => {
-            var file = uploader.getFile(id);
+            const file = uploader.getFile(id);
             let blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice;
             let chunks = Math.ceil(file.size / chunkSize);
             let currentChunk = 0;
             let spark = new SparkMD5.ArrayBuffer();
-            let crc = new Crc32();
 
             let fileReader = new FileReader();
             fileReader.onload = function (e) {
                 spark.append(e.target.result);
-                crc.append(new Uint8Array(e.target.result));
-
                 currentChunk++;
                 if (currentChunk < chunks) {
                     loadNext();
                 } else {
                     let md5 = spark.end();
-                    let crc32 = crc.compute();
-                    computeMd5Success(uploader, id, md5, crc32);
+                    computeCrcSuccess(uploader, id, md5);
                     if (!uploader.getFile(id).init) {
                         reject(e);
                     }
@@ -281,28 +300,52 @@
 
     function computeMd5Success(uploader, id, md5, crc32) {
         console.info("compute md5 success", uploader.getName(id), md5, crc32);
-        // init
-        $.ajax({
-            type: "POST",
-            url: "/initMultipart",
-            data: {
-                fileName: uploader.getName(id),
-                fileSize: uploader.getSize(id),
-                partSize: chunkSize,
-                fileMd5: md5,
-                fileCrc32: crc32,
-            },
-            cache: false,
-            async: false, // 与js同步
-            dataType: "json",
-            success: function (response) {
-                if (response.success) {
-                    uploader.getFile(id).init = true;
-                    uploader.setUuid(id, response.data.uploadId);
-                    uploader.setParams({"fileMd5": md5, "fileCrc32": crc32, "info": true}, id);
+
+    }
+
+    function computeCrc32(uploader, id) {
+        return new Promise((resolve, reject) => {
+            const file = uploader.getFile(id);
+            let blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice;
+            let chunks = Math.ceil(file.size / chunkSize);
+            let currentChunk = 0;
+            let crc = new Crc32();
+            let fileReader = new FileReader();
+            fileReader.onload = function (e) {
+                crc.append(new Uint8Array(e.target.result));
+                currentChunk++;
+                if (currentChunk < chunks) {
+                    loadNext();
+                } else {
+                    let crc32 = crc.compute();
+                    computeCrcSuccess(uploader, id, crc32);
+                    if (!uploader.getFile(id).init) {
+                        reject(e);
+                    }
+                    resolve(crc32);
                 }
-            },
+            };
+
+            fileReader.onerror = function (e) {
+                reject(e);
+            };
+
+            function loadNext() {
+                let start = currentChunk * chunkSize;
+                let end = start + chunkSize;
+                if (end > file.size) {
+                    end = file.size;
+                }
+                fileReader.readAsArrayBuffer(blobSlice.call(file, start, end));
+            }
+
+            loadNext();
         });
+    }
+
+    function computeCrcSuccess(uploader, id, crc) {
+        console.info("compute crc success", uploader.getName(id), crc);
+        uploader.setParams({"crc": crc}, id);
     }
 </script>
 </body>
