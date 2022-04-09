@@ -182,15 +182,16 @@
         },
         callbacks: {
             onUpload: function (id, name) {
-                console.info("md5", this.getFile(id).md5);
-                if (!this.getFile(id).init) {
+                let file = this.getFile(id);
+                console.info("md5", file.md5);
+                if (!file.init) {
                     // init
                     $.ajax({
                         type: "POST",
                         url: "/initMultipart",
                         data: {
-                            fileName: uploader.getName(id),
-                            fileSize: uploader.getSize(id),
+                            fileName: this.getName(id),
+                            fileSize: this.getSize(id),
                             partSize: chunkSize,
                         },
                         cache: false,
@@ -198,7 +199,7 @@
                         dataType: "json",
                         success: function (response) {
                             if (response.success) {
-                                this.getFile(id).init = true;
+                                file.init = true;
                                 this.setUuid(id, response.data.uploadId);
                                 // 根据crc校验方式计算校验码
                                 if (response.data.crc === "md5") {
