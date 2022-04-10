@@ -25,7 +25,7 @@ spring:
         max-wait: 2500
         min-idle: 0
   datasource:
-    url: jdbc:mysql://192.168.24.130:12345/filedb?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&autoReconnect=true&failOverReadOnly=false&useSSL=false
+    url: jdbc:mysql://192.168.24.130:12345/file?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&autoReconnect=true&failOverReadOnly=false&useSSL=false
     username: root
     password: 123456
     type: com.zaxxer.hikari.HikariDataSource
