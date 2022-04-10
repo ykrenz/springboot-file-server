@@ -25,8 +25,11 @@ import java.io.IOException;
 @Api(tags = "文件")
 public class FileController {
 
-    @Autowired
-    private FileService fileService;
+    private final FileService fileService;
+
+    public FileController(FileService fileService) {
+        this.fileService = fileService;
+    }
 
     @ApiOperation(value = "简单上传", notes = "文件大小10Mb以内")
     @ApiOperationSupport(order = 1)
@@ -35,7 +38,8 @@ public class FileController {
         return ResultUtil.success(fileService.upload(request));
     }
 
-    @ApiOperation(value = "极速上传", notes = "匹配md5秒传")
+    @ApiOperation(value = "极速秒传", notes = "匹配hash(具体看服务器支持类型,可参考初始化分片接口返回的checkMode)+分段md5秒传," +
+            "注意:分段md5为8k 文件大小必须大于8k")
     @ApiOperationSupport(order = 2)
     @PostMapping("/fastUpload")
     public ResultUtil<FileResult> upload(@Validated FastUploadRequest request) {
@@ -85,12 +89,4 @@ public class FileController {
     public ResultUtil<FileResult> getFile(@Validated FileInfoRequest request) {
         return ResultUtil.success(fileService.info(request));
     }
-
-//    @ApiOperation("删除所有文件-测试使用")
-//    @ApiOperationSupport(order = 8)
-//    @PostMapping("/deleteAllFiles")
-//    public ResultUtil<Object> deleteAllFiles() {
-//        fileService.deleteAllFiles();
-//        return ResultUtil.success();
-//    }
 }

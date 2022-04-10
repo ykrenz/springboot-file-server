@@ -1,6 +1,6 @@
 package com.ykrenz.file.exception;
 
-import com.ykrenz.file.model.ErrorCode;
+import com.ykrenz.file.model.ApiErrorMessage;
 import lombok.Getter;
 
 /**
@@ -15,14 +15,14 @@ public class ApiException extends RuntimeException {
 
     private Boolean reset;
 
-    public ApiException(ErrorCode errorCode) {
-        super(errorCode.getMessage());
-        this.error = errorCode.getMessage();
+    public ApiException(ApiErrorMessage errorMessage) {
+        super(errorMessage.getMessage());
+        this.error = errorMessage.getMessage();
     }
 
-    public ApiException(ErrorCode errorCode, Boolean reset) {
-        super(errorCode.getMessage());
-        this.error = errorCode.getMessage();
+    public ApiException(ApiErrorMessage errorMessage, Boolean reset) {
+        super(errorMessage.getMessage());
+        this.error = errorMessage.getMessage();
         this.reset = reset;
     }
 

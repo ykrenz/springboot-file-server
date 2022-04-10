@@ -24,14 +24,10 @@ public class CompleteMultipartRequest implements Serializable {
     private String uploadId;
 
     /**
-     * crc校验码
+     * 校验码
      */
-    @ApiModelProperty(name = "crc", value = "校验码,必须保证和初始化分片返回crc类型一致")
-    private String crc;
+    @ApiModelProperty(name = "hash", value = "校验码,保证与checkMode类型一致")
+    @NotBlank(message = "不能为空")
+    private String hash;
 
-    /**
-     * 文件md5
-     */
-    @ApiModelProperty(name = "md5", value = "文件md5 可用于急速秒传")
-    private String md5;
 }

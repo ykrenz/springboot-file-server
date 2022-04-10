@@ -1,6 +1,6 @@
 package com.ykrenz.file.exception;
 
-import com.ykrenz.file.model.ErrorCode;
+import com.ykrenz.file.model.SystemErrorMessage;
 import com.ykrenz.file.model.ResultUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -74,19 +74,7 @@ public class ExceptionAdvice {
     @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
     @ExceptionHandler({HttpRequestMethodNotSupportedException.class})
     public ResultUtil<String> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException e) {
-        return ResultUtil.error(ErrorCode.HTTP_METHOD_ERROR);
-    }
-
-    /**
-     * 返回状态码:400
-     */
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler({MultipartException.class})
-    public ResultUtil<String> multipartException(MultipartException e) {
-        if (e instanceof MaxUploadSizeExceededException) {
-            return ResultUtil.error(ErrorCode.FILE_TO_LARGE);
-        }
-        return ResultUtil.error(ErrorCode.HTTP_METHOD_ERROR);
+        return ResultUtil.error(SystemErrorMessage.HTTP_METHOD_ERROR);
     }
 
     /**
@@ -95,16 +83,7 @@ public class ExceptionAdvice {
     @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
     @ExceptionHandler({HttpMediaTypeNotSupportedException.class})
     public ResultUtil<String> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException e) {
-        return ResultUtil.error(ErrorCode.HTTP_MEDIA_ERROR);
-    }
-
-    /**
-     * 业务异常直接抛给客户端
-     */
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(ApiException.class)
-    public ResultUtil<Object> apiException(ApiException e) {
-        return ResultUtil.error(e.getMessage(), e.getReset());
+        return ResultUtil.error(SystemErrorMessage.HTTP_MEDIA_ERROR);
     }
 
     /**
@@ -120,7 +99,7 @@ public class ExceptionAdvice {
      * 参数异常
      */
     private ResultUtil<String> paramError(String msg) {
-        String message = ErrorCode.PARAM_ERROR.getMessage();
+        String message = SystemErrorMessage.PARAM_ERROR.getMessage();
         return ResultUtil.error(message + msg);
     }
 
@@ -129,6 +108,28 @@ public class ExceptionAdvice {
      */
     private ResultUtil<String> errorServerHandler(Exception e) {
         log.error("服务异常::", e);
-        return ResultUtil.error(ErrorCode.SERVER_ERROR);
+        return ResultUtil.error(SystemErrorMessage.SERVER_ERROR);
+    }
+
+
+    /**
+     * 返回状态码:400
+     */
+    @ResponseStatus(HttpStatus.OK)
+    @ExceptionHandler({MultipartException.class})
+    public ResultUtil<String> multipartException(MultipartException e) {
+        if (e instanceof MaxUploadSizeExceededException) {
+            return ResultUtil.error(SystemErrorMessage.FILE_TO_LARGE);
+        }
+        return ResultUtil.error(SystemErrorMessage.HTTP_METHOD_ERROR);
+    }
+
+    /**
+     * 业务异常直接抛给客户端
+     */
+    @ResponseStatus(HttpStatus.OK)
+    @ExceptionHandler(ApiException.class)
+    public ResultUtil<Object> apiException(ApiException e) {
+        return ResultUtil.error(e.getMessage(), e.getReset());
     }
 }

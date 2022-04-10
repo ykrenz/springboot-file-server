@@ -17,10 +17,6 @@ public class StorageProperties {
      */
     private StorageType storage = StorageType.fastdfs;
     /**
-     * 普通上传支持最大文件Size
-     */
-    private DataSize maxUploadSize = DataSize.ofMegabytes(1L);
-    /**
      * 上传分片支持最小Size
      */
     private DataSize multipartMinSize = DataSize.ofBytes(1L);

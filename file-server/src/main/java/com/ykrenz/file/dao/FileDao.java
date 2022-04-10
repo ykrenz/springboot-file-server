@@ -6,5 +6,5 @@ public interface FileDao {
 
     FileModel getById(String id);
 
-    FileModel getOneByMd5(String md5);
+    FileModel getOneByHash(String hash, String sliceMd5);
 }

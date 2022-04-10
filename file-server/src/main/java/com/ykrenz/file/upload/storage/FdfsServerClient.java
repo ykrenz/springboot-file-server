@@ -6,8 +6,8 @@ import com.ykrenz.fastdfs.model.UploadMultipartPartRequest;
 import com.ykrenz.fastdfs.model.fdfs.FileInfo;
 import com.ykrenz.fastdfs.model.fdfs.StorePath;
 import com.ykrenz.file.exception.ApiException;
+import com.ykrenz.file.model.ApiErrorMessage;
 import com.ykrenz.file.model.CommonUtils;
-import com.ykrenz.file.model.ErrorCode;
 import com.ykrenz.file.upload.storage.model.*;
 import com.ykrenz.file.upload.manager.*;
 import com.ykrenz.file.upload.manager.UploadModel;
@@ -40,23 +40,29 @@ public class FdfsServerClient implements FileServerClient {
     }
 
     @Override
-    public String crc() {
-        return CrcType.CRC32.getValue();
+    public HashType hash() {
+        return HashType.CRC32;
     }
 
     @Override
     public UploadResponse upload(UploadRequest request) throws IOException {
         MultipartFile file = request.getFile();
         StorePath storePath = fastDfs.uploadFile(file.getInputStream(), file.getSize(), getFileExtension(file));
-        checkCrc32(request.getCrc(), storePath);
-
         UploadResponse response = new UploadResponse();
         response.setFileName(file.getOriginalFilename());
         response.setFileSize(file.getSize());
         response.setBucketName(storePath.getGroup());
         response.setObjectName(storePath.getPath());
-        response.setCrc(request.getCrc());
+        response.setHash(getHash(storePath));
         return response;
+    }
+
+    private String getHash(StorePath storePath) {
+        FileInfo fileInfo = fastDfs.queryFileInfo(storePath.getGroup(), storePath.getPath());
+        if (fileInfo == null) {
+            return null;
+        }
+        return String.valueOf(fileInfo.getCrc32());
     }
 
     private String getFileExtension(MultipartFile file) {
@@ -124,14 +130,14 @@ public class FdfsServerClient implements FileServerClient {
         String uploadId = request.getUploadId();
         InitUploadModel upload = this.checkUpload(uploadId);
         StorePath storePath = fastDfs.completeMultipartUpload(upload.getBucketName(), upload.getObjectName());
-        checkCrc32(request.getCrc(), storePath);
+        checkCrc32(request.getHash(), storePath);
 
         UploadResponse response = new UploadResponse();
         response.setFileName(upload.getFileName());
         response.setFileSize(upload.getFileSize());
         response.setBucketName(storePath.getGroup());
         response.setObjectName(storePath.getPath());
-        response.setCrc(request.getCrc());
+        response.setHash(request.getHash());
 
         uploadManager.clearParts(uploadId);
         return response;
@@ -142,7 +148,7 @@ public class FdfsServerClient implements FileServerClient {
             FileInfo fileInfo = fastDfs.queryFileInfo(path.getGroup(), path.getPath());
             long crcUnsigned = Crc32.convertUnsigned(fileInfo.getCrc32());
             if (!StringUtils.equalsIgnoreCase(crc32, String.valueOf(crcUnsigned))) {
-                throw new ApiException(ErrorCode.FILE_CRC_ERROR);
+                throw new ApiException(ApiErrorMessage.FILE_CRC_ERROR);
             }
         }
     }
@@ -188,7 +194,7 @@ public class FdfsServerClient implements FileServerClient {
     private InitUploadModel checkUpload(String uploadId) {
         InitUploadModel upload = uploadManager.getUpload(uploadId);
         if (Objects.isNull(upload)) {
-            throw new ApiException(ErrorCode.UPLOAD_ID_NOT_FOUND, true);
+            throw new ApiException(ApiErrorMessage.UPLOAD_ID_NOT_FOUND, true);
         }
         return upload;
     }

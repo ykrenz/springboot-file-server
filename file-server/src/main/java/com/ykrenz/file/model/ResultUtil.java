@@ -25,7 +25,7 @@ public class ResultUtil<T> implements Serializable {
     private T data;
     @ApiModelProperty("错误信息")
     private String error;
-    @ApiModelProperty("重置上传标识 分片上传时客户端可根据该标识重置上传")
+    @ApiModelProperty("重置标识 分片上传时客户端可根据该标识重置上传")
     private Boolean reset;
 
 
@@ -66,7 +66,7 @@ public class ResultUtil<T> implements Serializable {
      * @param <T>
      * @return
      */
-    public static <T> ResultUtil<T> error(ErrorCode error) {
+    public static <T> ResultUtil<T> error(SystemErrorMessage error) {
         return new ResultUtil<>(error.getMessage(), null);
     }
 

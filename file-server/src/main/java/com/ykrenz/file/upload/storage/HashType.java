@@ -1,13 +1,13 @@
 package com.ykrenz.file.upload.storage;
 
-public enum CrcType {
+public enum HashType {
     CRC32("crc32"),
     CRC64("crc64"),
     MD5("md5");
 
     String value;
 
-    CrcType(String value) {
+    HashType(String value) {
         this.value = value;
     }
 

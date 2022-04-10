@@ -28,7 +28,7 @@ public class InitUploadMultipartRequest implements Serializable {
     @Min(value = 0, message = "文件大小不能为空")
     private Long fileSize;
 
-    @ApiModelProperty(name = "partSize", value = "分片大小", required = true)
+    @ApiModelProperty(name = "partSize", value = "分片大小5~50MB", required = true)
     @NotNull(message = "分片大小不能为空")
     private Long partSize;
 

@@ -28,12 +28,13 @@ public class FileModel {
     private String objectName;
 
     /**
-     * crc
+     * 校验码
      */
-    private String crc;
+    private String hash;
 
     /**
-     * md5
+     * 分段md5
      */
-    private String md5;
+    private String sliceMd5;
+
 }

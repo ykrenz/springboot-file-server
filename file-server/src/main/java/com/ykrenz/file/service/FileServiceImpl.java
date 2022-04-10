@@ -3,8 +3,8 @@ package com.ykrenz.file.service;
 import com.ykrenz.file.config.StorageProperties;
 import com.ykrenz.file.dao.FileDao;
 import com.ykrenz.file.exception.ApiException;
+import com.ykrenz.file.model.ApiErrorMessage;
 import com.ykrenz.file.model.CommonUtils;
-import com.ykrenz.file.model.ErrorCode;
 import com.ykrenz.file.dao.FileModel;
 import com.ykrenz.file.model.result.InitUploadMultipartResult;
 import com.ykrenz.file.model.request.*;
@@ -13,10 +13,8 @@ import com.ykrenz.file.model.result.ListMultipartResult;
 import com.ykrenz.file.upload.storage.FileServerClient;
 import com.ykrenz.file.upload.storage.StorageType;
 import com.ykrenz.file.upload.storage.model.*;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -32,7 +30,6 @@ import java.util.stream.Collectors;
 @Service
 public class FileServiceImpl implements FileService {
 
-    private final long maxUploadSize;
     private final long multipartMinSize;
     private final long multipartMaxSize;
     private final int expireDay;
@@ -45,7 +42,6 @@ public class FileServiceImpl implements FileService {
 
         this.fileServerClient = fileServerMap.get(storageProperties.getStorage());
         this.fileDao = fileDao;
-        this.maxUploadSize = storageProperties.getMaxUploadSize().toBytes();
         this.multipartMinSize = storageProperties.getMultipartMinSize().toBytes();
         this.multipartMaxSize = storageProperties.getMultipartMaxSize().toBytes();
         this.expireDay = storageProperties.getExpireDay();
@@ -53,27 +49,18 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public FileResult upload(SimpleUploadRequest request) throws IOException {
-        // 限制文件大小
-        MultipartFile file = request.getFile();
-        if (file.getSize() > maxUploadSize) {
-            String msg = String.format("文件限制%dM,请使用分片上传", maxUploadSize / 1024 / 1024);
-            throw new ApiException(msg);
-        }
         UploadResponse response = uploadServer(request);
-        String md5 = DigestUtils.md5DigestAsHex(file.getInputStream());
-        String fileId = saveFile(response, md5);
-
+        String fileId = saveFile(response);
         FileResult fileResult = convert2FileResult(response);
         fileResult.setId(fileId);
-        fileResult.setMd5(md5);
         return fileResult;
     }
 
     @Override
     public FileResult fastUpload(FastUploadRequest request) {
-        FileModel fileModel = fileDao.getOneByMd5(request.getMd5());
+        FileModel fileModel = fileDao.getOneByHash(request.getHash(),request.getSliceMd5());
         if (fileModel == null) {
-            return null;
+            throw new ApiException(ApiErrorMessage.FILE_NOT_FOUND);
         }
         fileModel.setFileName(request.getFileName());
         String fileId = fileDao.save(fileModel);
@@ -101,7 +88,7 @@ public class FileServiceImpl implements FileService {
 
         InitUploadMultipartResult initUploadMultipartResult = new InitUploadMultipartResult();
         initUploadMultipartResult.setUploadId(response.getUploadId());
-        initUploadMultipartResult.setCrc(fileServerClient.crc());
+        initUploadMultipartResult.setCheckMode(fileServerClient.hash().getValue());
         initUploadMultipartResult.setExpireTime(-1);
         if (expireDay > 0) {
             long createTime = response.getCreateTime();
@@ -149,19 +136,11 @@ public class FileServiceImpl implements FileService {
     public FileResult completeMultipart(CompleteMultipartRequest request) {
         CompleteRequest completeRequest = new CompleteRequest();
         completeRequest.setUploadId(request.getUploadId());
-        completeRequest.setCrc(request.getCrc());
-
-        if (StringUtils.isNotBlank(fileServerClient.crc()) && StringUtils.isBlank(request.getCrc())) {
-            throw new ApiException(ErrorCode.PARAM_ERROR.getMessage() + "crc校验码不能为空");
-        }
-
+        completeRequest.setHash(request.getHash());
         UploadResponse response = fileServerClient.completeMultipart(completeRequest);
-        String md5 = request.getMd5();
-        String fileId = saveFile(response, md5);
-
+        String fileId = saveFile(response);
         FileResult fileResult = convert2FileResult(response);
         fileResult.setId(fileId);
-        fileResult.setMd5(md5);
         return fileResult;
     }
 
@@ -175,7 +154,7 @@ public class FileServiceImpl implements FileService {
         String fileId = request.getId();
         FileModel fileModel = fileDao.getById(fileId);
         if (fileModel == null) {
-            throw new ApiException(ErrorCode.FILE_NOT_FOUND);
+            throw new ApiException(ApiErrorMessage.FILE_NOT_FOUND);
         }
         FileResult fileResult = convert2FileResult(fileModel);
         fileResult.setId(fileId);
@@ -188,14 +167,13 @@ public class FileServiceImpl implements FileService {
     }
 
 
-    private String saveFile(UploadResponse response, String md5) {
+    private String saveFile(UploadResponse response) {
         return fileDao.save(FileModel.builder()
                 .fileName(response.getFileName())
                 .fileSize(response.getFileSize())
                 .bucketName(response.getBucketName())
                 .objectName(response.getObjectName())
-                .crc(response.getCrc())
-                .md5(md5)
+                .hash(response.getHash())
                 .build());
     }
 
@@ -206,7 +184,7 @@ public class FileServiceImpl implements FileService {
         fileResult.setFileSize(response.getFileSize());
         fileResult.setBucketName(response.getBucketName());
         fileResult.setObjectName(response.getObjectName());
-        fileResult.setCrc(response.getCrc());
+        fileResult.setHash(response.getHash());
         //            fileResult.setUrl(fileServerClient2.getUrl());
         return fileResult;
     }
@@ -217,7 +195,6 @@ public class FileServiceImpl implements FileService {
         fileResult.setFileSize(fileModel.getFileSize());
         fileResult.setBucketName(fileModel.getBucketName());
         fileResult.setObjectName(fileModel.getObjectName());
-        fileResult.setMd5(fileModel.getMd5());
         //            fileResult.setUrl(fileServerClient2.getUrl());
         return fileResult;
     }

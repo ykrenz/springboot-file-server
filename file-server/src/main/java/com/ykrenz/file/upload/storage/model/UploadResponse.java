@@ -26,7 +26,7 @@ public class UploadResponse {
     private String objectName;
 
     /**
-     * crc校验码
+     * 校验码
      */
-    private String crc;
+    private String hash;
 }

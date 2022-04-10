@@ -23,7 +23,7 @@ public interface FileServerClient {
      *
      * @return
      */
-    String crc();
+    HashType hash();
 
     /**
      * 上传

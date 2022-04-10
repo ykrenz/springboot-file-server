@@ -11,7 +11,7 @@ public class CompleteRequest {
     private String uploadId;
 
     /**
-     * crc校验码
+     * 校验码
      */
-    private String crc;
+    private String hash;
 }

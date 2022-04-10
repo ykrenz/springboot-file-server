@@ -22,8 +22,7 @@ public class MapperDao implements FileDao {
         fileStorageEntity.setBucketName(fileModel.getBucketName());
         fileStorageEntity.setObjectName(fileModel.getObjectName());
         fileStorageEntity.setFileSize(fileModel.getFileSize());
-        fileStorageEntity.setCrc(fileModel.getCrc());
-        fileStorageEntity.setMd5(fileModel.getMd5());
+        fileStorageEntity.setHash(fileModel.getHash());
         fileStorageEntity.setStatus(1);
         fileStorageMapper.insert(fileStorageEntity);
         return fileStorageEntity.getId();
@@ -40,21 +39,25 @@ public class MapperDao implements FileDao {
                 .fileSize(fileStorageEntity.getFileSize())
                 .objectName(fileStorageEntity.getObjectName())
                 .bucketName(fileStorageEntity.getBucketName())
-                .crc(fileStorageEntity.getCrc())
-                .md5(fileStorageEntity.getMd5())
+                .hash(fileStorageEntity.getHash())
+                .sliceMd5(fileStorageEntity.getSliceMd5())
                 .build();
     }
 
     @Override
-    public FileModel getOneByMd5(String md5) {
+    public FileModel getOneByHash(String hash, String sliceMd5) {
         FileStorageEntity fileStorageEntity = fileStorageMapper.selectOne(
                 Wrappers.<FileStorageEntity>lambdaQuery()
-                        .eq(FileStorageEntity::getMd5, md5).last(" limit 1"));
+                        .eq(FileStorageEntity::getHash, hash)
+                        .eq(FileStorageEntity::getSliceMd5, sliceMd5)
+                        .last(" limit 1"));
         return FileModel.builder()
                 .fileSize(fileStorageEntity.getFileSize())
                 .objectName(fileStorageEntity.getObjectName())
                 .bucketName(fileStorageEntity.getBucketName())
-                .crc(fileStorageEntity.getCrc())
+                .hash(fileStorageEntity.getHash())
+                .sliceMd5(fileStorageEntity.getSliceMd5())
                 .build();
     }
+
 }
