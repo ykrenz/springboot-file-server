@@ -88,7 +88,7 @@ public class FileServiceImpl implements FileService {
 
         InitUploadMultipartResult initUploadMultipartResult = new InitUploadMultipartResult();
         initUploadMultipartResult.setUploadId(response.getUploadId());
-        initUploadMultipartResult.setCheckMode(fileServerClient.hash().getValue());
+        initUploadMultipartResult.setHashMode(fileServerClient.hash().getValue());
         initUploadMultipartResult.setExpireTime(-1);
         if (expireDay > 0) {
             long createTime = response.getCreateTime();

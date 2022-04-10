@@ -195,7 +195,7 @@
             onUploadChunkSuccess: function (id, chunkData, response, xhr) {
                 const partNumber = chunkData.partIndex + 1;
                 if (chunkData.totalParts === partNumber) {
-                    this.setParams({"crc": this.getFile(id).crc}, id);
+                    this.setParams({"hash": this.getFile(id).hash}, id);
                 }
             },
             onCancel: function (id) {
@@ -250,11 +250,11 @@
             success: function (response) {
                 if (response.success) {
                     uploader.setUuid(id, response.data.uploadId);
-                    // 根据crc校验方式计算校验码
-                    if (response.data.crc === "md5") {
+                    // 根据校验方式计算校验码
+                    if (response.data.hashMode === "md5") {
                         return computeMd5(uploader, id);
                     }
-                    if (response.data.crc === "crc32") {
+                    if (response.data.hashMode === "crc32") {
                         return computeCrc32(uploader, id);
                     }
                 }
@@ -344,7 +344,7 @@
 
     function computeCrcSuccess(uploader, id, crc) {
         console.info("compute crc success", uploader.getName(id), crc);
-        uploader.getFile(id).crc = crc;
+        uploader.getFile(id).hash = crc;
     }
 </script>
 </body>

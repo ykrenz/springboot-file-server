@@ -15,7 +15,7 @@ public class InitUploadMultipartResult implements Serializable {
     private String uploadId;
 
     @ApiModelProperty(value = "校验码方式(md5,sha1,crc32,crc64) 客户端必须采用相同的校验完成上传")
-    private String checkMode;
+    private String hashMode;
 
     @ApiModelProperty(value = "过期时间 过期后uploadId不可用 -1为永不过期")
     private long expireTime;
