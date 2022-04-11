@@ -21,6 +21,10 @@ public enum BizErrorMessage {
      */
     NOT_FOUND(404, "文件不存在"),
     /**
+     * 文件过大
+     */
+    SIZE_LARGE(400, "文件过大"),
+    /**
      * 分片大小错误
      */
     PART_SIZE_ERROR(400, "分片大小错误"),
@@ -30,6 +34,9 @@ public enum BizErrorMessage {
     NOT_SUPPORT(403, "服务器不支持"),
     ;
 
+    /**
+     * code
+     */
     private final int code;
     /**
      * 返回消息

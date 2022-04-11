@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.ykrenz.file.model.BizErrorMessage.PART_SIZE_ERROR;
-
 /**
  * @author ykren
  * @date 2022/3/4
@@ -32,6 +30,7 @@ import static com.ykrenz.file.model.BizErrorMessage.PART_SIZE_ERROR;
 public class FileServiceImpl implements FileService {
 
     private static final EnumSet<HashType> fastHash = EnumSet.of(HashType.MD5, HashType.SHA1);
+    private final long maxUploadSize;
     private final long multipartMinSize;
     private final long multipartMaxSize;
     private final int expireDay;
@@ -42,15 +41,19 @@ public class FileServiceImpl implements FileService {
                            Map<StorageType, FileServerClient> fileServerMap,
                            FileDao fileDao) {
 
-        this.fileServerClient = fileServerMap.get(storageProperties.getStorage());
-        this.fileDao = fileDao;
+        this.maxUploadSize = storageProperties.getMaxUploadSize().toBytes();
         this.multipartMinSize = storageProperties.getMultipartMinSize().toBytes();
         this.multipartMaxSize = storageProperties.getMultipartMaxSize().toBytes();
+        this.fileServerClient = fileServerMap.get(storageProperties.getStorage());
+        this.fileDao = fileDao;
         this.expireDay = storageProperties.getExpireDay();
     }
 
     @Override
     public FileResult upload(SimpleUploadRequest request) throws IOException {
+        if (request.getFile().getSize() > maxUploadSize) {
+            throw new BizException(BizErrorMessage.SIZE_LARGE);
+        }
         UploadResponse response = uploadServer(request);
         String fileId = saveFile(response);
         FileResult fileResult = convert2FileResult(response);

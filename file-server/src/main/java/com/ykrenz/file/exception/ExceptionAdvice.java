@@ -12,8 +12,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
-import org.springframework.web.multipart.MultipartException;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
@@ -109,19 +107,6 @@ public class ExceptionAdvice {
     private ResultUtil<String> errorServerHandler(Exception e) {
         log.error("服务异常::", e);
         return ResultUtil.error(SystemErrorMessage.SERVER_ERROR);
-    }
-
-
-    /**
-     * 返回状态码:400
-     */
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    @ExceptionHandler({MultipartException.class})
-    public ResultUtil<String> multipartException(MultipartException e) {
-        if (e instanceof MaxUploadSizeExceededException) {
-            return ResultUtil.error(SystemErrorMessage.FILE_TO_LARGE);
-        }
-        return ResultUtil.error(SystemErrorMessage.HTTP_METHOD_ERROR);
     }
 
     /**

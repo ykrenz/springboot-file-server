@@ -10,8 +10,8 @@ server:
 spring:
   servlet:
     multipart:
-      #上传文件最大值
-      max-file-size: 10MB
+      #上传文件最大值 不要低于分片最大值
+      max-file-size: 100MB
       max-request-size: 2048MB
   redis:
     database: 0
@@ -41,6 +41,8 @@ knife4j:
 file:
   #存储类型 对应的存储服务器配置要开启才可以正常使用
   storage: fastdfs
+  #普通上传支持最大文件Size
+  max-upload-size: 10MB
   #分片文件最小值 小于5M minio会上传错误
   multipart-min-size: 5MB
   #分片文件最大值
