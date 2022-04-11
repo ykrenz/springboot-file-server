@@ -132,9 +132,10 @@ public class FdfsServerClient implements FileServerClient {
         InitUploadModel upload = this.checkUpload(uploadId);
         StorePath storePath = fastDfs.completeMultipartUpload(upload.getBucketName(), upload.getObjectName());
 
-        //TODO 校验失败 清空文件
-        checkCrc32(request.getHash(), storePath);
-
+        if (!checkCrc32(request.getHash(), storePath)) {
+            abortMultipart(uploadId);
+            throw new BizException(BizErrorMessage.CHECK_HASH_ERROR, true);
+        }
         UploadResponse response = new UploadResponse();
         response.setFileName(upload.getFileName());
         response.setFileSize(upload.getFileSize());
@@ -146,14 +147,13 @@ public class FdfsServerClient implements FileServerClient {
         return response;
     }
 
-    private void checkCrc32(String crc32, StorePath path) {
-        if (StringUtils.isNotBlank(crc32)) {
-            FileInfo fileInfo = fastDfs.queryFileInfo(path.getGroup(), path.getPath());
-            long crcUnsigned = Crc32.convertUnsigned(fileInfo.getCrc32());
-            if (!StringUtils.equalsIgnoreCase(crc32, String.valueOf(crcUnsigned))) {
-                throw new BizException(BizErrorMessage.CHECK_HASH_ERROR, true);
-            }
+    private boolean checkCrc32(String crc32, StorePath path) {
+        if (StringUtils.isBlank(crc32)) {
+            return false;
         }
+        FileInfo fileInfo = fastDfs.queryFileInfo(path.getGroup(), path.getPath());
+        long crcUnsigned = Crc32.convertUnsigned(fileInfo.getCrc32());
+        return StringUtils.equalsIgnoreCase(crc32, String.valueOf(crcUnsigned));
     }
 
     @Override
