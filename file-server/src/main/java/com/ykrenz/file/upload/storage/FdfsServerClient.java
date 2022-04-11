@@ -5,8 +5,8 @@ import com.ykrenz.fastdfs.common.Crc32;
 import com.ykrenz.fastdfs.model.UploadMultipartPartRequest;
 import com.ykrenz.fastdfs.model.fdfs.FileInfo;
 import com.ykrenz.fastdfs.model.fdfs.StorePath;
-import com.ykrenz.file.exception.ApiException;
-import com.ykrenz.file.model.ApiErrorMessage;
+import com.ykrenz.file.exception.BizException;
+import com.ykrenz.file.model.BizErrorMessage;
 import com.ykrenz.file.model.CommonUtils;
 import com.ykrenz.file.upload.storage.model.*;
 import com.ykrenz.file.upload.manager.*;
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -130,6 +131,8 @@ public class FdfsServerClient implements FileServerClient {
         String uploadId = request.getUploadId();
         InitUploadModel upload = this.checkUpload(uploadId);
         StorePath storePath = fastDfs.completeMultipartUpload(upload.getBucketName(), upload.getObjectName());
+
+        //TODO 校验失败 清空文件
         checkCrc32(request.getHash(), storePath);
 
         UploadResponse response = new UploadResponse();
@@ -148,7 +151,7 @@ public class FdfsServerClient implements FileServerClient {
             FileInfo fileInfo = fastDfs.queryFileInfo(path.getGroup(), path.getPath());
             long crcUnsigned = Crc32.convertUnsigned(fileInfo.getCrc32());
             if (!StringUtils.equalsIgnoreCase(crc32, String.valueOf(crcUnsigned))) {
-                throw new ApiException(ApiErrorMessage.FILE_CRC_ERROR);
+                throw new BizException(BizErrorMessage.CHECK_HASH_ERROR, true);
             }
         }
     }
@@ -190,11 +193,19 @@ public class FdfsServerClient implements FileServerClient {
         }).collect(Collectors.toList());
     }
 
+    @Override
+    public InputStream downLoadInputStream(DownLoadRequest request) {
+        long[] range = request.getRange();
+        if (range != null) {
+            return fastDfs.downloadFile(request.getBucketName(), request.getObjectName(), range[0], range[1], ins -> ins);
+        }
+        return fastDfs.downloadFile(request.getBucketName(), request.getObjectName(), ins -> ins);
+    }
 
     private InitUploadModel checkUpload(String uploadId) {
         InitUploadModel upload = uploadManager.getUpload(uploadId);
         if (Objects.isNull(upload)) {
-            throw new ApiException(ApiErrorMessage.UPLOAD_ID_NOT_FOUND, true);
+            throw new BizException(BizErrorMessage.UPLOAD_ID_NOT_FOUND, true);
         }
         return upload;
     }

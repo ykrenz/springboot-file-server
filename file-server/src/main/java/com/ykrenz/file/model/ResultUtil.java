@@ -25,6 +25,8 @@ public class ResultUtil<T> implements Serializable {
     private T data;
     @ApiModelProperty("错误信息")
     private String error;
+    @ApiModelProperty("错误码")
+    private Integer errno;
     @ApiModelProperty("重置标识 分片上传时客户端可根据该标识重置上传")
     private Boolean reset;
 
@@ -34,9 +36,9 @@ public class ResultUtil<T> implements Serializable {
         this.success = true;
     }
 
-    private ResultUtil(String error, Boolean reset) {
+    public ResultUtil(int errno, String error, Boolean reset) {
+        this.errno = errno;
         this.error = error;
-        this.success = false;
         this.reset = reset;
     }
 
@@ -66,15 +68,19 @@ public class ResultUtil<T> implements Serializable {
      * @param <T>
      * @return
      */
-    public static <T> ResultUtil<T> error(SystemErrorMessage error) {
-        return new ResultUtil<>(error.getMessage(), null);
-    }
-
     public static <T> ResultUtil<T> error(String error) {
-        return new ResultUtil<>(error, null);
+        return new ResultUtil<>(500, error, false);
     }
 
-    public static <T> ResultUtil<T> error(String error, Boolean reset) {
-        return new ResultUtil<>(error, reset);
+    public static <T> ResultUtil<T> error(SystemErrorMessage error) {
+        return new ResultUtil<>(500, error.getMessage(), false);
+    }
+
+    public static <T> ResultUtil<T> error(BizErrorMessage message) {
+        return error(message, false);
+    }
+
+    public static <T> ResultUtil<T> error(BizErrorMessage message, boolean reset) {
+        return new ResultUtil<>(message.getCode(), message.getMessage(), reset);
     }
 }

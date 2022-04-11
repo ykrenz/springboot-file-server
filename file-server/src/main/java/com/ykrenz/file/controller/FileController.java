@@ -38,8 +38,7 @@ public class FileController {
         return ResultUtil.success(fileService.upload(request));
     }
 
-    @ApiOperation(value = "极速秒传", notes = "匹配hash(具体看服务器支持类型,可参考初始化分片接口返回的checkMode)+分段md5秒传," +
-            "注意:分段md5为8k 文件大小必须大于8k")
+    @ApiOperation(value = "极速秒传", notes = "匹配hash(具体看服务器是否支持) errno=403不支持 404文件不存在")
     @ApiOperationSupport(order = 2)
     @PostMapping("/fastUpload")
     public ResultUtil<FileResult> upload(@Validated FastUploadRequest request) {

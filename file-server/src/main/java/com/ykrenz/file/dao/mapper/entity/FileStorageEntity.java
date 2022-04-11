@@ -39,8 +39,4 @@ public class FileStorageEntity extends BaseEntity {
      */
     private String hash;
 
-    /**
-     * 分段md5
-     */
-    private String sliceMd5;
 }

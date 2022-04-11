@@ -40,23 +40,20 @@ public class MapperDao implements FileDao {
                 .objectName(fileStorageEntity.getObjectName())
                 .bucketName(fileStorageEntity.getBucketName())
                 .hash(fileStorageEntity.getHash())
-                .sliceMd5(fileStorageEntity.getSliceMd5())
                 .build();
     }
 
     @Override
-    public FileModel getOneByHash(String hash, String sliceMd5) {
+    public FileModel getOneByHash(String hash) {
         FileStorageEntity fileStorageEntity = fileStorageMapper.selectOne(
                 Wrappers.<FileStorageEntity>lambdaQuery()
                         .eq(FileStorageEntity::getHash, hash)
-                        .eq(FileStorageEntity::getSliceMd5, sliceMd5)
                         .last(" limit 1"));
         return FileModel.builder()
                 .fileSize(fileStorageEntity.getFileSize())
                 .objectName(fileStorageEntity.getObjectName())
                 .bucketName(fileStorageEntity.getBucketName())
                 .hash(fileStorageEntity.getHash())
-                .sliceMd5(fileStorageEntity.getSliceMd5())
                 .build();
     }
 

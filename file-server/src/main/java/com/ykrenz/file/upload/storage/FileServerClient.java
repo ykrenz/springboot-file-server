@@ -3,6 +3,7 @@ package com.ykrenz.file.upload.storage;
 import com.ykrenz.file.upload.storage.model.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -79,4 +80,12 @@ public interface FileServerClient {
      * @return
      */
     List<UploadTask> listUpload();
+
+    /**
+     * 下载文件流
+     *
+     * @param request
+     * @return
+     */
+    InputStream downLoadInputStream(DownLoadRequest request);
 }

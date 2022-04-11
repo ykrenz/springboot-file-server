@@ -127,9 +127,8 @@ public class ExceptionAdvice {
     /**
      * 业务异常直接抛给客户端
      */
-    @ResponseStatus(HttpStatus.OK)
-    @ExceptionHandler(ApiException.class)
-    public ResultUtil<Object> apiException(ApiException e) {
-        return ResultUtil.error(e.getMessage(), e.getReset());
+    @ExceptionHandler(BizException.class)
+    public ResultUtil<Object> apiException(BizException e) {
+        return ResultUtil.error(e.getMessage(), e.isReset());
     }
 }
