@@ -115,7 +115,7 @@ public class ExceptionAdvice {
     /**
      * 返回状态码:400
      */
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler({MultipartException.class})
     public ResultUtil<String> multipartException(MultipartException e) {
         if (e instanceof MaxUploadSizeExceededException) {
@@ -128,7 +128,7 @@ public class ExceptionAdvice {
      * 业务异常直接抛给客户端
      */
     @ExceptionHandler(BizException.class)
-    public ResultUtil<Object> apiException(BizException e) {
-        return ResultUtil.error(e.getMessage(), e.isReset());
+    public ResultUtil<Object> bizException(BizException e) {
+        return ResultUtil.error(e.getErrorMessage(), e.isReset());
     }
 }

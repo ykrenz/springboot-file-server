@@ -130,7 +130,7 @@ public class FileServiceImpl implements FileService {
     private void checkInitMultipartParam(InitUploadMultipartRequest request) {
         Long partSize = request.getPartSize();
         if (partSize < multipartMinSize || partSize > multipartMaxSize) {
-            throw new BizException(PART_SIZE_ERROR);
+            throw new BizException(BizErrorMessage.PART_SIZE_ERROR);
         }
     }
 

@@ -11,18 +11,18 @@ import lombok.Getter;
 @Getter
 public class BizException extends RuntimeException {
 
-    private final BizErrorMessage message;
+    private final BizErrorMessage errorMessage;
 
     private boolean reset;
 
     public BizException(BizErrorMessage message) {
         super(message.getMessage());
-        this.message = message;
+        this.errorMessage = message;
     }
 
     public BizException(BizErrorMessage message, boolean reset) {
         super(message.getMessage());
-        this.message = message;
+        this.errorMessage = message;
         this.reset = reset;
     }
 }
